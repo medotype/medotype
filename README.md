@@ -10,15 +10,15 @@ Simplistic typing game.
 - Practice mode
 - Automatic leaderboard
 - Account system
+- Themes
 - User searching
 
 
 ## To do
 - Ranked gamemode
-- Themes
+- Levels
 - Keyboard sounds
-- Daily modes system
-
+  
 ## Contributing
 
 Contributions are always welcome!
