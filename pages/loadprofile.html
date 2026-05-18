@@ -24,7 +24,7 @@
         .p-name { font-size: 2.2rem; font-weight: 600; margin: 0; letter-spacing: -0.03em; }
         .p-meta { color: var(--text-faded); font-size: 0.85rem; margin-top: 4px; font-weight: 400; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 2.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 2.5rem; }
         .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 18px; text-align: center; border: 1px solid rgba(255,255,255,0.03); transition: transform 0.2s; }
         .stat-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.08); }
         .stat-label { color: var(--text-faded); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; display: block; margin-bottom: 10px; font-weight: 600; }
@@ -57,6 +57,10 @@
         </div>
 
         <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Ranked Elo</span>
+                <div class="stat-value" id="user-elo">-</div>
+            </div>
             <div class="stat-card">
                 <span class="stat-label">Best WPM</span>
                 <div class="stat-value" id="best-wpm">-</div>
@@ -105,10 +109,9 @@
         }
 
         try {
-            // 1. Find Profile by username
             const { data: profile, error: pErr } = await _supabase
                 .from('profiles')
-                .select('id, username, updated_at')
+                .select('id, username, updated_at, elo')
                 .ilike('username', username)
                 .single();
 
@@ -117,6 +120,7 @@
                 return;
             }
 
+            // 2. Load latest 10 scores
             const { data: scores, error: sErr } = await _supabase
                 .from('scores')
                 .select('*')
@@ -129,6 +133,8 @@
             msg.style.display = 'none';
             view.style.display = 'block';
             document.getElementById('p-name').innerText = profile.username;
+            
+            document.getElementById('user-elo').innerText = profile.elo ?? 0;
             
             const joinDate = new Date(profile.updated_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('p-joined').innerText = `Joined ${joinDate}`;
