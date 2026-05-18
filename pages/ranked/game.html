@@ -160,30 +160,25 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    // Match Data
     const matchId = new URLSearchParams(window.location.search).get('id') || window.location.search.replace('?', '');
     let matchChannel;
     
-    // Player Data
     let myId, myUsername, myElo;
     let oppId = null, oppUsername = "Opponent", oppElo = 0;
     
-    // Game State
-    let gameState = 'WAITING'; // WAITING, COUNTDOWN, PLAYING, ROUND_OVER, GAME_OVER
+    let gameState = 'WAITING'; 
     const TOTAL_ROUNDS = 4;
     const WORDS_PER_ROUND = 15;
     let currentRound = 1;
-    let allWords = []; // Array of 60 words (4 * 15)
+    let allWords = [];
     let isGeneratingWords = false; 
     
-    // Sync Heartbeat Handle
     let syncInterval = null;
+    let lastOpponentActivity = Date.now(); 
 
-    // Scores (WPM + Acc)
     let myTotalScore = 0;
     let oppTotalScore = 0;
 
-    // Typing Engine Variables
     let activeWordIdx = 0;
     let activeCharIdx = 0;
     let isStarted = false;
@@ -227,7 +222,6 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
 
         console.log("[INIT] Subscribing to Supabase Realtime channel: match_" + matchId);
         
-        // Setup Realtime Channel
         matchChannel = _supabase.channel(`match_${matchId}`, {
             config: { broadcast: { self: false } }
         });
@@ -236,6 +230,8 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
                     .on('broadcast', { event: 'game_words' }, handleGameWords)
                     .on('broadcast', { event: 'player_ready' }, handlePlayerReady)
                     .on('broadcast', { event: 'round_finished' }, handleRoundFinished)
+                    .on('broadcast', { event: 'player_heartbeat' }, handlePlayerHeartbeat) 
+                    .on('broadcast', { event: 'player_left' }, handlePlayerLeft)          
                     .subscribe(async (status, err) => {
                         if (err) console.error("[REALTIME] Subscription Error:", err);
                         console.log("[REALTIME] Connection Status changed to:", status);
@@ -249,34 +245,50 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     }
 
     async function syncGame() {
-        if (gameState !== 'WAITING') return;
+        if (gameState === 'GAME_OVER') return;
 
-        // FIX: Unconditionally broadcast presence so both tabs ALWAYS hear each other
-        console.log("[SYNC] Broadcasting presence payload to the room...");
-        matchChannel.send({
-            type: 'broadcast',
-            event: 'player_joined',
-            payload: { id: myId, username: myUsername, elo: myElo }
-        });
+        if (gameState === 'WAITING') {
+            console.log("[SYNC] Broadcasting presence payload to the room...");
+            matchChannel.send({
+                type: 'broadcast',
+                event: 'player_joined',
+                payload: { id: myId, username: myUsername, elo: myElo }
+            });
 
-        // Handle Host responsibilities cleanly once an opponent is noted
-        if (oppId && myId > oppId) {
-            if (allWords.length === 0) {
-                if (!isGeneratingWords) {
-                    console.log("[SYNC] Host role assumed. Generating new match vocabulary.");
-                    await generateWordsLocal();
+            if (oppId && myId > oppId) {
+                if (allWords.length === 0) {
+                    if (!isGeneratingWords) {
+                        console.log("[SYNC] Host role assumed. Generating new match vocabulary.");
+                        await generateWordsLocal();
+                    }
+                } else {
+                    console.log("[SYNC] Sending vocabulary list payload to guest peer.");
+                    matchChannel.send({
+                        type: 'broadcast',
+                        event: 'game_words',
+                        payload: { words: allWords }
+                    });
                 }
-            } else {
-                console.log("[SYNC] Sending vocabulary list payload to guest peer.");
-                matchChannel.send({
-                    type: 'broadcast',
-                    event: 'game_words',
-                    payload: { words: allWords }
-                });
             }
-        } else if (oppId) {
-            console.log("[SYNC] Guest role assumed. Awaiting game vocabulary list payload from host...");
+        } 
+        else if (gameState === 'COUNTDOWN' || gameState === 'PLAYING' || gameState === 'ROUND_OVER') {
+            matchChannel.send({
+                type: 'broadcast',
+                event: 'player_heartbeat',
+                payload: { id: myId }
+            });
+
+            if (oppId && (Date.now() - lastOpponentActivity > 60000)) {
+                console.warn("[TIMEOUT] Opponent dropped connections or went AFK for 60s.");
+                handleOpponentForfeit('AFK');
+            }
         }
+    }
+
+    async function removeFromQueue() {
+        if (!myId) return;
+        console.log("[QUEUE] Cleansing match database queue tables for user:", myId);
+        await _supabase.from('queue').delete().eq('user_id', myId);
     }
 
     function handlePlayerJoined({ payload }) {
@@ -286,6 +298,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
             oppUsername = payload.username;
             oppElo = payload.elo;
             document.getElementById('opp-name').innerText = oppUsername;
+            lastOpponentActivity = Date.now(); 
             console.log(`[EVENT] Opponent discovered! Name: ${oppUsername} | ID: ${oppId}`);
             statusText.innerText = "Syncing with opponent...";
         }
@@ -308,8 +321,6 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     }
 
     function handleGameWords({ payload }) {
-        // FIX: If Host missed our setup confirmation packet and re-sends the word list, 
-        // bounce another ready packet back to un-stick them.
         if (gameState !== 'WAITING') {
             if (gameState === 'COUNTDOWN' || gameState === 'PLAYING') {
                 console.log("[EVENT] Host re-sent words. Re-transmitting ready acknowledgment.");
@@ -320,6 +331,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
 
         console.log("[EVENT] Received 'game_words' package distribution from remote host:", payload.words);
         allWords = payload.words;
+        lastOpponentActivity = Date.now();
         
         console.log("[EVENT] Dispatched readiness handshake affirmation message back to host.");
         matchChannel.send({
@@ -327,16 +339,64 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
             event: 'player_ready'
         });
         
-        clearInterval(syncInterval);
+        removeFromQueue();
         startRoundSequence();
     }
 
     function handlePlayerReady() {
         if (gameState !== 'WAITING') return;
-        console.log("[EVENT] Received confirmation handshake acknowledgment from guest client. Killing handshake intervals.");
+        console.log("[EVENT] Received confirmation handshake acknowledgment from guest client.");
+        lastOpponentActivity = Date.now();
         
-        clearInterval(syncInterval);
+        removeFromQueue(); 
         startRoundSequence();
+    }
+
+    function handlePlayerHeartbeat({ payload }) {
+        if (payload.id === oppId) {
+            lastOpponentActivity = Date.now();
+        }
+    }
+
+    function handlePlayerLeft({ payload }) {
+        if (payload.id === oppId && gameState !== 'GAME_OVER') {
+            console.warn("[EVENT] Opponent explicitly abandoned or closed the match window.");
+            handleOpponentForfeit('LEFT');
+        }
+    }
+
+    // Handles processing forfeit/AFK conditions out of the box safely
+    async function handleOpponentForfeit(reason) {
+        gameState = 'GAME_OVER';
+        clearInterval(syncInterval); // Kill checking tracking threads
+        
+        overlay.style.display = 'none';
+        document.getElementById('typing-viewport').style.display = 'none';
+        document.querySelector('.match-header').style.display = 'none';
+
+        const resultsScreen = document.getElementById('results-screen');
+        const resultText = document.getElementById('final-result');
+        const eloText = document.getElementById('elo-change-text');
+
+        resultsScreen.classList.remove('hidden');
+
+        resultText.innerText = "VICTORY";
+        resultText.style.color = "#10b981";
+        
+        if (reason === 'AFK') {
+            statusText.innerText = "Opponent went AFK. You win!";
+            eloText.innerText = "+25 Elo (Opponent AFK)";
+        } else {
+            statusText.innerText = "Opponent left midmatch. You win!";
+            eloText.innerText = "+25 Elo (Opponent Abandoned)";
+        }
+        eloText.className = "elo-change";
+        
+        let newElo = myElo + 25;
+        await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
+
+        await removeFromQueue(); 
+        _supabase.removeChannel(matchChannel);
     }
 
     function startRoundSequence() {
@@ -491,6 +551,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         if (payload.id === oppId) {
             oppTotalScore += payload.score;
             document.getElementById('opp-score').innerText = oppTotalScore;
+            lastOpponentActivity = Date.now(); 
             oppRoundFinished = true;
             checkRoundAdvance();
         }
@@ -512,6 +573,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     async function endMatch() {
         console.log("[MATCH] All matches complete. Resolving competitive session results screen.");
         gameState = 'GAME_OVER';
+        clearInterval(syncInterval); 
         overlay.style.display = 'none';
         
         const resultsScreen = document.getElementById('results-screen');
@@ -549,9 +611,23 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
             await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
         }
 
+        await removeFromQueue(); 
         console.log("[CLEANUP] Channel state unsubscription routine launched.");
         _supabase.removeChannel(matchChannel);
     }
+
+    window.addEventListener('beforeunload', () => {
+        if (myId) {
+            _supabase.from('queue').delete().eq('user_id', myId);
+        }
+        if (matchChannel && gameState !== 'GAME_OVER' && oppId) {
+            matchChannel.send({
+                type: 'broadcast',
+                event: 'player_left',
+                payload: { id: myId }
+            });
+        }
+    });
 
     initMatch();
     </script>
