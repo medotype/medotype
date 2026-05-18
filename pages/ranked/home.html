@@ -35,7 +35,6 @@
             align-items: center;
         }
 
-        /* Clean Header Stats for Username & Elo */
         .header-stats { 
             display: flex; 
             justify-content: center; 
@@ -44,7 +43,7 @@
             width: 100%; 
             margin-bottom: 3rem; 
             height: 2rem; 
-            opacity: 0; /* Hidden until loaded */
+            opacity: 0; 
             transition: opacity 0.3s ease;
         }
         
@@ -61,7 +60,6 @@
         
         .stat-box i { color: var(--accent); font-size: 1.1rem; }
 
-        /* Minimal Ranked Title */
         .ranked-title {
             font-size: 2.5rem;
             font-weight: 600;
@@ -70,7 +68,6 @@
             color: var(--text-bright);
         }
 
-        /* Action Bar */
         .action-bar {
             display: flex;
             gap: 15px;
@@ -125,7 +122,6 @@
             opacity: 0.9;
         }
 
-        /* Lock Overlay Logic */
         .icon-wrapper {
             position: relative;
             display: inline-flex;
@@ -176,7 +172,6 @@
             text-align: left;
         }
 
-        /* Error Toast */
         #error-toast {
             position: fixed;
             top: 20px;
@@ -249,6 +244,7 @@
 
         let currentElo = 0;
         let currentUsername = "Player";
+        let accessToken = null; // Captured to authenticate the tab-closure fetch request
         
         let isQueueing = false;
         let queueInterval;
@@ -260,6 +256,8 @@
         async function loadUserProfile() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) return;
+
+            accessToken = session.access_token;
 
             const { data: profile, error } = await _supabase
                 .from('profiles')
@@ -328,7 +326,8 @@
                     .insert([{ 
                         user_id: session.user.id, 
                         username: currentUsername,
-                        elo: currentElo
+                        elo: currentElo,
+                        status: 'searching'
                     }])
                     .select();
 
@@ -340,12 +339,21 @@
 
                 queueSubscription = _supabase
                     .channel(`q_${queueId}`)
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ranked_queue', filter: `id=eq.${queueId}` }, 
-                    payload => {
-                        if (payload.new.status === 'matched') matchFound(payload.new.match_id);
-                    }).subscribe();
-
-                checkNearbyPlayers(session.user.id);
+                    .on('postgres_changes', { 
+                        event: 'UPDATE', 
+                        schema: 'public', 
+                        table: 'ranked_queue', 
+                        filter: `id=eq.${queueId}` 
+                    }, payload => {
+                        if (payload.new.status === 'matched') {
+                            matchFound(payload.new.match_id);
+                        }
+                    })
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            checkNearbyPlayers(session.user.id);
+                        }
+                    });
 
             } else {
                 stopQueueUI();
@@ -376,14 +384,14 @@
         }
 
         async function checkNearbyPlayers(myId) {
-            // Build query base
+            if (!queueId) return;
+
             let query = _supabase
                 .from('ranked_queue')
                 .select('*')
                 .eq('status', 'searching')
-                .neq('id', queueId); // Prevent matching this exact browser tab row
+                .neq('id', queueId);
 
-            // If NOT on your beta domain, prevent users from matching with themselves
             if (!window.location.href.includes('medotypebeta.wasmer.app')) {
                 query = query.neq('user_id', myId);
             }
@@ -395,9 +403,20 @@
             if (opponents && opponents.length > 0) {
                 const opponent = opponents[0];
                 const sharedMatchId = crypto.randomUUID();
-                await _supabase.from('ranked_queue')
+
+                const { data: matchedOpponent } = await _supabase
+                    .from('ranked_queue')
                     .update({ status: 'matched', match_id: sharedMatchId })
-                    .in('id', [queueId, opponent.id]);
+                    .eq('id', opponent.id)
+                    .eq('status', 'searching')
+                    .select();
+
+                if (matchedOpponent && matchedOpponent.length > 0) {
+                    await _supabase
+                        .from('ranked_queue')
+                        .update({ status: 'matched', match_id: sharedMatchId })
+                        .eq('id', queueId);
+                }
             }
         }
 
@@ -405,8 +424,31 @@
             stopTimer();
             document.getElementById('btn-text').innerText = "MATCH FOUND!";
             document.getElementById('main-btn').style.background = "var(--accent)";
-            setTimeout(() => { window.location.href = `game.html?id=${matchId}`; }, 2000);
+            
+            queueId = null; 
+            if (queueSubscription) {
+                _supabase.removeChannel(queueSubscription);
+                queueSubscription = null;
+            }
+
+            setTimeout(() => { window.location.href = `game.html?${matchId}`; }, 2000);
         }
+
+        window.addEventListener('beforeunload', () => {
+            if (queueId) {
+                const url = `${SB_URL}/rest/v1/ranked_queue?id=eq.${queueId}`;
+                const headers = {
+                    'apikey': SB_KEY,
+                    'Authorization': accessToken ? `Bearer ${accessToken}` : `Bearer ${SB_KEY}`
+                };
+                
+                fetch(url, {
+                    method: 'DELETE',
+                    headers: headers,
+                    keepalive: true
+                });
+            }
+        });
 
         loadUserProfile();
     </script>
