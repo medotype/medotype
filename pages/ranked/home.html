@@ -376,11 +376,19 @@
         }
 
         async function checkNearbyPlayers(myId) {
-            const { data: opponents } = await _supabase
+            // Build query base
+            let query = _supabase
                 .from('ranked_queue')
                 .select('*')
                 .eq('status', 'searching')
-                .neq('user_id', myId)
+                .neq('id', queueId); // Prevent matching this exact browser tab row
+
+            // If NOT on your beta domain, prevent users from matching with themselves
+            if (!window.location.href.includes('medotypebeta.wasmer.app')) {
+                query = query.neq('user_id', myId);
+            }
+
+            const { data: opponents } = await query
                 .order('created_at', { ascending: true })
                 .limit(1);
 
