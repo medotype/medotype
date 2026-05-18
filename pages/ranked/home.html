@@ -60,13 +60,38 @@
         
         .stat-box i { color: var(--accent); font-size: 1.1rem; }
 
-        .ranked-title {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin: 0 0 2rem 0;
-            letter-spacing: -0.02em;
-            color: var(--text-bright);
+        .title-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2.5rem;
         }
+
+        .ranked-title {
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.03em;
+            color: var(--text-bright);
+            line-height: 1;
+        }
+
+        .season-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(226, 182, 43, 0.1);
+            border: 1px solid rgba(226, 182, 43, 0.25);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 0.6rem;
+        }
+
+        
 
         .action-bar {
             display: flex;
@@ -108,9 +133,17 @@
             color: var(--text-faded); 
         }
 
-        .btn-shop:not(.btn-locked):hover {
-            color: var(--text-bright);
-            transform: translateY(-2px);
+        .btn-locked, .btn-locked:hover {
+            opacity: 0.35 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            transform: none !important;
+            color: var(--text-faded) !important;
+        }
+
+        .btn-locked .lock-badge {
+            opacity: 1 !important;
+            transform: scale(1) !important;
         }
 
         .btn-cancel { 
@@ -246,7 +279,7 @@
 
         let currentElo = 0;
         let currentUsername = "Player";
-        let accessToken = null; // Captured to authenticate the tab-closure fetch request
+        let accessToken = null; 
         
         let isQueueing = false;
         let queueInterval;
