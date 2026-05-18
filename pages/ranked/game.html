@@ -156,7 +156,7 @@
     </div>
 
     <script>
-const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
@@ -174,6 +174,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const WORDS_PER_ROUND = 15;
     let currentRound = 1;
     let allWords = []; // Array of 60 words (4 * 15)
+    let isGeneratingWords = false; // Prevents overlapping local generation runs
     
     // Sync Heartbeat Handle
     let syncInterval = null;
@@ -201,19 +202,34 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const fallbackWords = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
 
     async function initMatch() {
+        console.log("[INIT] Initializing match logic. ID:", matchId);
         if (!matchId) return window.location.href = 'home.html';
 
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) return window.location.href = 'home.html';
+        const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+        if (sessionErr || !session) {
+            console.error("[INIT] Failed to retrieve authentication session:", sessionErr);
+            return window.location.href = 'home.html';
+        }
         myId = session.user.id;
+        console.log("[INIT] Authenticated as User UUID:", myId);
 
         // Fetch profile
-        const { data: profile } = await _supabase.from('profiles').select('username, elo').eq('id', myId).single();
+        const { data: profile, error: profileErr } = await _supabase.from('profiles').select('username, elo').eq('id', myId).single();
+        if (profileErr) console.warn("[INIT] Profile load warning/error:", profileErr);
+        
         myUsername = profile?.username || "Me";
         myElo = profile?.elo || 0;
-        document.getElementById('my-name').innerText = myUsername;
+        
+        const myNameEl = document.getElementById('my-name');
+        if (myNameEl) {
+            myNameEl.innerText = myUsername;
+        } else {
+            console.error("[CRITICAL] '#my-name' element missing from DOM structure.");
+        }
 
-        // Setup Realtime Channel (self: false keeps channels distinct and responsive)
+        console.log("[INIT] Subscribing to Supabase Realtime channel: match_" + matchId);
+        
+        // Setup Realtime Channel
         matchChannel = _supabase.channel(`match_${matchId}`, {
             config: { broadcast: { self: false } }
         });
@@ -222,63 +238,88 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
                     .on('broadcast', { event: 'game_words' }, handleGameWords)
                     .on('broadcast', { event: 'player_ready' }, handlePlayerReady)
                     .on('broadcast', { event: 'round_finished' }, handleRoundFinished)
-                    .subscribe(async (status) => {
+                    .subscribe(async (status, err) => {
+                        if (err) console.error("[REALTIME] Subscription Error:", err);
+                        console.log("[REALTIME] Connection Status changed to:", status);
+                        
                         if (status === 'SUBSCRIBED') {
-                            // Run handshake engine every 1 second
+                            console.log("[REALTIME] Channel verified. Starting heartbeat synchronization loop.");
+                            statusText.innerText = "Searching for opponent...";
                             syncInterval = setInterval(syncGame, 1000);
                         }
                     });
     }
 
-    function syncGame() {
+    async function syncGame() {
         if (gameState !== 'WAITING') return;
 
-        // Phase 1: Keep telling the room we are here until someone responds
+        // Phase 1: Look for Opponent
         if (!oppId) {
+            console.log("[SYNC] Broadcaster searching... broadcasting presence payload.");
             matchChannel.send({
                 type: 'broadcast',
                 event: 'player_joined',
                 payload: { id: myId, username: myUsername, elo: myElo }
             });
         } 
-        // Phase 2: If opponent found and I am the host, keep broadcasting the words until they say they are ready
+        // Phase 2: Handle Host responsibilities cleanly
         else if (myId > oppId) {
             if (allWords.length === 0) {
-                generateWordsLocal();
+                if (!isGeneratingWords) {
+                    console.log("[SYNC] Host role assumed. Generating new match vocabulary.");
+                    await generateWordsLocal();
+                }
             } else {
+                console.log("[SYNC] Sending vocabulary list payload to guest peer.");
                 matchChannel.send({
                     type: 'broadcast',
                     event: 'game_words',
                     payload: { words: allWords }
                 });
             }
+        } else {
+            console.log("[SYNC] Guest role assumed. Awaiting game vocabulary list payload from host...");
         }
     }
 
     function handlePlayerJoined({ payload }) {
+        console.log("[EVENT] Received 'player_joined' broadcast message payload:", payload);
         if (payload.id !== myId && !oppId) {
             oppId = payload.id;
             oppUsername = payload.username;
             oppElo = payload.elo;
             document.getElementById('opp-name').innerText = oppUsername;
+            console.log(`[EVENT] Opponent discovered! Name: ${oppUsername} | ID: ${oppId}`);
+            statusText.innerText = "Syncing with opponent...";
         }
     }
 
     async function generateWordsLocal() {
+        isGeneratingWords = true;
         let fetchedWords = fallbackWords;
         try {
             const resp = await fetch('../../data/json/wordlistcommon.json');
-            if (resp.ok) fetchedWords = await resp.json();
-        } catch(e) {}
+            if (resp.ok) {
+                fetchedWords = await resp.json();
+                console.log("[WORDS] Loaded word list source successfully.");
+            } else {
+                console.warn("[WORDS] Remote asset status failed. Resorting to array engine fallbacks.");
+            }
+        } catch(e) {
+            console.warn("[WORDS] Fetch operation exception. Using native fallback arrays.", e);
+        }
 
         allWords = fetchedWords.sort(() => Math.random() - 0.5).slice(0, TOTAL_ROUNDS * WORDS_PER_ROUND);
+        console.log("[WORDS] Generated game words array:", allWords);
+        isGeneratingWords = false;
     }
 
     function handleGameWords({ payload }) {
         if (gameState !== 'WAITING') return;
+        console.log("[EVENT] Received 'game_words' package distribution from remote host:", payload.words);
         allWords = payload.words;
         
-        // Tell the host we received the words and are transitioning to countdown
+        console.log("[EVENT] Dispatched readiness handshake affirmation message back to host.");
         matchChannel.send({
             type: 'broadcast',
             event: 'player_ready'
@@ -290,13 +331,14 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
 
     function handlePlayerReady() {
         if (gameState !== 'WAITING') return;
+        console.log("[EVENT] Received confirmation handshake acknowledgment from guest client. Killing handshake intervals.");
         
-        // Host gets the ok signal from guest, cuts interval, starts game
         clearInterval(syncInterval);
         startRoundSequence();
     }
 
     function startRoundSequence() {
+        console.log(`[ROUND] Transitioning to round sequencing context. Current: ${currentRound}`);
         gameState = 'COUNTDOWN';
         myRoundFinished = false;
         oppRoundFinished = false;
@@ -336,6 +378,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
                 overlay.classList.add('hidden');
                 gameState = 'PLAYING';
                 statusText.innerText = "Typing...";
+                console.log("[ROUND] Countdown sequence expired. Input collection enabled.");
             }
         }, 1000);
     }
@@ -430,6 +473,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         document.getElementById('my-score').innerText = myTotalScore;
         statusText.innerText = `You scored ${roundScore}! Waiting...`;
 
+        console.log(`[MATCH] Finished typing calculations. Score: ${roundScore}. Dispatched 'round_finished'.`);
         matchChannel.send({
             type: 'broadcast',
             event: 'round_finished',
@@ -441,6 +485,7 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     }
 
     function handleRoundFinished({ payload }) {
+        console.log("[EVENT] Peer transmitted 'round_finished' alert message block.", payload);
         if (payload.id === oppId) {
             oppTotalScore += payload.score;
             document.getElementById('opp-score').innerText = oppTotalScore;
@@ -456,12 +501,14 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
                 endMatch();
             } else {
                 statusText.innerText = "Both finished. Next round...";
+                console.log("Both players are in which is a big boy w frfr. We doing ts frfr");
                 setTimeout(() => startRoundSequence(), 2000);
             }
         }
     }
 
     async function endMatch() {
+        console.log("make skibidi results screen");
         gameState = 'GAME_OVER';
         overlay.style.display = 'none';
         
@@ -496,9 +543,11 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         }
 
         if (newElo !== myElo) {
+            console.log(`Update elo: ${newElo}`);
             await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
         }
 
+        console.log("Skibidi");
         _supabase.removeChannel(matchChannel);
     }
 
