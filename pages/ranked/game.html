@@ -156,7 +156,7 @@
     </div>
 
     <script>
-    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
@@ -174,7 +174,7 @@
     const WORDS_PER_ROUND = 15;
     let currentRound = 1;
     let allWords = []; // Array of 60 words (4 * 15)
-    let isGeneratingWords = false; // Prevents overlapping local generation runs
+    let isGeneratingWords = false; 
     
     // Sync Heartbeat Handle
     let syncInterval = null;
@@ -223,8 +223,6 @@
         const myNameEl = document.getElementById('my-name');
         if (myNameEl) {
             myNameEl.innerText = myUsername;
-        } else {
-            console.error("[CRITICAL] '#my-name' element missing from DOM structure.");
         }
 
         console.log("[INIT] Subscribing to Supabase Realtime channel: match_" + matchId);
@@ -253,17 +251,16 @@
     async function syncGame() {
         if (gameState !== 'WAITING') return;
 
-        // Phase 1: Look for Opponent
-        if (!oppId) {
-            console.log("[SYNC] Broadcaster searching... broadcasting presence payload.");
-            matchChannel.send({
-                type: 'broadcast',
-                event: 'player_joined',
-                payload: { id: myId, username: myUsername, elo: myElo }
-            });
-        } 
-        // Phase 2: Handle Host responsibilities cleanly
-        else if (myId > oppId) {
+        // FIX: Unconditionally broadcast presence so both tabs ALWAYS hear each other
+        console.log("[SYNC] Broadcasting presence payload to the room...");
+        matchChannel.send({
+            type: 'broadcast',
+            event: 'player_joined',
+            payload: { id: myId, username: myUsername, elo: myElo }
+        });
+
+        // Handle Host responsibilities cleanly once an opponent is noted
+        if (oppId && myId > oppId) {
             if (allWords.length === 0) {
                 if (!isGeneratingWords) {
                     console.log("[SYNC] Host role assumed. Generating new match vocabulary.");
@@ -277,7 +274,7 @@
                     payload: { words: allWords }
                 });
             }
-        } else {
+        } else if (oppId) {
             console.log("[SYNC] Guest role assumed. Awaiting game vocabulary list payload from host...");
         }
     }
@@ -302,12 +299,8 @@
             if (resp.ok) {
                 fetchedWords = await resp.json();
                 console.log("[WORDS] Loaded word list source successfully.");
-            } else {
-                console.warn("[WORDS] Remote asset status failed. Resorting to array engine fallbacks.");
             }
-        } catch(e) {
-            console.warn("[WORDS] Fetch operation exception. Using native fallback arrays.", e);
-        }
+        } catch(e) {}
 
         allWords = fetchedWords.sort(() => Math.random() - 0.5).slice(0, TOTAL_ROUNDS * WORDS_PER_ROUND);
         console.log("[WORDS] Generated game words array:", allWords);
@@ -315,7 +308,16 @@
     }
 
     function handleGameWords({ payload }) {
-        if (gameState !== 'WAITING') return;
+        // FIX: If Host missed our setup confirmation packet and re-sends the word list, 
+        // bounce another ready packet back to un-stick them.
+        if (gameState !== 'WAITING') {
+            if (gameState === 'COUNTDOWN' || gameState === 'PLAYING') {
+                console.log("[EVENT] Host re-sent words. Re-transmitting ready acknowledgment.");
+                matchChannel.send({ type: 'broadcast', event: 'player_ready' });
+            }
+            return;
+        }
+
         console.log("[EVENT] Received 'game_words' package distribution from remote host:", payload.words);
         allWords = payload.words;
         
@@ -501,14 +503,14 @@
                 endMatch();
             } else {
                 statusText.innerText = "Both finished. Next round...";
-                console.log("Both players are in which is a big boy w frfr. We doing ts frfr");
+                console.log("[ROUND] Both players checked in. Progressing match map state sequence indices.");
                 setTimeout(() => startRoundSequence(), 2000);
             }
         }
     }
 
     async function endMatch() {
-        console.log("make skibidi results screen");
+        console.log("[MATCH] All matches complete. Resolving competitive session results screen.");
         gameState = 'GAME_OVER';
         overlay.style.display = 'none';
         
@@ -543,11 +545,11 @@
         }
 
         if (newElo !== myElo) {
-            console.log(`Update elo: ${newElo}`);
+            console.log(`[DATABASE] Updating profile statistics dynamically. New ELO target: ${newElo}`);
             await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
         }
 
-        console.log("Skibidi");
+        console.log("[CLEANUP] Channel state unsubscription routine launched.");
         _supabase.removeChannel(matchChannel);
     }
 
