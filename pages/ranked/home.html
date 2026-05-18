@@ -246,18 +246,19 @@
             </div>
         </div>
 
-        <h1 class="ranked-title">MeDoType</h1>
-        <h2 class="ranked-title">Season 1</h2>
-
+<div class="title-container">
+            <h1 class="ranked-title">MeDoType</h1>
+            <div class="season-badge">Season 1</div>
+        </div>
 
         <div class="action-bar">
             <button class="btn btn-play" id="main-btn" onclick="handleQueue()">
                 <i class="fa-solid fa-play" id="btn-icon"></i> <span id="btn-text">Find Match</span>
             </button>
-            <button class="btn btn-shop" id="shop-btn">
+            <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
                 <span class="icon-wrapper">
                     <i class="fa-solid fa-cart-shopping" id="shop-icon"></i>
-                    <i class="fa-solid fa-lock lock-badge"></i>
+                    <i class="fa-solid fa-lock lock-badge" style="opacity: 1; transform: scale(1);"></i>
                 </span>
                 Shop
             </button>
