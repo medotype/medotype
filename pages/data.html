@@ -59,7 +59,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 20px;
             margin-bottom: 3rem;
         }
@@ -134,13 +134,17 @@
     <div class="container">
         <h1 style="margin-bottom: 2rem; font-weight: 600;">Personal Analytics</h1>
 
-        <div class="mode-nav" id="mode-nav">
-            </div>
+        <div class="mode-nav" id="mode-nav"></div>
 
         <div id="stats-display">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <span class="stat-label">Personal Best</span>
+                    <span class="stat-label">Ranked Elo</span>
+                    <div class="stat-value" id="user-elo">--</div>
+                    <div class="stat-sub">Current Rating</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Best (Last 10)</span>
                     <div class="stat-value" id="best-wpm">-</div>
                     <div class="stat-sub">WPM</div>
                 </div>
@@ -152,12 +156,12 @@
                 <div class="stat-card">
                     <span class="stat-label">Avg. Accuracy</span>
                     <div class="stat-value" id="avg-acc">-</div>
-                    <div class="stat-sub">Percentage</div>
+                    <div class="stat-sub">Last 10 tests</div>
                 </div>
             </div>
 
             <div class="history-container">
-                <span class="stat-label" style="margin-left: 12px; margin-bottom: 15px;">Recent History</span>
+                <span class="stat-label" style="margin-left: 12px; margin-bottom: 15px;">Recent History (Max 10)</span>
                 <table id="history-table">
                     <thead>
                         <tr>
@@ -212,7 +216,6 @@
         }
 
         async function fetchAnalytics(modeId, btnElement) {
-            // UI Toggle
             if (btnElement) {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                 btnElement.classList.add('active');
@@ -225,13 +228,29 @@
                 return;
             }
 
-            // Fetch scores for this mode
+            // 1. Fetch user Elo rating from profiles table
+            try {
+                const { data: profile, error: pError } = await _supabase
+                    .from('profiles')
+                    .select('elo')
+                    .eq('id', session.user.id)
+                    .single();
+                
+                if (profile && !pError) {
+                    document.getElementById('user-elo').innerText = profile.elo ?? 0;
+                }
+            } catch (pErr) {
+                console.error("Error pulling profile Elo:", pErr);
+            }
+
+            // 2. Fetch scores table data strictly limited to the last 10 records
             const { data, error } = await _supabase
                 .from('scores')
                 .select('*')
                 .eq('user_id', session.user.id)
                 .eq('mode', modeId)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(10); // Enforces backend level strict limit to 10 records
 
             if (error) {
                 console.error(error);
@@ -260,12 +279,9 @@
             table.style.display = 'table';
 
             const best = Math.max(...data.map(s => s.wpm));
-            
-            const recent = data.slice(0, 10);
-            const avgWpm = Math.round(recent.reduce((acc, curr) => acc + curr.wpm, 0) / recent.length);
-            const avgAcc = Math.round(recent.reduce((acc, curr) => acc + curr.accuracy, 0) / recent.length);
+            const avgWpm = Math.round(data.reduce((acc, curr) => acc + curr.wpm, 0) / data.length);
+            const avgAcc = Math.round(data.reduce((acc, curr) => acc + curr.accuracy, 0) / data.length);
 
-            // Set Values
             document.getElementById('best-wpm').innerText = best;
             document.getElementById('avg-wpm').innerText = avgWpm;
             document.getElementById('avg-acc').innerText = avgAcc + '%';
@@ -283,7 +299,6 @@
             });
         }
 
-        // Initialize on load
         initModes();
     </script>
 </body>
