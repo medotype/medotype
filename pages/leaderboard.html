@@ -28,6 +28,43 @@
 
         .container { width: 100%; max-width: 800px; }
 
+        /* New Category Navigation Styles */
+        .category-nav {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 2rem;
+            justify-content: center;
+            border-bottom: 2px solid rgba(255,255,255,0.05);
+            padding-bottom: 15px;
+            width: 100%;
+        }
+
+        .category-btn {
+            background: none;
+            border: none;
+            color: var(--text-faded);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-family: var(--font);
+            transition: 0.2s ease;
+            position: relative;
+        }
+
+        .category-btn:hover { color: var(--text-bright); }
+        .category-btn.active { color: var(--accent); }
+        
+        .category-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -17px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+        }
+
         .header { 
             display: flex; 
             justify-content: space-between; 
@@ -149,6 +186,11 @@
 <body>
 
 <div class="container">
+    <div class="category-nav">
+        <button class="category-btn active" id="cat-single" onclick="switchCategory('singleplayer')">Singleplayer</button>
+        <button class="category-btn" id="cat-ranked" onclick="switchCategory('ranked')">Ranked</button>
+    </div>
+
     <div class="header">
         <h1><i class="fa-solid fa-trophy"></i> Leaderboard</h1>
         <div class="mode-nav" id="mode-nav"></div>
@@ -157,12 +199,8 @@
     <div class="board-card">
         <table id="lb-table" style="display:none">
             <thead>
-                <tr>
-                    <th class="rank-col">#</th>
-                    <th>user</th>
-                    <th style="text-align:right">wpm</th>
-                    <th style="text-align:right">accuracy</th>
-                </tr>
+                <tr id="table-headers">
+                    </tr>
             </thead>
             <tbody id="lb-body"></tbody>
         </table>
@@ -186,6 +224,9 @@
     let currentPage = 1;
     let availableModes = [];
     const ITEMS_PER_PAGE = 10;
+    
+    // New variable to track active tab
+    let currentCategory = 'singleplayer';
 
     async function initModes() {
         try {
@@ -221,6 +262,67 @@
         });
     }
 
+    // Category Switcher
+    function switchCategory(cat) {
+        currentCategory = cat;
+        document.getElementById('cat-single').classList.toggle('active', cat === 'singleplayer');
+        document.getElementById('cat-ranked').classList.toggle('active', cat === 'ranked');
+        
+        const modeNav = document.getElementById('mode-nav');
+        
+        if (cat === 'singleplayer') {
+            modeNav.style.display = 'flex';
+            if (availableModes.length > 0) fetchLeaderboardData(availableModes[0].id);
+            
+            document.querySelectorAll('.mode-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === 0);
+            });
+        } else {
+            modeNav.style.display = 'none';
+            fetchRankedData();
+        }
+    }
+
+    // Fetch Ranked Data (Elo from Profiles)
+    async function fetchRankedData() {
+        const status = document.getElementById('status');
+        const table = document.getElementById('lb-table');
+        const pagination = document.getElementById('pagination');
+
+        table.style.display = 'none';
+        pagination.style.display = 'none';
+        status.style.display = 'block';
+        status.innerText = 'fetching ranked standings...';
+
+        try {
+            const { data: profiles, error } = await _supabase
+                .from('profiles')
+                .select('username, elo')
+                .order('elo', { ascending: false })
+                .limit(500);
+
+            if (error) throw error;
+            if (!profiles || profiles.length === 0) {
+                status.innerText = 'no ranked players found';
+                return;
+            }
+
+            currentData = profiles.map(p => ({
+                username: p.username || "Unknown",
+                elo: p.elo || 0
+            }));
+
+            currentPage = 1;
+            status.style.display = 'none';
+            table.style.display = 'table';
+            renderPage();
+        } catch (err) {
+            console.error("Ranked Load Failed:", err);
+            status.innerText = "Error loading ranked standings.";
+        }
+    }
+
+    // Fetch Singleplayer Data
     async function fetchLeaderboardData(modeId) {
         const status = document.getElementById('status');
         const table = document.getElementById('lb-table');
@@ -281,10 +383,27 @@
         }
     }
 
+    // Dynamic Render Logic
     function renderPage() {
         const body = document.getElementById('lb-body');
+        const headers = document.getElementById('table-headers');
         const pagination = document.getElementById('pagination');
         body.innerHTML = '';
+
+        if (currentCategory === 'singleplayer') {
+            headers.innerHTML = `
+                <th class="rank-col">#</th>
+                <th>user</th>
+                <th style="text-align:right">wpm</th>
+                <th style="text-align:right">accuracy</th>
+            `;
+        } else {
+            headers.innerHTML = `
+                <th class="rank-col">#</th>
+                <th>user</th>
+                <th style="text-align:right">elo rating</th>
+            `;
+        }
 
         const totalPages = Math.ceil(currentData.length / ITEMS_PER_PAGE);
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -293,7 +412,6 @@
         pageData.forEach((s, i) => {
             const absoluteRank = startIndex + i + 1;
             
-            // Logic for top 3 colors and special 1st place icon
             let rowStyle = 'color: inherit';
             let crownIcon = '';
 
@@ -306,13 +424,22 @@
                 rowStyle = `color: var(--bronze); font-weight: 600;`;
             }
 
-            body.innerHTML += `
-                <tr>
-                    <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
-                    <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
-                    <td class="wpm-col">${s.wpm}</td>
-                    <td class="acc-col">${s.accuracy}%</td>
-                </tr>`;
+            if (currentCategory === 'singleplayer') {
+                body.innerHTML += `
+                    <tr>
+                        <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
+                        <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
+                        <td class="wpm-col">${s.wpm}</td>
+                        <td class="acc-col">${s.accuracy}%</td>
+                    </tr>`;
+            } else {
+                body.innerHTML += `
+                    <tr>
+                        <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
+                        <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
+                        <td class="wpm-col">${s.elo}</td>
+                    </tr>`;
+            }
         });
 
         if (totalPages > 1) {
