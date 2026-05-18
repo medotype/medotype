@@ -156,336 +156,353 @@
     </div>
 
     <script>
-        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
-        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
-        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        // Match Data
-        const matchId = new URLSearchParams(window.location.search).get('id') || window.location.search.replace('?', '');
-        let matchChannel;
-        
-        // Player Data
-        let myId, myUsername, myElo;
-        let oppId = null, oppUsername = "Opponent", oppElo = 0;
-        
-        // Game State
-        let gameState = 'WAITING'; // WAITING, COUNTDOWN, PLAYING, ROUND_OVER, GAME_OVER
-        const TOTAL_ROUNDS = 4;
-        const WORDS_PER_ROUND = 15;
-        let currentRound = 1;
-        let allWords = []; // Array of 60 words (4 * 15)
-        
-        // Scores (WPM + Acc)
-        let myTotalScore = 0;
-        let oppTotalScore = 0;
+    // Match Data
+    const matchId = new URLSearchParams(window.location.search).get('id') || window.location.search.replace('?', '');
+    let matchChannel;
+    
+    // Player Data
+    let myId, myUsername, myElo;
+    let oppId = null, oppUsername = "Opponent", oppElo = 0;
+    
+    // Game State
+    let gameState = 'WAITING'; // WAITING, COUNTDOWN, PLAYING, ROUND_OVER, GAME_OVER
+    const TOTAL_ROUNDS = 4;
+    const WORDS_PER_ROUND = 15;
+    let currentRound = 1;
+    let allWords = []; // Array of 60 words (4 * 15)
+    
+    // Sync Heartbeat Handle
+    let syncInterval = null;
 
-        // Typing Engine Variables
-        let activeWordIdx = 0;
-        let activeCharIdx = 0;
-        let isStarted = false;
-        let startTime = null;
-        let correctChars = 0;
-        let totalKeystrokes = 0;
-        let myRoundFinished = false;
-        let oppRoundFinished = false;
+    // Scores (WPM + Acc)
+    let myTotalScore = 0;
+    let oppTotalScore = 0;
 
-        const container = document.getElementById('word-container');
-        const overlay = document.getElementById('overlay');
-        const overlayTitle = document.getElementById('overlay-title');
-        const overlaySub = document.getElementById('overlay-sub');
-        const statusText = document.getElementById('round-status');
+    // Typing Engine Variables
+    let activeWordIdx = 0;
+    let activeCharIdx = 0;
+    let isStarted = false;
+    let startTime = null;
+    let correctChars = 0;
+    let totalKeystrokes = 0;
+    let myRoundFinished = false;
+    let oppRoundFinished = false;
 
-        // Fallback wordlist just in case the JSON fails
-        const fallbackWords = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
+    const container = document.getElementById('word-container');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlaySub = document.getElementById('overlay-sub');
+    const statusText = document.getElementById('round-status');
 
-        async function initMatch() {
-            if (!matchId) return window.location.href = 'home.html';
+    const fallbackWords = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
 
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (!session) return window.location.href = 'home.html';
-            myId = session.user.id;
+    async function initMatch() {
+        if (!matchId) return window.location.href = 'home.html';
 
-            // Fetch my profile
-            const { data: profile } = await _supabase.from('profiles').select('username, elo').eq('id', myId).single();
-            myUsername = profile?.username || "Me";
-            myElo = profile?.elo || 0;
-            document.getElementById('my-name').innerText = myUsername;
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) return window.location.href = 'home.html';
+        myId = session.user.id;
 
-            // Setup Realtime Channel
-            matchChannel = _supabase.channel(`match_${matchId}`, {
-                config: { broadcast: { self: true } }
-            });
+        // Fetch profile
+        const { data: profile } = await _supabase.from('profiles').select('username, elo').eq('id', myId).single();
+        myUsername = profile?.username || "Me";
+        myElo = profile?.elo || 0;
+        document.getElementById('my-name').innerText = myUsername;
 
-            matchChannel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined)
-                        .on('broadcast', { event: 'game_words' }, handleGameWords)
-                        .on('broadcast', { event: 'round_finished' }, handleRoundFinished)
-                        .subscribe(async (status) => {
-                            if (status === 'SUBSCRIBED') {
-                                // Broadcast that we are in the room
-                                matchChannel.send({
-                                    type: 'broadcast',
-                                    event: 'player_joined',
-                                    payload: { id: myId, username: myUsername, elo: myElo }
-                                });
-                            }
-                        });
-        }
-
-        function handlePlayerJoined({ payload }) {
-            if (payload.id !== myId && !oppId) {
-                oppId = payload.id;
-                oppUsername = payload.username;
-                oppElo = payload.elo;
-                document.getElementById('opp-name').innerText = oppUsername;
-                
-                // Resend my info so the new guy knows who I am
-                matchChannel.send({
-                    type: 'broadcast',
-                    event: 'player_joined',
-                    payload: { id: myId, username: myUsername, elo: myElo }
-                });
-
-                // Deterministic Host: Whoever has the higher ID string generates the words
-                if (myId > oppId) generateWords();
-            }
-        }
-
-        async function generateWords() {
-            let fetchedWords = fallbackWords;
-            try {
-                const resp = await fetch('../../data/json/wordlistcommon.json');
-                if (resp.ok) fetchedWords = await resp.json();
-            } catch(e) {}
-
-            // Shuffle and slice exactly 60 words (15 * 4 rounds)
-            const shuffled = fetchedWords.sort(() => Math.random() - 0.5).slice(0, TOTAL_ROUNDS * WORDS_PER_ROUND);
-            
-            matchChannel.send({
-                type: 'broadcast',
-                event: 'game_words',
-                payload: { words: shuffled }
-            });
-        }
-
-        function handleGameWords({ payload }) {
-            allWords = payload.words;
-            startRoundSequence();
-        }
-
-        function startRoundSequence() {
-            gameState = 'COUNTDOWN';
-            myRoundFinished = false;
-            oppRoundFinished = false;
-            
-            // Setup Words for this round
-            const roundWords = allWords.slice((currentRound - 1) * WORDS_PER_ROUND, currentRound * WORDS_PER_ROUND);
-            container.innerHTML = roundWords.map((w) => `
-                <span class="word">
-                    ${w.split('').map(c => `<span class="letter">${c}</span>`).join('')}
-                </span>
-            `).join('');
-            
-            container.style.top = "0px";
-            activeWordIdx = 0;
-            activeCharIdx = 0;
-            correctChars = 0;
-            totalKeystrokes = 0;
-            isStarted = false;
-            startTime = null;
-
-            document.getElementById('round-display').innerText = currentRound;
-            statusText.innerText = "Get Ready!";
-            overlay.classList.remove('hidden');
-            overlaySub.innerText = `Round ${currentRound} of ${TOTAL_ROUNDS}`;
-
-            updateCaret();
-
-            // 3-2-1 Countdown
-            let count = 3;
-            overlayTitle.innerText = count;
-            const countInterval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    overlayTitle.innerText = count;
-                } else if (count === 0) {
-                    overlayTitle.innerText = "GO!";
-                } else {
-                    clearInterval(countInterval);
-                    overlay.classList.add('hidden');
-                    gameState = 'PLAYING';
-                    statusText.innerText = "Typing...";
-                }
-            }, 1000);
-        }
-
-        // Typing Logic
-        window.addEventListener('keydown', (e) => {
-            if (gameState !== 'PLAYING') return;
-            if (e.key === 'Tab') { e.preventDefault(); return; }
-            if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== ' ') return;
-            if (e.key === ' ') e.preventDefault();
-
-            if (!isStarted && e.key.length === 1) {
-                isStarted = true;
-                startTime = Date.now();
-            }
-
-            const words = container.querySelectorAll('.word');
-            const currentWord = words[activeWordIdx];
-            if (!currentWord) return;
-            const letters = currentWord.querySelectorAll('.letter');
-
-            if (e.key === 'Backspace') {
-                if (activeCharIdx > 0) {
-                    activeCharIdx--;
-                    letters[activeCharIdx].className = 'letter';
-                } else if (activeWordIdx > 0) {
-                    activeWordIdx--;
-                    const prevWord = words[activeWordIdx];
-                    const prevLetters = prevWord.querySelectorAll('.letter');
-                    activeCharIdx = prevLetters.length;
-                    handleScroll(prevWord);
-                }
-            } else if (e.key === ' ') {
-                if (activeCharIdx > 0) {
-                    // Check if last word
-                    if (activeWordIdx + 1 >= WORDS_PER_ROUND) {
-                        finishTyping(); return;
-                    }
-                    activeWordIdx++;
-                    activeCharIdx = 0;
-                    handleScroll(words[activeWordIdx]);
-                }
-            } else if (e.key.length === 1) {
-                if (activeCharIdx < letters.length) {
-                    totalKeystrokes++;
-                    if (e.key === letters[activeCharIdx].innerText) {
-                        letters[activeCharIdx].classList.add('correct');
-                        correctChars++;
-                    } else {
-                        letters[activeCharIdx].classList.add('incorrect');
-                    }
-                    activeCharIdx++;
-
-                    if (activeWordIdx === WORDS_PER_ROUND - 1 && activeCharIdx === letters.length) {
-                        finishTyping(); return;
-                    }
-                }
-            }
-            updateCaret();
+        // Setup Realtime Channel (self: false keeps channels distinct and responsive)
+        matchChannel = _supabase.channel(`match_${matchId}`, {
+            config: { broadcast: { self: false } }
         });
 
-        function updateCaret() {
-            document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
-                el.classList.remove('active-char', 'active-end', 'active');
-            });
-            const words = container.querySelectorAll('.word');
-            const currentWord = words[activeWordIdx];
-            if (!currentWord) return;
+        matchChannel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined)
+                    .on('broadcast', { event: 'game_words' }, handleGameWords)
+                    .on('broadcast', { event: 'player_ready' }, handlePlayerReady)
+                    .on('broadcast', { event: 'round_finished' }, handleRoundFinished)
+                    .subscribe(async (status) => {
+                        if (status === 'SUBSCRIBED') {
+                            // Run handshake engine every 1 second
+                            syncInterval = setInterval(syncGame, 1000);
+                        }
+                    });
+    }
 
-            currentWord.classList.add('active');
-            const letters = currentWord.querySelectorAll('.letter');
+    function syncGame() {
+        if (gameState !== 'WAITING') return;
 
-            if (activeCharIdx < letters.length) {
-                letters[activeCharIdx].classList.add('active-char');
-            } else {
-                currentWord.classList.add('active-end');
-            }
-        }
-
-        function handleScroll(activeWord) {
-            const offset = activeWord.offsetTop;
-            if (offset > 40) container.style.top = `-${offset}px`;
-        }
-
-        function finishTyping() {
-            gameState = 'ROUND_OVER';
-            const durationMinutes = (Date.now() - startTime) / 60000;
-            const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
-            const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
-            
-            const roundScore = wpm + acc; // Formula requested by user
-            myTotalScore += roundScore;
-            
-            document.getElementById('my-score').innerText = myTotalScore;
-            statusText.innerText = `You scored ${roundScore}! Waiting...`;
-
-            // Tell opponent we finished
+        // Phase 1: Keep telling the room we are here until someone responds
+        if (!oppId) {
             matchChannel.send({
                 type: 'broadcast',
-                event: 'round_finished',
-                payload: { id: myId, score: roundScore }
+                event: 'player_joined',
+                payload: { id: myId, username: myUsername, elo: myElo }
             });
-
-            myRoundFinished = true;
-            checkRoundAdvance();
-        }
-
-        function handleRoundFinished({ payload }) {
-            if (payload.id === oppId) {
-                oppTotalScore += payload.score;
-                document.getElementById('opp-score').innerText = oppTotalScore;
-                oppRoundFinished = true;
-                checkRoundAdvance();
-            } else if (payload.id === myId) {
-                // Ignore our own echo if broadcast is self: true
+        } 
+        // Phase 2: If opponent found and I am the host, keep broadcasting the words until they say they are ready
+        else if (myId > oppId) {
+            if (allWords.length === 0) {
+                generateWordsLocal();
+            } else {
+                matchChannel.send({
+                    type: 'broadcast',
+                    event: 'game_words',
+                    payload: { words: allWords }
+                });
             }
         }
+    }
 
-        function checkRoundAdvance() {
-            if (myRoundFinished && oppRoundFinished) {
-                currentRound++;
-                if (currentRound > TOTAL_ROUNDS) {
-                    endMatch();
+    function handlePlayerJoined({ payload }) {
+        if (payload.id !== myId && !oppId) {
+            oppId = payload.id;
+            oppUsername = payload.username;
+            oppElo = payload.elo;
+            document.getElementById('opp-name').innerText = oppUsername;
+        }
+    }
+
+    async function generateWordsLocal() {
+        let fetchedWords = fallbackWords;
+        try {
+            const resp = await fetch('../../data/json/wordlistcommon.json');
+            if (resp.ok) fetchedWords = await resp.json();
+        } catch(e) {}
+
+        allWords = fetchedWords.sort(() => Math.random() - 0.5).slice(0, TOTAL_ROUNDS * WORDS_PER_ROUND);
+    }
+
+    function handleGameWords({ payload }) {
+        if (gameState !== 'WAITING') return;
+        allWords = payload.words;
+        
+        // Tell the host we received the words and are transitioning to countdown
+        matchChannel.send({
+            type: 'broadcast',
+            event: 'player_ready'
+        });
+        
+        clearInterval(syncInterval);
+        startRoundSequence();
+    }
+
+    function handlePlayerReady() {
+        if (gameState !== 'WAITING') return;
+        
+        // Host gets the ok signal from guest, cuts interval, starts game
+        clearInterval(syncInterval);
+        startRoundSequence();
+    }
+
+    function startRoundSequence() {
+        gameState = 'COUNTDOWN';
+        myRoundFinished = false;
+        oppRoundFinished = false;
+        
+        const roundWords = allWords.slice((currentRound - 1) * WORDS_PER_ROUND, currentRound * WORDS_PER_ROUND);
+        container.innerHTML = roundWords.map((w) => `
+            <span class="word">
+                ${w.split('').map(c => `<span class="letter">${c}</span>`).join('')}
+            </span>
+        `).join('');
+        
+        container.style.top = "0px";
+        activeWordIdx = 0;
+        activeCharIdx = 0;
+        correctChars = 0;
+        totalKeystrokes = 0;
+        isStarted = false;
+        startTime = null;
+
+        document.getElementById('round-display').innerText = currentRound;
+        statusText.innerText = "Get Ready!";
+        overlay.classList.remove('hidden');
+        overlaySub.innerText = `Round ${currentRound} of ${TOTAL_ROUNDS}`;
+
+        updateCaret();
+
+        let count = 3;
+        overlayTitle.innerText = count;
+        const countInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                overlayTitle.innerText = count;
+            } else if (count === 0) {
+                overlayTitle.innerText = "GO!";
+            } else {
+                clearInterval(countInterval);
+                overlay.classList.add('hidden');
+                gameState = 'PLAYING';
+                statusText.innerText = "Typing...";
+            }
+        }, 1000);
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (gameState !== 'PLAYING') return;
+        if (e.key === 'Tab') { e.preventDefault(); return; }
+        if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== ' ') return;
+        if (e.key === ' ') e.preventDefault();
+
+        if (!isStarted && e.key.length === 1) {
+            isStarted = true;
+            startTime = Date.now();
+        }
+
+        const words = container.querySelectorAll('.word');
+        const currentWord = words[activeWordIdx];
+        if (!currentWord) return;
+        const letters = currentWord.querySelectorAll('.letter');
+
+        if (e.key === 'Backspace') {
+            if (activeCharIdx > 0) {
+                activeCharIdx--;
+                letters[activeCharIdx].className = 'letter';
+            } else if (activeWordIdx > 0) {
+                activeWordIdx--;
+                const prevWord = words[activeWordIdx];
+                const prevLetters = prevWord.querySelectorAll('.letter');
+                activeCharIdx = prevLetters.length;
+                handleScroll(prevWord);
+            }
+        } else if (e.key === ' ') {
+            if (activeCharIdx > 0) {
+                if (activeWordIdx + 1 >= WORDS_PER_ROUND) {
+                    finishTyping(); return;
+                }
+                activeWordIdx++;
+                activeCharIdx = 0;
+                handleScroll(words[activeWordIdx]);
+            }
+        } else if (e.key.length === 1) {
+            if (activeCharIdx < letters.length) {
+                totalKeystrokes++;
+                if (e.key === letters[activeCharIdx].innerText) {
+                    letters[activeCharIdx].classList.add('correct');
+                    correctChars++;
                 } else {
-                    statusText.innerText = "Both finished. Next round...";
-                    setTimeout(() => startRoundSequence(), 2000);
+                    letters[activeCharIdx].classList.add('incorrect');
+                }
+                activeCharIdx++;
+
+                if (activeWordIdx === WORDS_PER_ROUND - 1 && activeCharIdx === letters.length) {
+                    finishTyping(); return;
                 }
             }
         }
+        updateCaret();
+    });
 
-        async function endMatch() {
-            gameState = 'GAME_OVER';
-            overlay.style.display = 'none'; 
-            
-            const resultsScreen = document.getElementById('results-screen');
-            const resultText = document.getElementById('final-result');
-            const eloText = document.getElementById('elo-change-text');
+    function updateCaret() {
+        document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
+            el.classList.remove('active-char', 'active-end', 'active');
+        });
+        const words = container.querySelectorAll('.word');
+        const currentWord = words[activeWordIdx];
+        if (!currentWord) return;
 
-            resultsScreen.classList.remove('hidden');
-            
-            document.getElementById('typing-viewport').style.display = 'none';
-            document.querySelector('.match-header').style.display = 'none';
-            
-            let newElo = myElo;
-            
-            if (myTotalScore > oppTotalScore) {
-                resultText.innerText = "VICTORY";
-                resultText.style.color = "#10b981"; 
-                eloText.innerText = "+25 Elo";
-                eloText.className = "elo-change";
-                newElo += 25;
-            } else if (myTotalScore < oppTotalScore) {
-                resultText.innerText = "DEFEAT";
-                resultText.style.color = "var(--error)";
-                eloText.innerText = "-25 Elo";
-                eloText.className = "elo-change negative";
-                newElo = Math.max(0, newElo - 25);
+        currentWord.classList.add('active');
+        const letters = currentWord.querySelectorAll('.letter');
+
+        if (activeCharIdx < letters.length) {
+            letters[activeCharIdx].classList.add('active-char');
+        } else {
+            currentWord.classList.add('active-end');
+        }
+    }
+
+    function handleScroll(activeWord) {
+        const offset = activeWord.offsetTop;
+        if (offset > 40) container.style.top = `-${offset}px`;
+    }
+
+    function finishTyping() {
+        gameState = 'ROUND_OVER';
+        const durationMinutes = (Date.now() - startTime) / 60000;
+        const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+        const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
+        
+        const roundScore = wpm + acc;
+        myTotalScore += roundScore;
+        
+        document.getElementById('my-score').innerText = myTotalScore;
+        statusText.innerText = `You scored ${roundScore}! Waiting...`;
+
+        matchChannel.send({
+            type: 'broadcast',
+            event: 'round_finished',
+            payload: { id: myId, score: roundScore }
+        });
+
+        myRoundFinished = true;
+        checkRoundAdvance();
+    }
+
+    function handleRoundFinished({ payload }) {
+        if (payload.id === oppId) {
+            oppTotalScore += payload.score;
+            document.getElementById('opp-score').innerText = oppTotalScore;
+            oppRoundFinished = true;
+            checkRoundAdvance();
+        }
+    }
+
+    function checkRoundAdvance() {
+        if (myRoundFinished && oppRoundFinished) {
+            currentRound++;
+            if (currentRound > TOTAL_ROUNDS) {
+                endMatch();
             } else {
-                resultText.innerText = "DRAW";
-                resultText.style.color = "var(--text-bright)";
-                eloText.innerText = "+0 Elo";
-                eloText.className = "elo-change";
+                statusText.innerText = "Both finished. Next round...";
+                setTimeout(() => startRoundSequence(), 2000);
             }
+        }
+    }
 
-            if (newElo !== myElo) {
-                await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
-            }
+    async function endMatch() {
+        gameState = 'GAME_OVER';
+        overlay.style.display = 'none';
+        
+        const resultsScreen = document.getElementById('results-screen');
+        const resultText = document.getElementById('final-result');
+        const eloText = document.getElementById('elo-change-text');
 
-            _supabase.removeChannel(matchChannel);
+        resultsScreen.classList.remove('hidden');
+        
+        document.getElementById('typing-viewport').style.display = 'none';
+        document.querySelector('.match-header').style.display = 'none';
+        
+        let newElo = myElo;
+        
+        if (myTotalScore > oppTotalScore) {
+            resultText.innerText = "VICTORY";
+            resultText.style.color = "#10b981";
+            eloText.innerText = "+25 Elo";
+            eloText.className = "elo-change";
+            newElo += 25;
+        } else if (myTotalScore < oppTotalScore) {
+            resultText.innerText = "DEFEAT";
+            resultText.style.color = "var(--error)";
+            eloText.innerText = "-25 Elo";
+            eloText.className = "elo-change negative";
+            newElo = Math.max(0, newElo - 25);
+        } else {
+            resultText.innerText = "DRAW";
+            resultText.style.color = "var(--text-bright)";
+            eloText.innerText = "+0 Elo";
+            eloText.className = "elo-change";
         }
 
-        initMatch();
+        if (newElo !== myElo) {
+            await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
+        }
+
+        _supabase.removeChannel(matchChannel);
+    }
+
+    initMatch();
     </script>
 </body>
 </html>
