@@ -91,13 +91,12 @@
             margin-top: 0.6rem;
         }
 
-        
-
         .action-bar {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .btn {
@@ -141,11 +140,6 @@
             color: var(--text-faded) !important;
         }
 
-        .btn-locked .lock-badge {
-            opacity: 1 !important;
-            transform: scale(1) !important;
-        }
-
         .btn-cancel { 
             background: var(--error) !important; 
             color: white;
@@ -153,6 +147,55 @@
         
         .btn-cancel:hover {
             opacity: 0.9;
+        }
+
+        /* Play Menu Dropdown */
+        #play-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 160px;
+            transform: translateY(-10px);
+        }
+
+        #play-menu.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .menu-option {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: var(--text-bright);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-start;
+        }
+
+        .menu-option:hover {
+            background: var(--accent);
+            color: white;
         }
 
         .icon-wrapper {
@@ -169,12 +212,6 @@
             opacity: 0;
             transform: scale(0.5);
             transition: all 0.2s ease;
-        }
-
-        .btn-locked {
-            opacity: 0.4;
-            cursor: not-allowed;
-            pointer-events: none; 
         }
 
         .btn-locked .lock-badge {
@@ -219,7 +256,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            z-index: 100;
+            z-index: 1000;
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -246,15 +283,26 @@
             </div>
         </div>
 
-<div class="title-container">
+        <div class="title-container">
             <h1 class="ranked-title">MeDoType</h1>
             <div class="season-badge">Season 1</div>
         </div>
 
         <div class="action-bar">
-            <button class="btn btn-play" id="main-btn" onclick="handleQueue()">
-                <i class="fa-solid fa-play" id="btn-icon"></i> <span id="btn-text">Find Match</span>
-            </button>
+            <div>
+                <button class="btn btn-play" id="main-btn" onclick="togglePlayMenu(event)">
+                    <i class="fa-solid fa-play" id="btn-icon"></i> <span id="btn-text">Play</span>
+                </button>
+                <div id="play-menu">
+                    <button class="menu-option" onclick="startMatchmaking('ranked')">
+                        <i class="fa-solid fa-trophy"></i> Ranked
+                    </button>
+                    <button class="menu-option" onclick="startMatchmaking('1v1')">
+                        <i class="fa-solid fa-user-ninja"></i> 1v1
+                    </button>
+                </div>
+            </div>
+
             <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
                 <span class="icon-wrapper">
                     <i class="fa-solid fa-cart-shopping" id="shop-icon"></i>
@@ -283,6 +331,7 @@
         let accessToken = null; 
         
         let isQueueing = false;
+        let currentMode = null; // Tracks 'ranked' or '1v1'
         let queueInterval;
         let seconds = 0;
         let queueId = null;
@@ -335,10 +384,29 @@
             document.getElementById('queue-timer').innerText = "00:00";
         }
 
-        async function handleQueue() {
-            const { data: { session } } = await _supabase.auth.getSession();
+        function togglePlayMenu(event) {
+            if (event) event.stopPropagation();
             
-            if (!session) return showError("To play ranked, please log in.");
+            if (isQueueing) {
+                stopQueueUI();
+            } else {
+                document.getElementById('play-menu').classList.toggle('show');
+            }
+        }
+
+        // Close menu if clicked outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('play-menu');
+            if (menu && menu.classList.contains('show') && !menu.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        async function startMatchmaking(mode) {
+            document.getElementById('play-menu').classList.remove('show');
+            
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return showError("To play, please log in.");
 
             const btn = document.getElementById('main-btn');
             const btnText = document.getElementById('btn-text');
@@ -346,54 +414,54 @@
             const statusDiv = document.getElementById('queue-status');
             const shopBtn = document.getElementById('shop-btn');
 
-            isQueueing = !isQueueing;
+            isQueueing = true;
+            currentMode = mode;
 
-            if (isQueueing) {
-                btn.classList.add('btn-cancel');
-                btnText.innerText = "Cancel Queue";
-                btnIcon.className = "fa-solid fa-xmark";
-                shopBtn.classList.add('btn-locked');
-                
-                statusDiv.style.display = 'flex';
-                startTimer();
+            // UI Changes
+            btn.classList.add('btn-cancel');
+            btnText.innerText = mode === 'ranked' ? "Cancel Ranked" : "Cancel 1v1";
+            btnIcon.className = "fa-solid fa-xmark";
+            shopBtn.classList.add('btn-locked');
+            
+            statusDiv.style.display = 'flex';
+            startTimer();
 
-                const { data, error } = await _supabase
-                    .from('ranked_queue')
-                    .insert([{ 
-                        user_id: session.user.id, 
-                        username: currentUsername,
-                        elo: currentElo,
-                        status: 'searching'
-                    }])
-                    .select();
+            // Distinct tables for distinct queues
+            const tableName = mode === 'ranked' ? 'ranked_queue' : '1v1_queue';
 
-                if (error) {
-                    stopQueueUI();
-                    return showError("Failed to join queue. Try again.");
-                }
-                queueId = data[0].id;
+            const { data, error } = await _supabase
+                .from(tableName)
+                .insert([{ 
+                    user_id: session.user.id, 
+                    username: currentUsername,
+                    elo: currentElo, // Keep data parity even if not strictly used in 1v1 right now
+                    status: 'searching'
+                }])
+                .select();
 
-                queueSubscription = _supabase
-                    .channel(`q_${queueId}`)
-                    .on('postgres_changes', { 
-                        event: 'UPDATE', 
-                        schema: 'public', 
-                        table: 'ranked_queue', 
-                        filter: `id=eq.${queueId}` 
-                    }, payload => {
-                        if (payload.new.status === 'matched') {
-                            matchFound(payload.new.match_id);
-                        }
-                    })
-                    .subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            checkNearbyPlayers(session.user.id);
-                        }
-                    });
-
-            } else {
+            if (error) {
                 stopQueueUI();
+                return showError(`Failed to join ${mode} queue. Try again.`);
             }
+            queueId = data[0].id;
+
+            queueSubscription = _supabase
+                .channel(`q_${queueId}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: tableName, 
+                    filter: `id=eq.${queueId}` 
+                }, payload => {
+                    if (payload.new.status === 'matched') {
+                        matchFound(payload.new.match_id);
+                    }
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        checkNearbyPlayers(session.user.id, tableName);
+                    }
+                });
         }
 
         async function stopQueueUI() {
@@ -404,26 +472,30 @@
             const shopBtn = document.getElementById('shop-btn');
 
             isQueueing = false;
+            
             btn.classList.remove('btn-cancel');
-            btnText.innerText = "Find Match";
+            btnText.innerText = "Play";
             btnIcon.className = "fa-solid fa-play";
             shopBtn.classList.remove('btn-locked');
             
             statusDiv.style.display = 'none';
             stopTimer();
 
-            if (queueId) {
-                await _supabase.from('ranked_queue').delete().eq('id', queueId);
+            if (queueId && currentMode) {
+                const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
+                await _supabase.from(tableName).delete().eq('id', queueId);
                 queueId = null;
             }
+            
             if (queueSubscription) _supabase.removeChannel(queueSubscription);
+            currentMode = null;
         }
 
-        async function checkNearbyPlayers(myId) {
+        async function checkNearbyPlayers(myId, tableName) {
             if (!queueId) return;
 
             let query = _supabase
-                .from('ranked_queue')
+                .from(tableName)
                 .select('*')
                 .eq('status', 'searching')
                 .neq('id', queueId);
@@ -441,7 +513,7 @@
                 const sharedMatchId = crypto.randomUUID();
 
                 const { data: matchedOpponent } = await _supabase
-                    .from('ranked_queue')
+                    .from(tableName)
                     .update({ status: 'matched', match_id: sharedMatchId })
                     .eq('id', opponent.id)
                     .eq('status', 'searching')
@@ -449,7 +521,7 @@
 
                 if (matchedOpponent && matchedOpponent.length > 0) {
                     await _supabase
-                        .from('ranked_queue')
+                        .from(tableName)
                         .update({ status: 'matched', match_id: sharedMatchId })
                         .eq('id', queueId);
                 }
@@ -471,8 +543,9 @@
         }
 
         window.addEventListener('beforeunload', () => {
-            if (queueId) {
-                const url = `${SB_URL}/rest/v1/ranked_queue?id=eq.${queueId}`;
+            if (queueId && currentMode) {
+                const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
+                const url = `${SB_URL}/rest/v1/${tableName}?id=eq.${queueId}`;
                 const headers = {
                     'apikey': SB_KEY,
                     'Authorization': accessToken ? `Bearer ${accessToken}` : `Bearer ${SB_KEY}`
