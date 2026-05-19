@@ -18,16 +18,5 @@ Simplistic typing game.
 ## To do
 - Levels
 - Keyboard sounds
-  
-## Contributing
-
-Contributions are always welcome!
-
-See `contributing.md` for ways to get started.
-
-## Links
-
-https://medotype.wasmer.app/ - Stable branch
-<div>
-https://medotype.github.io/ - Development branch
-</div>
+- Profile pictures
+- Add shop
