@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Avatar Shop</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="../../data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+    
+    <style>
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-bright); 
+            font-family: var(--font); 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            overflow-x: hidden;
+        }
+        
+        #app { 
+            width: 100%; 
+            max-width: 950px; 
+            padding: 2rem; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Shop Header */
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 20px 30px;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .shop-title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: left;
+        }
+
+        .shop-title { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            color: var(--text-bright); 
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .shop-subtitle { 
+            font-size: 0.9rem; 
+            color: var(--text-faded); 
+            margin: 0;
+        }
+
+        .user-balance-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .balance-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-faded);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .balance-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        /* Shop Grid */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .shop-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .shop-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .shop-card.locked {
+            opacity: 0.6;
+        }
+
+        .avatar-container {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+            font-size: 1.5rem;
+        }
+
+        .item-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin: 0 0 5px 0;
+        }
+
+        .item-price {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-faded);
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .item-price.unlocked-text {
+            color: #10b981;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-bright);
+            border: none;
+            padding: 10px 0;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover:not(:disabled) {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-action.equipped {
+            background: #10b981 !important;
+            color: white !important;
+        }
+
+        /* Status Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: var(--card-bg);
+            border-left: 4px solid var(--accent);
+            color: var(--text-bright);
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 200;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: var(--text-faded);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-start;
+        }
+
+        .btn-back:hover {
+            color: var(--text-bright);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <button class="btn-back" onclick="window.location.href='home.html'">
+            <i class="fa-solid fa-arrow-left"></i> Back to Menu
+        </button>
+        <br>
+        
+        <div class="shop-header">
+            <div class="shop-title-area">
+                <h1 class="shop-title">Rank Rewards</h1>
+                <p class="shop-subtitle">Unlock and equip exclusive profile pictures based on your current ELO milestone</p>
+            </div>
+            <div class="user-balance-card">
+                <div>
+                    <div class="balance-label">Your Current Rank</div>
+                    <div class="balance-value"><span id="user-elo">0</span> ELO</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="shop-grid" id="shop-grid-container"></div>
+    </div>
+
+    <div id="toast">Avatar updated successfully!</div>
+
+    <script>
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    let myId = null;
+    let myElo = 0;
+    let equippedAvatar = "";
+
+    // The ELO field now serves strictly as the minimum milestone rank requirement
+    const shopCatalog = [
+        { id: "pfp_default", name: "Recruit", requiredElo: 0, src: "../../data/images/pfps/default.png" },
+        { id: "pfp_cypher", name: "Cypher Neon", requiredElo: 100, src: "../../data/images/pfps/cypher.png" },
+        { id: "pfp_retro", name: "Retro Clicker", requiredElo: 250, src: "../../data/images/pfps/retro.png" },
+        { id: "pfp_ghost", name: "Ghost Type", requiredElo: 500, src: "../../data/images/pfps/ghost.png" },
+        { id: "pfp_monochrome", name: "Mono Minimal", requiredElo: 750, src: "../../data/images/pfps/mono.png" },
+        { id: "pfp_grandmaster", name: "Grandmaster", requiredElo: 1500, src: "../../data/images/pfps/grandmaster.png" }
+    ];
+
+    async function initShop() {
+        console.log("[SHOP] Fetching user verification data...");
+        const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+        
+        if (sessionErr || !session) {
+            console.error("[SHOP] Session validation failed:", sessionErr);
+            return window.location.href = 'home.html';
+        }
+        
+        myId = session.user.id;
+
+        const { data: profile, error: profileErr } = await _supabase
+            .from('profiles')
+            .select('elo, avatar_url')
+            .eq('id', myId)
+            .single();
+
+        if (profileErr) {
+            console.warn("[SHOP] Error loading extended profile data, initializing defaults:", profileErr);
+        }
+
+        myElo = profile?.elo || 0;
+        equippedAvatar = profile?.avatar_url || "";
+
+        document.getElementById('user-elo').innerText = myElo;
+        
+        renderShop();
+    }
+
+    function renderShop() {
+        const grid = document.getElementById('shop-grid-container');
+        grid.innerHTML = "";
+
+        shopCatalog.forEach(item => {
+            const isUnlocked = myElo >= item.requiredElo;
+            const isEquipped = equippedAvatar === item.src;
+            
+            let actionBtnHtml = "";
+            if (isEquipped) {
+                actionBtnHtml = `<button class="btn-action equipped" disabled>Equipped</button>`;
+            } else if (isUnlocked) {
+                actionBtnHtml = `<button class="btn-action" onclick="equipItem('${item.src}')">Equip</button>`;
+            } else {
+                actionBtnHtml = `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Locked</button>`;
+            }
+
+            const card = document.createElement('div');
+            card.className = `shop-card ${!isUnlocked ? 'locked' : ''}`;
+            card.innerHTML = `
+                <div class="avatar-container">
+                    <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/pfps/default.png';">
+                    ${!isUnlocked ? '<div class="lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
+                </div>
+                <h3 class="item-name">${item.name}</h3>
+                <div class="item-price ${isUnlocked ? 'unlocked-text' : ''}">
+                    ${isUnlocked 
+                        ? '<i class="fa-solid fa-circle-check"></i> Unlocked' 
+                        : `<i class="fa-solid fa-bolt"></i> Req: ${item.requiredElo} ELO`
+                    }
+                </div>
+                ${actionBtnHtml}
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    async function equipItem(itemSrc) {
+        equippedAvatar = itemSrc;
+
+        // Simply update the active avatar path to Supabase profiles
+        const { error } = await _supabase.from('profiles').update({
+            avatar_url: itemSrc
+        }).eq('id', myId);
+
+        if (error) {
+            console.error("[SHOP] Configuration assignment error:", error);
+            showToast("Failed to equip asset.");
+            return;
+        }
+
+        showToast("Avatar successfully updated!");
+        renderShop();
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    initShop();
+    </script>
+</body>
+</html>
