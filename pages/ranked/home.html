@@ -410,7 +410,7 @@
                         <i class="fa-solid fa-trophy"></i> Ranked Match
                     </button>
                     <button class="menu-option" onclick="toggleChallengeInput(event)">
-                        <i class="fa-solid fa-user-ninja"></i> 1v1 Player
+                        <i class="fa-solid fa-user"></i> 1v1 Player
                     </button>
                     
                     <div id="challenge-input-box" onclick="event.stopPropagation()">
@@ -714,7 +714,6 @@
             }
         }
 
-        // ---------------- SHARED CONTROLLER LOGIC ----------------
         function updateQueueUI(active, mode, statusLabel) {
             isQueueing = active;
             currentMode = mode;
