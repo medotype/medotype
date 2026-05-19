@@ -473,6 +473,7 @@
 
             isQueueing = false;
             
+            // Revert UI
             btn.classList.remove('btn-cancel');
             btnText.innerText = "Play";
             btnIcon.className = "fa-solid fa-play";
@@ -481,6 +482,7 @@
             statusDiv.style.display = 'none';
             stopTimer();
 
+            // Clear from respective table
             if (queueId && currentMode) {
                 const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
                 await _supabase.from(tableName).delete().eq('id', queueId);
