@@ -200,51 +200,94 @@
             color: white;
         }
 
-        /* Direct Challenge Input Layout */
-        #challenge-input-box {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            padding: 4px;
-            margin-top: 4px;
-            border-top: 1px solid rgba(255,255,255,0.05);
+        /* Centralized Challenge Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
         }
 
-        #challenge-input-box.show {
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .challenge-modal {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
             display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.show .challenge-modal {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+            text-align: left;
+            color: var(--text-bright);
         }
 
         #target-player-input {
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 6px;
+            border-radius: 8px;
             color: var(--text-bright);
             font-family: var(--font);
-            font-size: 0.85rem;
-            padding: 8px 12px;
+            font-size: 1rem;
+            padding: 12px;
             outline: none;
             transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         #target-player-input:focus {
             border-color: var(--accent);
         }
 
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-faded);
+            flex: 1;
+        }
+
+        .btn-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-bright);
+        }
+
         .btn-send-challenge {
             background: var(--accent);
             color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: var(--font);
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 8px;
-            transition: opacity 0.2s;
-        }
-
-        .btn-send-challenge:hover {
-            opacity: 0.9;
+            flex: 1.5;
         }
 
         .icon-wrapper {
@@ -306,7 +349,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            z-index: 1000;
+            z-index: 3000;
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -374,6 +417,17 @@
         <span id="error-text">Error message</span>
     </div>
 
+    <div class="modal-overlay" id="challenge-modal-overlay" onclick="closeChallengeModal()">
+        <div class="challenge-modal" onclick="event.stopPropagation()">
+            <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--accent); margin-right:8px;"></i>1v1 Challenge</h3>
+            <input type="text" id="target-player-input" placeholder="Enter username..." autocomplete="off">
+            <div class="modal-buttons">
+                <button class="btn btn-modal-close" onclick="closeChallengeModal()">Cancel</button>
+                <button class="btn btn-send-challenge" onclick="sendDirectChallenge()">Send Invite</button>
+            </div>
+        </div>
+    </div>
+
     <div id="incoming-toast">
         <div class="incoming-header">
             <i class="fa-solid fa-bolt" style="color: var(--accent);"></i>
@@ -409,14 +463,9 @@
                     <button class="menu-option" onclick="startMatchmaking('ranked')">
                         <i class="fa-solid fa-trophy"></i> Ranked Match
                     </button>
-                    <button class="menu-option" onclick="toggleChallengeInput(event)">
+                    <button class="menu-option" onclick="openChallengeModal(event)">
                         <i class="fa-solid fa-user"></i> 1v1 Player
                     </button>
-                    
-                    <div id="challenge-input-box" onclick="event.stopPropagation()">
-                        <input type="text" id="target-player-input" placeholder="Enter username..." autocomplete="off">
-                        <button class="btn-send-challenge" onclick="sendDirectChallenge()">Send Request</button>
-                    </div>
                 </div>
             </div>
 
@@ -477,7 +526,6 @@
                 document.getElementById('elo-display').innerText = `${currentElo}`;
                 document.getElementById('profile-stats').style.opacity = '1';
 
-                // Begin scanning for requests targeting this player
                 initIncomingRequestListener();
             }
         }
@@ -512,18 +560,25 @@
                 stopQueueUI();
             } else {
                 document.getElementById('play-menu').classList.toggle('show');
-                document.getElementById('challenge-input-box').classList.remove('show');
             }
         }
 
-        function toggleChallengeInput(event) {
+        function openChallengeModal(event) {
             if (event) event.stopPropagation();
-            document.getElementById('challenge-input-box').classList.toggle('show');
+            document.getElementById('play-menu').classList.remove('show');
+            document.getElementById('challenge-modal-overlay').classList.add('show');
+            document.getElementById('target-player-input').focus();
+        }
+
+        function closeChallengeModal() {
+            document.getElementById('challenge-modal-overlay').classList.remove('show');
+            document.getElementById('target-player-input').value = '';
         }
 
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('play-menu');
             if (menu && menu.classList.contains('show') && !menu.contains(e.target)) {
+                menu.classList.remove('remove');
                 menu.classList.remove('show');
             }
         });
@@ -562,7 +617,7 @@
                     filter: `id=eq.${queueId}` 
                 }, payload => {
                     if (payload.new.status === 'matched') {
-                        matchFound(payload.new.match_id);
+                        matchFound(payload.new.match_id, 'ranked');
                     }
                 })
                 .subscribe((status) => {
@@ -615,13 +670,12 @@
             if (!targetName) return showError("Enter a user's name to invite.");
             if (targetName.toLowerCase() === currentUsername.toLowerCase()) return showError("You cannot challenge yourself.");
 
-            document.getElementById('play-menu').classList.remove('show');
+            closeChallengeModal();
 
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) return showError("Please log in to send requests.");
 
             updateQueueUI(true, 'direct_1v1', 'Awaiting Player');
-            targetInput.value = '';
 
             const { data, error } = await _supabase
                 .from('1v1_queue')
@@ -649,7 +703,7 @@
                     filter: `id=eq.${queueId}`
                 }, payload => {
                     if (payload.new.status === 'accepted') {
-                        matchFound(payload.new.match_id);
+                        matchFound(payload.new.match_id, 'direct_1v1');
                     } else if (payload.new.status === 'declined') {
                         stopQueueUI();
                         showError(`${targetName} declined your challenge.`);
@@ -676,7 +730,6 @@
         }
 
         function processIncomingRequest(request) {
-            // Drop invitation if already busy in an action
             if (isQueueing) {
                 _supabase.from('1v1_queue').update({ status: 'declined' }).eq('id', request.id);
                 return;
@@ -707,7 +760,7 @@
                     stopQueueUI();
                     showError("Error responding to connection query.");
                 } else {
-                    matchFound(uniqueRoomId);
+                    matchFound(uniqueRoomId, 'direct_1v1');
                 }
             } else {
                 await _supabase.from('1v1_queue').update({ status: 'declined' }).eq('id', req.id);
@@ -765,7 +818,7 @@
             currentMode = null;
         }
 
-        function matchFound(matchId) {
+        function matchFound(matchId, mode) {
             stopTimer();
             document.getElementById('btn-text').innerText = "MATCH FOUND!";
             document.getElementById('main-btn').style.background = "var(--accent)";
@@ -778,7 +831,9 @@
                 queueSubscription = null;
             }
 
-            setTimeout(() => { window.location.href = `game.html?${matchId}`; }, 1500);
+            // Route dynamically based on game type
+            const targetPage = (mode === 'ranked') ? 'game.html' : '1v1.html';
+            setTimeout(() => { window.location.href = `${targetPage}?${matchId}`; }, 1500);
         }
 
         window.addEventListener('beforeunload', () => {
