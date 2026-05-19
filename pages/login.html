@@ -235,7 +235,7 @@
 
             <div id="username-wrap" class="input-wrap">
                 <label>Username</label>
-                <input type="text" id="username" placeholder="Typist123">
+                <input type="text" id="username" placeholder="Typist123" minlength="3" maxlength="12">
             </div>
 
             <div class="input-wrap">
@@ -307,13 +307,22 @@ let signupEmail = "";
 
 async function handleAuth() {
     if (isCooldown) return;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const username = document.getElementById('username').value;
+    
+    // Trim added to inputs to prevent spaces from bypassing length checks
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const username = document.getElementById('username').value.trim();
     const msgEl = document.getElementById('msg');
 
     if (!email || !password || (!isLogin && !username)) {
         msgEl.innerText = "Fill all fields.";
+        msgEl.className = 'err';
+        return;
+    }
+
+    // --- NEW USERNAME LENGTH VALIDATION ---
+    if (!isLogin && (username.length < 3 || username.length > 12)) {
+        msgEl.innerText = "Username must be 3-12 characters.";
         msgEl.className = 'err';
         return;
     }
