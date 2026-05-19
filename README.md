@@ -6,8 +6,9 @@ Simplistic typing game.
 
 ## Features
 
-- Five different tests for the current gamemode
+- Singleplayer mode
 - Practice mode
+- Ranked mode
 - Automatic leaderboard
 - Account system
 - Themes
@@ -15,7 +16,6 @@ Simplistic typing game.
 
 
 ## To do
-- Ranked gamemode
 - Levels
 - Keyboard sounds
   
