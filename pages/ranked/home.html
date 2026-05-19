@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | Ranked</title>
+    <title>MeDoType | Multiplayer</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -91,13 +91,12 @@
             margin-top: 0.6rem;
         }
 
-        
-
         .action-bar {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .btn {
@@ -141,11 +140,6 @@
             color: var(--text-faded) !important;
         }
 
-        .btn-locked .lock-badge {
-            opacity: 1 !important;
-            transform: scale(1) !important;
-        }
-
         .btn-cancel { 
             background: var(--error) !important; 
             color: white;
@@ -153,6 +147,147 @@
         
         .btn-cancel:hover {
             opacity: 0.9;
+        }
+
+        /* Play Menu Dropdown */
+        #play-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 200px;
+            transform: translateY(-10px);
+        }
+
+        #play-menu.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .menu-option {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: var(--text-bright);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-start;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .menu-option:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Centralized Challenge Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .challenge-modal {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.show .challenge-modal {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+            text-align: left;
+            color: var(--text-bright);
+        }
+
+        #target-player-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: var(--text-bright);
+            font-family: var(--font);
+            font-size: 1rem;
+            padding: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #target-player-input:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-faded);
+            flex: 1;
+        }
+
+        .btn-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-bright);
+        }
+
+        .btn-send-challenge {
+            background: var(--accent);
+            color: white;
+            flex: 1.5;
         }
 
         .icon-wrapper {
@@ -169,12 +304,6 @@
             opacity: 0;
             transform: scale(0.5);
             transition: all 0.2s ease;
-        }
-
-        .btn-locked {
-            opacity: 0.4;
-            cursor: not-allowed;
-            pointer-events: none; 
         }
 
         .btn-locked .lock-badge {
@@ -205,6 +334,7 @@
             text-align: left;
         }
 
+        /* Toasts & Alerts */
         #error-toast {
             position: fixed;
             top: 20px;
@@ -219,11 +349,62 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            z-index: 100;
+            z-index: 3000;
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         #error-toast.show { transform: translate(-50%, 0); }
+
+        #incoming-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            padding: 18px 22px;
+            transform: translateX(180%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 260px;
+            text-align: left;
+        }
+
+        #incoming-toast.show { transform: translateX(0); }
+
+        .incoming-header {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .incoming-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toast-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .toast-btn-accept { background: var(--accent); color: white; }
+        .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded); }
+        .toast-btn:hover { opacity: 0.9; }
         
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -236,6 +417,28 @@
         <span id="error-text">Error message</span>
     </div>
 
+    <div class="modal-overlay" id="challenge-modal-overlay" onclick="closeChallengeModal()">
+        <div class="challenge-modal" onclick="event.stopPropagation()">
+            <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--accent); margin-right:8px;"></i>1v1 Challenge</h3>
+            <input type="text" id="target-player-input" placeholder="Enter username..." autocomplete="off">
+            <div class="modal-buttons">
+                <button class="btn btn-modal-close" onclick="closeChallengeModal()">Cancel</button>
+                <button class="btn btn-send-challenge" onclick="sendDirectChallenge()">Send Invite</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="incoming-toast">
+        <div class="incoming-header">
+            <i class="fa-solid fa-bolt" style="color: var(--accent);"></i>
+            <span id="challenge-prompt">Player challenged you!</span>
+        </div>
+        <div class="incoming-buttons">
+            <button class="toast-btn toast-btn-accept" onclick="respondToChallenge(true)">Accept</button>
+            <button class="toast-btn toast-btn-decline" onclick="respondToChallenge(false)">Decline</button>
+        </div>
+    </div>
+
     <div id="app">
         <div class="header-stats" id="profile-stats">
             <div class="stat-box">
@@ -246,15 +449,26 @@
             </div>
         </div>
 
-<div class="title-container">
+        <div class="title-container">
             <h1 class="ranked-title">MeDoType</h1>
             <div class="season-badge">Season 1</div>
         </div>
 
         <div class="action-bar">
-            <button class="btn btn-play" id="main-btn" onclick="handleQueue()">
-                <i class="fa-solid fa-play" id="btn-icon"></i> <span id="btn-text">Find Match</span>
-            </button>
+            <div>
+                <button class="btn btn-play" id="main-btn" onclick="togglePlayMenu(event)">
+                    <i class="fa-solid fa-play" id="btn-icon"></i> <span id="btn-text">Play</span>
+                </button>
+                <div id="play-menu">
+                    <button class="menu-option" onclick="startMatchmaking('ranked')">
+                        <i class="fa-solid fa-trophy"></i> Ranked Match
+                    </button>
+                    <button class="menu-option" onclick="openChallengeModal(event)">
+                        <i class="fa-solid fa-user"></i> 1v1 Player
+                    </button>
+                </div>
+            </div>
+
             <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
                 <span class="icon-wrapper">
                     <i class="fa-solid fa-cart-shopping" id="shop-icon"></i>
@@ -267,7 +481,7 @@
         <div id="queue-status">
             <div class="spinner"></div>
             <div class="queue-text">
-                <span style="font-size: 0.7rem; color: var(--text-faded); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Searching</span>
+                <span id="queue-action-label" style="font-size: 0.7rem; color: var(--text-faded); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Searching</span>
                 <span id="queue-timer" style="font-size: 1rem; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums;">00:00</span>
             </div>
         </div>
@@ -283,10 +497,13 @@
         let accessToken = null; 
         
         let isQueueing = false;
+        let currentMode = null; // 'ranked' or 'direct_1v1'
         let queueInterval;
         let seconds = 0;
         let queueId = null;
         let queueSubscription = null;
+        let realtimeGlobalListener = null;
+        let activeIncomingRequest = null;
         let errorTimeout;
 
         async function loadUserProfile() {
@@ -308,6 +525,8 @@
                 document.getElementById('username-display').innerText = currentUsername;
                 document.getElementById('elo-display').innerText = `${currentElo}`;
                 document.getElementById('profile-stats').style.opacity = '1';
+
+                initIncomingRequestListener();
             }
         }
 
@@ -335,91 +554,80 @@
             document.getElementById('queue-timer').innerText = "00:00";
         }
 
-        async function handleQueue() {
-            const { data: { session } } = await _supabase.auth.getSession();
-            
-            if (!session) return showError("To play ranked, please log in.");
-
-            const btn = document.getElementById('main-btn');
-            const btnText = document.getElementById('btn-text');
-            const btnIcon = document.getElementById('btn-icon');
-            const statusDiv = document.getElementById('queue-status');
-            const shopBtn = document.getElementById('shop-btn');
-
-            isQueueing = !isQueueing;
-
+        function togglePlayMenu(event) {
+            if (event) event.stopPropagation();
             if (isQueueing) {
-                btn.classList.add('btn-cancel');
-                btnText.innerText = "Cancel Queue";
-                btnIcon.className = "fa-solid fa-xmark";
-                shopBtn.classList.add('btn-locked');
-                
-                statusDiv.style.display = 'flex';
-                startTimer();
-
-                const { data, error } = await _supabase
-                    .from('ranked_queue')
-                    .insert([{ 
-                        user_id: session.user.id, 
-                        username: currentUsername,
-                        elo: currentElo,
-                        status: 'searching'
-                    }])
-                    .select();
-
-                if (error) {
-                    stopQueueUI();
-                    return showError("Failed to join queue. Try again.");
-                }
-                queueId = data[0].id;
-
-                queueSubscription = _supabase
-                    .channel(`q_${queueId}`)
-                    .on('postgres_changes', { 
-                        event: 'UPDATE', 
-                        schema: 'public', 
-                        table: 'ranked_queue', 
-                        filter: `id=eq.${queueId}` 
-                    }, payload => {
-                        if (payload.new.status === 'matched') {
-                            matchFound(payload.new.match_id);
-                        }
-                    })
-                    .subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            checkNearbyPlayers(session.user.id);
-                        }
-                    });
-
-            } else {
                 stopQueueUI();
+            } else {
+                document.getElementById('play-menu').classList.toggle('show');
             }
         }
 
-        async function stopQueueUI() {
-            const btn = document.getElementById('main-btn');
-            const btnText = document.getElementById('btn-text');
-            const btnIcon = document.getElementById('btn-icon');
-            const statusDiv = document.getElementById('queue-status');
-            const shopBtn = document.getElementById('shop-btn');
+        function openChallengeModal(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('play-menu').classList.remove('show');
+            document.getElementById('challenge-modal-overlay').classList.add('show');
+            document.getElementById('target-player-input').focus();
+        }
 
-            isQueueing = false;
-            btn.classList.remove('btn-cancel');
-            btnText.innerText = "Find Match";
-            btnIcon.className = "fa-solid fa-play";
-            shopBtn.classList.remove('btn-locked');
+        function closeChallengeModal() {
+            document.getElementById('challenge-modal-overlay').classList.remove('show');
+            document.getElementById('target-player-input').value = '';
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('play-menu');
+            if (menu && menu.classList.contains('show') && !menu.contains(e.target)) {
+                menu.classList.remove('remove');
+                menu.classList.remove('show');
+            }
+        });
+
+        // ---------------- SYSTEM 1: PUBLIC MATCHMAKING (RANKED) ----------------
+        async function startMatchmaking(mode) {
+            document.getElementById('play-menu').classList.remove('show');
             
-            statusDiv.style.display = 'none';
-            stopTimer();
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return showError("To play, please log in.");
 
-            if (queueId) {
-                await _supabase.from('ranked_queue').delete().eq('id', queueId);
-                queueId = null;
+            updateQueueUI(true, mode, "Searching");
+
+            const { data, error } = await _supabase
+                .from('ranked_queue')
+                .insert([{ 
+                    user_id: session.user.id, 
+                    username: currentUsername,
+                    elo: currentElo,
+                    status: 'searching'
+                }])
+                .select();
+
+            if (error) {
+                stopQueueUI();
+                return showError("Failed to join match pool. Try again.");
             }
-            if (queueSubscription) _supabase.removeChannel(queueSubscription);
+            queueId = data[0].id;
+
+            queueSubscription = _supabase
+                .channel(`q_${queueId}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'ranked_queue', 
+                    filter: `id=eq.${queueId}` 
+                }, payload => {
+                    if (payload.new.status === 'matched') {
+                        matchFound(payload.new.match_id, 'ranked');
+                    }
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        checkNearbyPoolPlayers(session.user.id);
+                    }
+                });
         }
 
-        async function checkNearbyPlayers(myId) {
+        async function checkNearbyPoolPlayers(myId) {
             if (!queueId) return;
 
             let query = _supabase
@@ -432,9 +640,7 @@
                 query = query.neq('user_id', myId);
             }
 
-            const { data: opponents } = await query
-                .order('created_at', { ascending: true })
-                .limit(1);
+            const { data: opponents } = await query.order('created_at', { ascending: true }).limit(1);
 
             if (opponents && opponents.length > 0) {
                 const opponent = opponents[0];
@@ -456,10 +662,168 @@
             }
         }
 
-        function matchFound(matchId) {
+        // ---------------- SYSTEM 2: OUTGOING CHALLENGES ----------------
+        async function sendDirectChallenge() {
+            const targetInput = document.getElementById('target-player-input');
+            const targetName = targetInput.value.trim();
+
+            if (!targetName) return showError("Enter a user's name to invite.");
+            if (targetName.toLowerCase() === currentUsername.toLowerCase()) return showError("You cannot challenge yourself.");
+
+            closeChallengeModal();
+
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return showError("Please log in to send requests.");
+
+            updateQueueUI(true, 'direct_1v1', 'Awaiting Player');
+
+            const { data, error } = await _supabase
+                .from('1v1_queue')
+                .insert([{
+                    user_id: session.user.id,
+                    username: currentUsername,
+                    target_username: targetName,
+                    status: 'pending'
+                }])
+                .select();
+
+            if (error) {
+                stopQueueUI();
+                return showError("Could not dispatch request.");
+            }
+
+            queueId = data[0].id;
+
+            queueSubscription = _supabase
+                .channel(`direct_${queueId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: '1v1_queue',
+                    filter: `id=eq.${queueId}`
+                }, payload => {
+                    if (payload.new.status === 'accepted') {
+                        matchFound(payload.new.match_id, 'direct_1v1');
+                    } else if (payload.new.status === 'declined') {
+                        stopQueueUI();
+                        showError(`${targetName} declined your challenge.`);
+                    }
+                })
+                .subscribe();
+        }
+
+        // ---------------- SYSTEM 3: INCOMING CHALLENGES ----------------
+        function initIncomingRequestListener() {
+            realtimeGlobalListener = _supabase
+                .channel('incoming_challenges')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: '1v1_queue',
+                    filter: `target_username=eq.${currentUsername}`
+                }, payload => {
+                    if (payload.new.status === 'pending') {
+                        processIncomingRequest(payload.new);
+                    }
+                })
+                .subscribe();
+        }
+
+        function processIncomingRequest(request) {
+            if (isQueueing) {
+                _supabase.from('1v1_queue').update({ status: 'declined' }).eq('id', request.id);
+                return;
+            }
+
+            activeIncomingRequest = request;
+            document.getElementById('challenge-prompt').innerHTML = `<b>${request.username}</b> challenged you!`;
+            document.getElementById('incoming-toast').classList.add('show');
+        }
+
+        async function respondToChallenge(accept) {
+            if (!activeIncomingRequest) return;
+            document.getElementById('incoming-toast').classList.remove('show');
+
+            const req = activeIncomingRequest;
+            activeIncomingRequest = null;
+
+            if (accept) {
+                const uniqueRoomId = crypto.randomUUID();
+                updateQueueUI(true, 'direct_1v1', 'Connecting');
+
+                const { error } = await _supabase
+                    .from('1v1_queue')
+                    .update({ status: 'accepted', match_id: uniqueRoomId })
+                    .eq('id', req.id);
+
+                if (error) {
+                    stopQueueUI();
+                    showError("Error responding to connection query.");
+                } else {
+                    matchFound(uniqueRoomId, 'direct_1v1');
+                }
+            } else {
+                await _supabase.from('1v1_queue').update({ status: 'declined' }).eq('id', req.id);
+            }
+        }
+
+        function updateQueueUI(active, mode, statusLabel) {
+            isQueueing = active;
+            currentMode = mode;
+
+            const btn = document.getElementById('main-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const statusDiv = document.getElementById('queue-status');
+            const shopBtn = document.getElementById('shop-btn');
+
+            if (active) {
+                btn.classList.add('btn-cancel');
+                btnText.innerText = mode === 'ranked' ? "Cancel Ranked" : "Cancel Invite";
+                btnIcon.className = "fa-solid fa-xmark";
+                shopBtn.classList.add('btn-locked');
+                document.getElementById('queue-action-label').innerText = statusLabel;
+                statusDiv.style.display = 'flex';
+                startTimer();
+            }
+        }
+
+        async function stopQueueUI() {
+            const btn = document.getElementById('main-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const statusDiv = document.getElementById('queue-status');
+            const shopBtn = document.getElementById('shop-btn');
+
+            isQueueing = false;
+            
+            btn.classList.remove('btn-cancel');
+            btnText.innerText = "Play";
+            btnIcon.className = "fa-solid fa-play";
+            shopBtn.classList.remove('btn-locked');
+            
+            statusDiv.style.display = 'none';
+            stopTimer();
+
+            if (queueId && currentMode) {
+                const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
+                await _supabase.from(tableName).delete().eq('id', queueId);
+                queueId = null;
+            }
+            
+            if (queueSubscription) {
+                _supabase.removeChannel(queueSubscription);
+                queueSubscription = null;
+            }
+            currentMode = null;
+        }
+
+        function matchFound(matchId, mode) {
             stopTimer();
             document.getElementById('btn-text').innerText = "MATCH FOUND!";
             document.getElementById('main-btn').style.background = "var(--accent)";
+            document.getElementById('main-btn').classList.remove('btn-cancel');
+            document.getElementById('btn-icon').className = "fa-solid fa-check";
             
             queueId = null; 
             if (queueSubscription) {
@@ -467,12 +831,15 @@
                 queueSubscription = null;
             }
 
-            setTimeout(() => { window.location.href = `game.html?${matchId}`; }, 2000);
+            // Route dynamically based on game type
+            const targetPage = (mode === 'ranked') ? 'game.html' : '1v1.html';
+            setTimeout(() => { window.location.href = `${targetPage}?${matchId}`; }, 1500);
         }
 
         window.addEventListener('beforeunload', () => {
-            if (queueId) {
-                const url = `${SB_URL}/rest/v1/ranked_queue?id=eq.${queueId}`;
+            if (queueId && currentMode) {
+                const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
+                const url = `${SB_URL}/rest/v1/${tableName}?id=eq.${queueId}`;
                 const headers = {
                     'apikey': SB_KEY,
                     'Authorization': accessToken ? `Bearer ${accessToken}` : `Bearer ${SB_KEY}`

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | 1v1</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="../../data/css/root.css">
+        <link rel="stylesheet" href="game.css">
+    <script src="../../data/js/theme.js"></script>
+    </head>
+<body>
+
+    <div id="app">
+        <div class="match-header">
+            <div class="player-info">
+                <span class="player-name" id="my-name">Me</span>
+                <span class="player-score">Score: <span id="my-score">0</span></span>
+            </div>
+            <div class="round-info">
+                <span class="round-text">ROUND <span id="round-display">1</span></span>
+                <span class="round-status" id="round-status">Connecting...</span>
+            </div>
+            <div class="player-info right">
+                <span class="player-name" id="opp-name">Opponent</span>
+                <span class="player-score">Score: <span id="opp-score">0</span></span>
+            </div>
+        </div>
+
+        <div id="typing-viewport">
+            <div id="word-container"></div>
+        </div>
+
+        <div id="overlay">
+            <h1 id="overlay-title">...</h1>
+            <p id="overlay-sub">Waiting for opponent...</p>
+        </div>
+
+        <div id="round-results-overlay">
+            <h2 style="font-size: 2rem; margin:0; color: var(--text-bright);">Round Complete!</h2>
+            <div class="round-scores-flex">
+                <div class="round-score-card">
+                    <h3>You</h3>
+                    <div class="round-pts" id="anim-my-score">0</div>
+                </div>
+                <div class="round-score-card">
+                    <h3>Opponent</h3>
+                    <div class="round-pts" id="anim-opp-score">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden overlay">
+            <div class="results-card">
+                <h1 class="winner-text" id="final-result">VICTORY</h1>
+                <div class="elo-change" id="elo-change-text">No ELO</div>
+                <button class="btn-home" onclick="window.location.href='home.html'">Back to Lobby</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="1v1.js"></script>
+</body>
+</html>
