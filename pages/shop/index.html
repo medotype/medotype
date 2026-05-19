@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | Avatar Shop</title>
+    <title>MeDoType | Shop</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -34,7 +34,6 @@
             align-items: center;
         }
 
-        /* Shop Header */
         .shop-header {
             display: flex;
             justify-content: space-between;
@@ -93,7 +92,6 @@
             color: var(--accent);
         }
 
-        /* Shop Grid */
         .shop-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -255,11 +253,6 @@
 </head>
 <body>
 
-    <div id="app">
-        <button class="btn-back" onclick="window.location.href='home.html'">
-            <i class="fa-solid fa-arrow-left"></i> Back to Menu
-        </button>
-        <br>
         
         <div class="shop-header">
             <div class="shop-title-area">
@@ -288,14 +281,10 @@
     let myElo = 0;
     let equippedAvatar = "";
 
-    // The ELO field now serves strictly as the minimum milestone rank requirement
     const shopCatalog = [
-        { id: "pfp_default", name: "Recruit", requiredElo: 0, src: "../../data/images/pfps/default.png" },
-        { id: "pfp_cypher", name: "Cypher Neon", requiredElo: 100, src: "../../data/images/pfps/cypher.png" },
-        { id: "pfp_retro", name: "Retro Clicker", requiredElo: 250, src: "../../data/images/pfps/retro.png" },
-        { id: "pfp_ghost", name: "Ghost Type", requiredElo: 500, src: "../../data/images/pfps/ghost.png" },
-        { id: "pfp_monochrome", name: "Mono Minimal", requiredElo: 750, src: "../../data/images/pfps/mono.png" },
-        { id: "pfp_grandmaster", name: "Grandmaster", requiredElo: 1500, src: "../../data/images/pfps/grandmaster.png" }
+        { id: "pfp_default", name: "Example0", requiredElo: 0, src: "../../data/images/pfps/default.png" },
+        { id: "pfp_example1", name: "Example1", requiredElo: 100, src: "../../data/images/pfps/cypher.png" },
+        { id: "pfp_example2", name: "Example2", requiredElo: 1500, src: "../../data/images/pfps/grandmaster.png" }
     ];
 
     async function initShop() {
