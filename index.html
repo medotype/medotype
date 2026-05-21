@@ -15,6 +15,62 @@
     <link rel="stylesheet" href="data/css/root.css">
     <script src="/data/js/theme.js"></script>
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=1">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        #incoming-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            padding: 18px 22px;
+            transform: translateX(180%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 9999; 
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 260px;
+            text-align: left;
+            font-family: var(--font, 'Inter', sans-serif);
+        }
+
+        #incoming-toast.show { transform: translateX(0); }
+
+        .incoming-header {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .incoming-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toast-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font, 'Inter', sans-serif);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .toast-btn-accept { background: var(--accent); color: white; }
+        .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded); }
+        .toast-btn:hover { opacity: 0.9; }
+    </style>
 </head>
     
 <body>
@@ -25,10 +81,10 @@
             <span class="logo-text">MeDoType</span>
         </div>
 
-<div class="search-container">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="global-search" placeholder="search users..." onkeypress="if(event.key === 'Enter') handleSearch()">
-    </div>
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="global-search" placeholder="search users..." onkeypress="if(event.key === 'Enter') handleSearch()">
+        </div>
         
         <nav class="nav-links">
             <a onclick="navigateFrame('pages/home.html', this)" class="active" title="Home">
@@ -62,7 +118,91 @@
         </div>
     </footer>
 
+    <div id="incoming-toast">
+        <div class="incoming-header">
+            <i class="fa-solid fa-bolt" style="color: var(--accent);"></i>
+            <span id="challenge-prompt">Player challenged you!</span>
+        </div>
+        <div class="incoming-buttons">
+            <button class="toast-btn toast-btn-accept" onclick="respondToGlobalChallenge(true)">Accept</button>
+            <button class="toast-btn toast-btn-decline" onclick="respondToGlobalChallenge(false)">Decline</button>
+        </div>
+    </div>
+
     <script src="data/js/index.js"></script>
-    
+
+    <script>
+        const SHELL_SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SHELL_SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const shellSupabase = supabase.createClient(SHELL_SB_URL, SHELL_SB_KEY);
+
+        let shellCurrentUsername = null;
+        let shellActiveRequest = null;
+
+        async function initGlobalChallengeListener() {
+            const { data: { session } } = await shellSupabase.auth.getSession();
+            if (!session) return;
+
+            // Fetch current username to know who to listen for
+            const { data: profile } = await shellSupabase
+                .from('profiles')
+                .select('username')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile && profile.username) {
+                shellCurrentUsername = profile.username;
+                
+                shellSupabase.channel('global_incoming_challenges')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: '1v1_queue',
+                        filter: `target_username=eq.${shellCurrentUsername}`
+                    }, payload => {
+                        if (payload.new.status === 'pending') {
+                            showGlobalChallengeToast(payload.new);
+                        }
+                    })
+                    .subscribe();
+            }
+        }
+
+        function showGlobalChallengeToast(request) {
+            shellActiveRequest = request;
+            document.getElementById('challenge-prompt').innerHTML = `<b>${request.username}</b> challenged you!`;
+            document.getElementById('incoming-toast').classList.add('show');
+        }
+
+        async function respondToGlobalChallenge(accept) {
+            if (!shellActiveRequest) return;
+            document.getElementById('incoming-toast').classList.remove('show');
+
+            const req = shellActiveRequest;
+            shellActiveRequest = null;
+
+            if (accept) {
+                const uniqueRoomId = crypto.randomUUID();
+                
+                const { error } = await shellSupabase
+                    .from('1v1_queue')
+                    .update({ status: 'accepted', match_id: uniqueRoomId })
+                    .eq('id', req.id);
+
+                if (!error) {
+                    const frame = document.getElementById('main-frame');
+                    if (frame) {
+                        frame.src = `pages/ranked/1v1.html?${uniqueRoomId}`;
+                    }
+                } else {
+                    console.error("Failed to accept challenge", error);
+                }
+            } else {
+                await shellSupabase.from('1v1_queue').update({ status: 'declined' }).eq('id', req.id);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initGlobalChallengeListener);
+    </script>
 </body>
 </html>
