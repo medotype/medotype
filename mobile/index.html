@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Unsupported Device</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+
+    <style>
+        body {
+            background-color: transparent;
+            color: var(--text-bright);
+            font-family: var(--font);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .unsupported-card {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 360px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-label { 
+            color: var(--text-faded); 
+            text-transform: uppercase; 
+            font-size: 0.75rem; 
+            letter-spacing: 0.15em; 
+            margin: 0; 
+        }
+
+        .error-val { 
+            font-size: 2.2rem; 
+            font-weight: 600; 
+            color: var(--accent); 
+            margin: 1.5rem 0; 
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); 
+            line-height: 1.2;
+        }
+
+        .status-msg { 
+            font-size: 0.8rem; 
+            padding: 12px; 
+            border-radius: 8px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            line-height: 1.4;
+        }
+        
+        .msg-guest { 
+            background: rgba(100, 102, 105, 0.1); 
+            color: var(--text-faded); 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="unsupported-card">
+        <p class="stat-label">MeDoType</p>
+        <h1 class="error-val">Mobile isn't supported yet</h1>
+
+        <div class="status-msg msg-guest">
+            Please switch to a desktop device with a physical keyboard to play.
+        </div>
+    </div>
+
+</body>
+</html>
