@@ -21,7 +21,6 @@ let lastOpponentActivity = Date.now();
 let myTotalScore = 0;
 let oppTotalScore = 0;
 
-// Variables to track the scores for the current round specifically for the animation
 let myLastRoundScore = 0;
 let oppLastRoundScore = 0;
 
@@ -54,7 +53,6 @@ async function initMatch() {
     myId = session.user.id;
     console.log("[INIT] Authenticated as User UUID:", myId);
 
-    // Fetch profile
     const { data: profile, error: profileErr } = await _supabase.from('profiles').select('username, elo').eq('id', myId).single();
     if (profileErr) console.warn("[INIT] Profile load warning/error:", profileErr);
     
@@ -400,7 +398,6 @@ function handleRoundFinished({ payload }) {
 function checkRoundAdvance() {
     if (myRoundFinished && oppRoundFinished) {
         
-        // Trigger the cool round end animation
         const animOverlay = document.getElementById('round-results-overlay');
         const myScoreAnim = document.getElementById('anim-my-score');
         const oppScoreAnim = document.getElementById('anim-opp-score');
@@ -408,7 +405,6 @@ function checkRoundAdvance() {
         myScoreAnim.innerText = "+" + myLastRoundScore;
         oppScoreAnim.innerText = "+" + oppLastRoundScore;
 
-        // Highlight the winner of the round in green
         myScoreAnim.style.color = myLastRoundScore > oppLastRoundScore ? '#10b981' : (myLastRoundScore === oppLastRoundScore ? 'var(--text-bright)' : 'var(--error)');
         oppScoreAnim.style.color = oppLastRoundScore > myLastRoundScore ? '#10b981' : (oppLastRoundScore === myLastRoundScore ? 'var(--text-bright)' : 'var(--error)');
         
@@ -417,7 +413,6 @@ function checkRoundAdvance() {
 
         currentRound++;
 
-        // Hide the animation after 3.5 seconds and proceed
         setTimeout(() => {
             animOverlay.classList.remove('show');
             
@@ -449,19 +444,19 @@ async function endMatch() {
     if (myTotalScore > oppTotalScore) {
         resultText.innerText = "VICTORY";
         resultText.style.color = "#10b981";
-        eloText.innerText = "+0 Elo";
+        eloText.innerText = "No ELO gained";
         eloText.className = "elo-change";
         newElo += 0;
     } else if (myTotalScore < oppTotalScore) {
         resultText.innerText = "DEFEAT";
         resultText.style.color = "var(--error)";
-        eloText.innerText = "-0 Elo";
+        eloText.innerText = "No ELO lost";
         eloText.className = "elo-change negative";
         newElo = Math.max(0, newElo - 0);
     } else {
         resultText.innerText = "DRAW";
         resultText.style.color = "var(--text-bright)";
-        eloText.innerText = "+0 Elo";
+        eloText.innerText = "No ELO gained";
         eloText.className = "elo-change";
     }
 
