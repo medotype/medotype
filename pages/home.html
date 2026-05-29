@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeDoType | Home</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../data/css/root.css">
-    <script src="../data/js/theme.js"></script>
+    
+    <link rel="stylesheet" href="../../data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+    
     <style>
         body { 
             background-color: var(--bg); 
@@ -17,39 +21,98 @@
             align-items: center; 
             justify-content: center; 
             height: 100vh; 
-            overflow: hidden;
+            overflow: hidden; 
+        }
+        
+        #app { 
+            width: 100%; 
+            max-width: 1000px; 
+            text-align: center; 
+            padding: 2rem; 
+            position: relative; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        #menu-container {
-            width: 100%;
-            max-width: 1000px;
-            padding: 2rem;
-            text-align: center;
+        /* Header & Title */
+        .header-stats { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 40px; 
+            width: 100%; 
+            margin-bottom: 2rem; 
+            height: 2rem; 
+            opacity: 0; 
+            transition: opacity 0.3s ease;
         }
-
-        .header-meta {
+        
+        .stat-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.3rem;
+            font-weight: 500;
             color: var(--text-faded);
-            font-size: 0.75rem;
-            font-weight: 1000;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            margin-bottom: 3rem;
-            animation: fadeIn 0.8s ease;
+            justify-content: center;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .stat-box i { color: var(--accent); font-size: 1.1rem; }
+
+        .title-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2.5rem;
         }
 
-        /* Unified Grid Structure */
+        .ranked-title {
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.03em;
+            color: var(--text-bright);
+            line-height: 1;
+        }
+
+        .season-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--accent);
+            border: 1px solid rgba(226, 182, 43, 0.25);
+            color: var(--text-bright);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 0.6rem;
+        }
+
+        /* Modes Grid */
         .modes-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
+            width: 100%;
             animation: fadeIn 1s ease;
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        .modes-grid.grid-disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(0.5);
         }
 
         .mode-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.03);
             border-radius: 24px;
-            padding: 60px 30px;
+            padding: 50px 25px;
             text-decoration: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -60,7 +123,6 @@
             cursor: pointer;
         }
 
-        /* Hover States */
         .mode-card:not(.locked):hover {
             background: rgba(255, 255, 255, 0.04);
             border-color: var(--accent);
@@ -96,14 +158,12 @@
             transform: scale(1.1);
         }
 
-        /* Locked State Updates */
         .mode-card.locked {
             opacity: 0.4;
             cursor: not-allowed;
             filter: grayscale(0.8);
         }
 
-        /* Animated underline on hover */
         .mode-card::after {
             content: '';
             position: absolute;
@@ -123,53 +183,613 @@
             opacity: 1;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Buttons & Utility */
+        .bottom-actions {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 50px;
+            width: 100%;
         }
 
-        /* Responsive handling */
-        @media (max-width: 900px) {
-            .modes-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @media (max-width: 600px) {
+        .btn-shop { 
+            background: var(--card-bg); 
+            color: var(--text-faded); 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .btn-locked, .btn-locked:hover {
+            opacity: 0.35 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            transform: none !important;
+            color: var(--text-faded) !important;
+        }
+
+        .btn-cancel { 
+            background: var(--error) !important; 
+            color: white;
+        }
+        
+        .btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .btn-play { background: var(--accent); color: white; }
+        .btn-play:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .icon-wrapper { position: relative; display: inline-flex; }
+        .lock-badge {
+            position: absolute;
+            bottom: -4px;
+            right: -6px;
+            font-size: 0.7rem;
+            color: var(--error);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+        }
+        .btn-locked .lock-badge { opacity: 1; transform: scale(1); }
+
+        /* Queue Status UI */
+        #queue-container {
+            display: none; 
+            align-items: center; 
+            justify-content: center;
+            gap: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #queue-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--card-bg);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .queue-text { display: flex; flex-direction: column; text-align: left; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+
+        .challenge-modal {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.show .challenge-modal { transform: scale(1); }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+            text-align: left;
+            color: var(--text-bright);
+        }
+
+        #target-player-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: var(--text-bright);
+            font-family: var(--font);
+            font-size: 1rem;
+            padding: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #target-player-input:focus { border-color: var(--accent); }
+
+        .modal-buttons { display: flex; gap: 10px; }
+
+        .btn-modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-faded);
+            flex: 1;
+        }
+        .btn-modal-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-bright); }
+
+        /* Toasts & Alerts */
+        #error-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translate(-50%, -150px);
+            background: var(--error);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 3000;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #error-toast.show { transform: translate(-50%, 0); }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) { .modes-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { 
             body { height: auto; padding: 4rem 0; overflow-y: auto; }
-            .modes-grid {
-                grid-template-columns: 1fr;
-                max-width: 400px;
-                margin: 0 auto;
-            }
+            .modes-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
         }
     </style>
 </head>
 <body>
 
-    <div id="menu-container">
-        <div class="header-meta">Select Gamemode</div>
-        
-        <div class="modes-grid">
+    <div id="error-toast">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="error-text">Error message</span>
+    </div>
+
+    <div class="modal-overlay" id="ranked-modal-overlay" onclick="closeRankedModal()">
+        <div class="challenge-modal" onclick="event.stopPropagation()">
+            <h3 class="modal-title"><i class="fa-solid fa-trophy" style="color:var(--accent); margin-right:8px;"></i>Multiplayer</h3>
+            <p style="color: var(--text-faded); font-size: 0.9rem; margin-top: 0; margin-bottom: 5px;">Select how you want to play.</p>
+            <div class="modal-buttons" style="flex-direction: column; gap: 10px;">
+                <button class="btn btn-play" style="width: 100%;" onclick="startMatchmaking('ranked')">
+                    <i class="fa-solid fa-globe"></i> Ranked Matchmaking
+                </button>
+                <button class="btn btn-play" style="width: 100%; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); color: var(--text-bright);" onclick="openChallengeModalFromRanked()">
+                    <i class="fa-solid fa-user-plus"></i> Challenge 1v1
+                </button>
+                <button class="btn btn-modal-close" style="width: 100%; margin-top: 5px;" onclick="closeRankedModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="challenge-modal-overlay" onclick="closeChallengeModal()">
+        <div class="challenge-modal" onclick="event.stopPropagation()">
+            <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--accent); margin-right:8px;"></i>1v1 Challenge</h3>
+            <input type="text" id="target-player-input" placeholder="Enter username..." autocomplete="off">
+            <div class="modal-buttons">
+                <button class="btn btn-modal-close" onclick="closeChallengeModal()">Cancel</button>
+                <button class="btn btn-play" style="flex: 1.5;" onclick="sendDirectChallenge()">Send Invite</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app">
+        <div class="header-stats" id="profile-stats">
+            <div class="stat-box">
+                <i class="fa-solid fa-user"></i> <span id="username-display">Loading...</span>
+            </div>
+            <div class="stat-box">
+                <i class="fa-solid fa-trophy"></i> <span id="elo-display">-- Elo</span>
+            </div>
+        </div>
+
+        <div class="title-container">
+            <h1 class="ranked-title">MeDoType</h1>
+            <div class="season-badge">Season 1</div>
+        </div>
+
+        <div class="modes-grid" id="main-menu">
             <a href="singleplayer/home.html" class="mode-card">
                 <i class="fa-solid fa-user"></i>
                 <h2>Singleplayer</h2>
                 <p>Standard typing test with customizable modes and personal bests.</p>
             </a>
 
-            <a href="practice/home.html" class="mode-card">
+            <div class="mode-card locked" id="card-practice" onclick="handleModeClick('practice')">
                 <i class="fa-solid fa-dumbbell"></i>
                 <h2>Practice</h2>
                 <p>Sharpen your speed with infinite typing and live combo tracking.</p>
-            </a>
+            </div>
 
-            <a href="ranked/home.html" class="mode-card">
+            <div class="mode-card locked" id="card-ranked" onclick="handleModeClick('ranked')">
                 <i class="fa-solid fa-trophy"></i>
                 <h2>Multiplayer</h2>
                 <p>Compete against people online to get higher ELO and unlock new avatars!</p>
-            </a>
+            </div>
         </div>
+
+        <div class="bottom-actions">
+            <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
+                <span class="icon-wrapper">
+                    <i class="fa-solid fa-cart-shopping" id="shop-icon"></i>
+                    <i class="fa-solid fa-lock lock-badge"></i>
+                </span>
+                Shop
+            </button>
+
+            <div id="queue-container">
+                <button class="btn btn-cancel" id="cancel-queue-btn" onclick="stopQueueUI()">
+                    <i class="fa-solid fa-xmark"></i> Cancel
+                </button>
+                <div id="queue-status">
+                    <div class="spinner"></div>
+                    <div class="queue-text">
+                        <span id="queue-action-label" style="font-size: 0.7rem; color: var(--text-faded); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Searching</span>
+                        <span id="queue-timer" style="font-size: 1rem; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums;">00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
+    <script>
+        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        let isLoggedIn = false;
+        let currentElo = 0;
+        let currentUsername = "Guest";
+        let accessToken = null; 
+        
+        let isQueueing = false;
+        let currentMode = null; 
+        let queueInterval;
+        let seconds = 0;
+        let queueId = null;
+        let queueSubscription = null;
+        let errorTimeout;
+
+        async function loadUserProfile() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            
+            if (!session) {
+                document.getElementById('username-display').innerText = "Guest";
+                document.getElementById('profile-stats').style.opacity = '1';
+                return;
+            }
+
+            isLoggedIn = true;
+            accessToken = session.access_token;
+
+            // Unlock UI
+            document.getElementById('card-practice').classList.remove('locked');
+            document.getElementById('card-ranked').classList.remove('locked');
+            document.getElementById('shop-btn').classList.remove('btn-locked');
+            document.getElementById('shop-btn').disabled = false;
+
+            const { data: profile, error } = await _supabase
+                .from('profiles')
+                .select('elo, username')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) {
+                currentElo = profile.elo || 0;
+                currentUsername = profile.username || "Player";
+                
+                document.getElementById('username-display').innerText = currentUsername;
+                document.getElementById('elo-display').innerText = `${currentElo}`;
+                document.getElementById('profile-stats').style.opacity = '1';
+            }
+        }
+
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            document.getElementById('error-text').innerText = message;
+            toast.classList.add('show');
+            clearTimeout(errorTimeout);
+            errorTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // --- Grid Click Handlers ---
+        function handleModeClick(mode) {
+            if (!isLoggedIn) {
+                return showError("Please log in to access this mode.");
+            }
+
+            if (mode === 'practice') {
+                window.location.href = 'practice/home.html';
+            } else if (mode === 'ranked') {
+                openRankedModal();
+            }
+        }
+
+        // --- Modals ---
+        function openRankedModal() {
+            document.getElementById('ranked-modal-overlay').classList.add('show');
+        }
+
+        function closeRankedModal() {
+            document.getElementById('ranked-modal-overlay').classList.remove('show');
+        }
+
+        function openChallengeModalFromRanked() {
+            closeRankedModal();
+            document.getElementById('challenge-modal-overlay').classList.add('show');
+            document.getElementById('target-player-input').focus();
+        }
+
+        function closeChallengeModal() {
+            document.getElementById('challenge-modal-overlay').classList.remove('show');
+            document.getElementById('target-player-input').value = '';
+        }
+
+        // --- Timer Logic ---
+        function startTimer() {
+            seconds = 0;
+            const timerDisplay = document.getElementById('queue-timer');
+            queueInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                timerDisplay.innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(queueInterval);
+            document.getElementById('queue-timer').innerText = "00:00";
+        }
+
+        // --- Matchmaking & Queueing ---
+        async function startMatchmaking(mode) {
+            closeRankedModal();
+            
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return showError("To play, please log in.");
+
+            updateQueueUI(true, mode, "Searching");
+
+            const { data, error } = await _supabase
+                .from('ranked_queue')
+                .insert([{ 
+                    user_id: session.user.id, 
+                    username: currentUsername,
+                    elo: currentElo,
+                    status: 'searching'
+                }])
+                .select();
+
+            if (error) {
+                stopQueueUI();
+                return showError("Failed to join match pool. Try again.");
+            }
+            queueId = data[0].id;
+
+            queueSubscription = _supabase
+                .channel(`q_${queueId}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'ranked_queue', 
+                    filter: `id=eq.${queueId}` 
+                }, payload => {
+                    if (payload.new.status === 'matched') {
+                        matchFound(payload.new.match_id, 'ranked');
+                    }
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') checkNearbyPoolPlayers(session.user.id);
+                });
+        }
+
+        async function checkNearbyPoolPlayers(myId) {
+            if (!queueId) return;
+
+            let query = _supabase
+                .from('ranked_queue')
+                .select('*')
+                .eq('status', 'searching')
+                .neq('id', queueId);
+
+            if (!window.location.href.includes('medotypebeta.wasmer.app')) {
+                query = query.neq('user_id', myId);
+            }
+
+            const { data: opponents } = await query.order('created_at', { ascending: true }).limit(1);
+
+            if (opponents && opponents.length > 0) {
+                const opponent = opponents[0];
+                const sharedMatchId = crypto.randomUUID();
+
+                const { data: matchedOpponent } = await _supabase
+                    .from('ranked_queue')
+                    .update({ status: 'matched', match_id: sharedMatchId })
+                    .eq('id', opponent.id)
+                    .eq('status', 'searching')
+                    .select();
+
+                if (matchedOpponent && matchedOpponent.length > 0) {
+                    await _supabase
+                        .from('ranked_queue')
+                        .update({ status: 'matched', match_id: sharedMatchId })
+                        .eq('id', queueId);
+                }
+            }
+        }
+
+        async function sendDirectChallenge() {
+            const targetInput = document.getElementById('target-player-input');
+            const targetName = targetInput.value.trim();
+
+            if (!targetName) return showError("Enter a user's name to invite.");
+            if (targetName.toLowerCase() === currentUsername.toLowerCase()) return showError("You cannot challenge yourself.");
+
+            closeChallengeModal();
+
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return showError("Please log in to send requests.");
+
+            updateQueueUI(true, 'direct_1v1', 'Awaiting Player');
+
+            const { data, error } = await _supabase
+                .from('1v1_queue')
+                .insert([{
+                    user_id: session.user.id,
+                    username: currentUsername,
+                    target_username: targetName,
+                    status: 'pending'
+                }])
+                .select();
+
+            if (error) {
+                stopQueueUI();
+                return showError("Could not dispatch request.");
+            }
+
+            queueId = data[0].id;
+
+            queueSubscription = _supabase
+                .channel(`direct_${queueId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: '1v1_queue',
+                    filter: `id=eq.${queueId}`
+                }, payload => {
+                    if (payload.new.status === 'accepted') {
+                        matchFound(payload.new.match_id, 'direct_1v1');
+                    } else if (payload.new.status === 'declined') {
+                        stopQueueUI();
+                        showError(`${targetName} declined your challenge.`);
+                    }
+                })
+                .subscribe();
+        }
+
+        function updateQueueUI(active, mode, statusLabel) {
+            isQueueing = active;
+            currentMode = mode;
+
+            const gridMenu = document.getElementById('main-menu');
+            const shopBtn = document.getElementById('shop-btn');
+            const queueContainer = document.getElementById('queue-container');
+
+            if (active) {
+                gridMenu.classList.add('grid-disabled');
+                shopBtn.style.display = 'none';
+                
+                document.getElementById('queue-action-label').innerText = statusLabel;
+                queueContainer.style.display = 'flex';
+                
+                // Adjust cancel button text based on mode
+                const cancelBtn = document.getElementById('cancel-queue-btn');
+                cancelBtn.innerHTML = mode === 'ranked' ? '<i class="fa-solid fa-xmark"></i> Cancel Matchmaking' : '<i class="fa-solid fa-xmark"></i> Cancel Invite';
+                
+                startTimer();
+            }
+        }
+
+        async function stopQueueUI() {
+            const gridMenu = document.getElementById('main-menu');
+            const shopBtn = document.getElementById('shop-btn');
+            const queueContainer = document.getElementById('queue-container');
+
+            isQueueing = false;
+            
+            gridMenu.classList.remove('grid-disabled');
+            shopBtn.style.display = 'flex';
+            queueContainer.style.display = 'none';
+            stopTimer();
+
+            if (queueId && currentMode) {
+                const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
+                await _supabase.from(tableName).delete().eq('id', queueId);
+                queueId = null;
+            }
+            
+            if (queueSubscription) {
+                _supabase.removeChannel(queueSubscription);
+                queueSubscription = null;
+            }
+            currentMode = null;
+        }
+
+        function matchFound(matchId, mode) {
+            stopTimer();
+            
+            const cancelBtn = document.getElementById('cancel-queue-btn');
+            cancelBtn.innerHTML = '<i class="fa-solid fa-check"></i> Match Found!';
+            cancelBtn.style.background = 'var(--accent)';
+            cancelBtn.classList.remove('btn-cancel');
+            cancelBtn.style.pointerEvents = 'none';
+            
+            document.querySelector('#queue-status .spinner').style.display = 'none';
+            document.getElementById('queue-action-label').innerText = "Connecting...";
+
+            queueId = null; 
+            if (queueSubscription) {
+                _supabase.removeChannel(queueSubscription);
+                queueSubscription = null;
+            }
+
+            const targetPage = (mode === 'ranked') ? 'game.html' : '1v1.html';
+            setTimeout(() => { window.location.href = `${targetPage}?${matchId}`; }, 1500);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (queueId && currentMode) {
+                const tableName = currentMode === 'ranked' ? 'ranked_queue' : '1v1_queue';
+                const url = `${SB_URL}/rest/v1/${tableName}?id=eq.${queueId}`;
+                const headers = {
+                    'apikey': SB_KEY,
+                    'Authorization': accessToken ? `Bearer ${accessToken}` : `Bearer ${SB_KEY}`
+                };
+                
+                fetch(url, { method: 'DELETE', headers: headers, keepalive: true });
+            }
+        });
+
+        loadUserProfile();
+    </script>
 </body>
 </html>
