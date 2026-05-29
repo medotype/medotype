@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeDoType | Home</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="../../data/css/root.css">
     <script src="../../data/js/theme.js"></script>
     
     <style>
+        /* --- Base & Animated Background --- */
         body { 
             background-color: var(--bg); 
             color: var(--text-bright); 
@@ -22,6 +23,26 @@
             justify-content: center; 
             height: 100vh; 
             overflow: hidden; 
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(var(--accent-rgb, 100, 150, 255), 0.05) 0%, transparent 60%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulseGlow 8s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
         }
         
         #app { 
@@ -33,9 +54,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            z-index: 1;
         }
 
-        /* Header & Title */
+        /* --- Header & Title --- */
         .header-stats { 
             display: flex; 
             justify-content: center; 
@@ -52,140 +74,132 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 1.3rem;
-            font-weight: 500;
+            font-size: 1.1rem;
+            font-weight: 600;
             color: var(--text-faded);
             justify-content: center;
             font-variant-numeric: tabular-nums;
+            background: rgba(255,255,255,0.03);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         
-        .stat-box i { color: var(--accent); font-size: 1.1rem; }
+        .stat-box i { color: var(--accent); }
 
         .title-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         .ranked-title {
-            font-size: 3.5rem;
-            font-weight: 600;
+            font-size: 4rem;
+            font-weight: 800;
             margin: 0;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.04em;
             color: var(--text-bright);
             line-height: 1;
+            text-transform: uppercase;
         }
 
         .season-badge {
             display: inline-flex;
             align-items: center;
-            background: var(--accent);
-            border: 1px solid rgba(226, 182, 43, 0.25);
-            color: var(--text-bright);
-            padding: 4px 12px;
+            background: linear-gradient(135deg, var(--accent), #e2b62b);
+            color: #000;
+            padding: 4px 14px;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
+            font-size: 0.85rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            margin-top: 0.6rem;
+            margin-top: 0.8rem;
+            box-shadow: 0 4px 15px rgba(226, 182, 43, 0.3);
         }
 
-        /* Modes Grid */
+        /* --- Modes Grid --- */
         .modes-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
             width: 100%;
-            animation: fadeIn 1s ease;
-            transition: opacity 0.3s ease, filter 0.3s ease;
+            animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
         }
 
         .modes-grid.grid-disabled {
-            opacity: 0.3;
+            opacity: 0.2;
             pointer-events: none;
-            filter: grayscale(0.5);
+            filter: grayscale(0.8) blur(2px);
+            transform: scale(0.98);
         }
 
         .mode-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 24px;
+            background: linear-gradient(180deg, var(--card-bg) 0%, rgba(0,0,0,0.2) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
             padding: 50px 25px;
             text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
             cursor: pointer;
+            overflow: hidden;
         }
 
+        /* Game-style hover state */
         .mode-card:not(.locked):hover {
-            background: rgba(255, 255, 255, 0.04);
             border-color: var(--accent);
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(var(--accent-rgb, 100, 150, 255), 0.2);
+            background: linear-gradient(180deg, var(--card-bg) 0%, rgba(var(--accent-rgb, 100, 150, 255), 0.1) 100%);
         }
 
         .mode-card i {
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: var(--text-faded);
             margin-bottom: 1.5rem;
-            transition: 0.3s;
+            transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
         }
 
         .mode-card h2 {
             margin: 0;
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.4rem;
+            font-weight: 800;
             color: var(--text-bright);
-            letter-spacing: -0.01em;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
         }
 
         .mode-card p {
             margin-top: 12px;
             font-size: 0.9rem;
             color: var(--text-faded);
-            line-height: 1.6;
-            font-weight: 300;
+            line-height: 1.5;
+            font-weight: 400;
         }
 
         .mode-card:not(.locked):hover i {
             color: var(--accent);
-            transform: scale(1.1);
+            transform: scale(1.15) translateY(-5px);
         }
 
         .mode-card.locked {
             opacity: 0.4;
             cursor: not-allowed;
-            filter: grayscale(0.8);
+            filter: grayscale(1);
         }
 
-        .mode-card::after {
-            content: '';
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 2px;
-            background: var(--accent);
-            border-radius: 2px;
-            transition: 0.3s ease;
-            opacity: 0;
-        }
-
-        .mode-card:not(.locked):hover::after {
-            width: 40px;
-            opacity: 1;
-        }
-
-        /* Buttons & Utility */
+        /* --- Buttons & Utility --- */
         .bottom-actions {
-            margin-top: 2rem;
+            margin-top: 2.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -198,20 +212,28 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 12px 28px;
-            border-radius: 10px;
+            padding: 14px 32px;
+            border-radius: 12px;
             border: none;
             font-family: var(--font);
-            font-weight: 600;
-            font-size: 1rem;
+            font-weight: 800;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .btn-shop { 
             background: var(--card-bg); 
-            color: var(--text-faded); 
-            border: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-bright); 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-shop:hover {
+            background: rgba(255,255,255,0.05);
+            transform: translateY(-2px);
         }
 
         .btn-locked, .btn-locked:hover {
@@ -227,10 +249,10 @@
             color: white;
         }
         
-        .btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 50, 50, 0.3); }
 
         .btn-play { background: var(--accent); color: white; }
-        .btn-play:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-play:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(var(--accent-rgb, 100, 150, 255), 0.3); }
 
         .icon-wrapper { position: relative; display: inline-flex; }
         .lock-badge {
@@ -245,98 +267,112 @@
         }
         .btn-locked .lock-badge { opacity: 1; transform: scale(1); }
 
-        /* Queue Status UI */
+        /* --- Queue Status UI --- */
         #queue-container {
             display: none; 
             align-items: center; 
             justify-content: center;
             gap: 20px;
-            animation: fadeIn 0.3s ease;
+            animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         #queue-status {
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: var(--card-bg);
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.05);
+            gap: 15px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top: 2px solid var(--accent);
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--accent);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         .queue-text { display: flex; flex-direction: column; text-align: left; }
 
-        /* Modals */
+        .pulse-btn {
+            animation: pulseBtn 1.5s infinite;
+        }
+
+        @keyframes pulseBtn {
+            0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb, 100, 150, 255), 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(var(--accent-rgb, 100, 150, 255), 0); }
+            100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb, 100, 150, 255), 0); }
+        }
+
+        /* --- Modals --- */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2000;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.3s ease;
         }
 
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
 
         .challenge-modal {
-            background: var(--card-bg);
+            background: linear-gradient(180deg, var(--card-bg) 0%, #1a1a1a 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 24px;
-            border-radius: 16px;
+            padding: 30px;
+            border-radius: 20px;
             width: 100%;
-            max-width: 360px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            max-width: 380px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            transform: scale(0.9);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            gap: 20px;
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .modal-overlay.show .challenge-modal { transform: scale(1); }
+        .modal-overlay.show .challenge-modal { transform: scale(1) translateY(0); }
 
         .modal-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+            font-size: 1.4rem;
+            font-weight: 800;
             margin: 0;
             text-align: left;
             color: var(--text-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
         }
 
         #target-player-input {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             color: var(--text-bright);
             font-family: var(--font);
-            font-size: 1rem;
-            padding: 12px;
+            font-size: 1.1rem;
+            padding: 14px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
             width: 100%;
             box-sizing: border-box;
         }
 
-        #target-player-input:focus { border-color: var(--accent); }
+        #target-player-input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(var(--accent-rgb, 100, 150, 255), 0.2); }
 
-        .modal-buttons { display: flex; gap: 10px; }
+        .modal-buttons { display: flex; gap: 12px; }
 
         .btn-modal-close {
             background: rgba(255, 255, 255, 0.05);
@@ -345,7 +381,7 @@
         }
         .btn-modal-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-bright); }
 
-        /* Toasts & Alerts */
+        /* --- Toasts & Alerts --- */
         #error-toast {
             position: fixed;
             top: 20px;
@@ -353,14 +389,15 @@
             transform: translate(-50%, -150px);
             background: var(--error);
             color: white;
-            padding: 12px 24px;
-            border-radius: 10px;
+            padding: 14px 28px;
+            border-radius: 12px;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             z-index: 3000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -368,11 +405,33 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @media (max-width: 900px) { .modes-grid { grid-template-columns: repeat(2, 1fr); } }
+        /* --- Responsive scaling for smaller/shorter screens --- */
+        @media (max-width: 900px) { 
+            .modes-grid { grid-template-columns: repeat(2, 1fr); gap: 16px;} 
+            .mode-card { padding: 35px 20px; }
+        }
+
         @media (max-width: 600px) { 
-            body { height: auto; padding: 4rem 0; overflow-y: auto; }
-            .modes-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+            body { height: auto; min-height: 100vh; padding: 2rem 0; overflow-y: auto; }
+            .modes-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; gap: 16px;} 
+            .mode-card { padding: 30px 20px; }
+            .ranked-title { font-size: 3rem; }
+        }
+
+        /* Essential fix for wide but short screens (like small laptops) */
+        @media (max-height: 750px) {
+            #app { padding: 1rem; }
+            .header-stats { margin-bottom: 1rem; }
+            .title-container { margin-bottom: 1.5rem; }
+            .ranked-title { font-size: 2.8rem; }
+            .modes-grid { gap: 16px; }
+            .mode-card { padding: 25px 20px; } /* Compress height */
+            .mode-card i { font-size: 2rem; margin-bottom: 0.8rem; }
+            .mode-card h2 { font-size: 1.2rem; }
+            .mode-card p { font-size: 0.8rem; margin-top: 6px; }
+            .bottom-actions { margin-top: 1.5rem; }
         }
     </style>
 </head>
@@ -385,13 +444,13 @@
 
     <div class="modal-overlay" id="ranked-modal-overlay" onclick="closeRankedModal()">
         <div class="challenge-modal" onclick="event.stopPropagation()">
-            <h3 class="modal-title"><i class="fa-solid fa-trophy" style="color:var(--accent); margin-right:8px;"></i>Multiplayer</h3>
-            <p style="color: var(--text-faded); font-size: 0.9rem; margin-top: 0; margin-bottom: 5px;">Select how you want to play.</p>
-            <div class="modal-buttons" style="flex-direction: column; gap: 10px;">
+            <h3 class="modal-title"><i class="fa-solid fa-trophy" style="color:var(--accent); margin-right:10px;"></i>Multiplayer</h3>
+            <p style="color: var(--text-faded); font-size: 0.95rem; margin-top: -10px; margin-bottom: 10px;">Select how you want to play.</p>
+            <div class="modal-buttons" style="flex-direction: column; gap: 12px;">
                 <button class="btn btn-play" style="width: 100%;" onclick="startMatchmaking('ranked')">
-                    <i class="fa-solid fa-globe"></i> Ranked Matchmaking
+                    <i class="fa-solid fa-globe"></i> Matchmaking
                 </button>
-                <button class="btn btn-play" style="width: 100%; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); color: var(--text-bright);" onclick="openChallengeModalFromRanked()">
+                <button class="btn btn-play" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-bright); box-shadow: none;" onclick="openChallengeModalFromRanked()">
                     <i class="fa-solid fa-user-plus"></i> Challenge 1v1
                 </button>
                 <button class="btn btn-modal-close" style="width: 100%; margin-top: 5px;" onclick="closeRankedModal()">Cancel</button>
@@ -401,8 +460,8 @@
 
     <div class="modal-overlay" id="challenge-modal-overlay" onclick="closeChallengeModal()">
         <div class="challenge-modal" onclick="event.stopPropagation()">
-            <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--accent); margin-right:8px;"></i>1v1 Challenge</h3>
-            <input type="text" id="target-player-input" placeholder="Enter username..." autocomplete="off">
+            <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--accent); margin-right:10px;"></i>1v1 Challenge</h3>
+            <input type="text" id="target-player-input" placeholder="Enter opponent username" autocomplete="off">
             <div class="modal-buttons">
                 <button class="btn btn-modal-close" onclick="closeChallengeModal()">Cancel</button>
                 <button class="btn btn-play" style="flex: 1.5;" onclick="sendDirectChallenge()">Send Invite</button>
@@ -427,7 +486,7 @@
 
         <div class="modes-grid" id="main-menu">
             <a href="singleplayer/home.html" class="mode-card">
-                <i class="fa-solid fa-user"></i>
+                <i class="fa-solid fa-keyboard"></i>
                 <h2>Singleplayer</h2>
                 <p>Standard typing test with customizable modes and personal bests.</p>
             </a>
@@ -439,7 +498,7 @@
             </div>
 
             <div class="mode-card locked" id="card-ranked" onclick="handleModeClick('ranked')">
-                <i class="fa-solid fa-trophy"></i>
+                <i class="fa-solid fa-crosshairs"></i>
                 <h2>Multiplayer</h2>
                 <p>Compete against people online to get higher ELO and unlock new avatars!</p>
             </div>
@@ -448,10 +507,10 @@
         <div class="bottom-actions">
             <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
                 <span class="icon-wrapper">
-                    <i class="fa-solid fa-cart-shopping" id="shop-icon"></i>
+                    <i class="fa-solid fa-store" id="shop-icon" style="margin-right: 8px;"></i>
                     <i class="fa-solid fa-lock lock-badge"></i>
                 </span>
-                Shop
+                Item Shop
             </button>
 
             <div id="queue-container">
@@ -461,8 +520,8 @@
                 <div id="queue-status">
                     <div class="spinner"></div>
                     <div class="queue-text">
-                        <span id="queue-action-label" style="font-size: 0.7rem; color: var(--text-faded); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Searching</span>
-                        <span id="queue-timer" style="font-size: 1rem; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums;">00:00</span>
+                        <span id="queue-action-label" style="font-size: 0.75rem; color: var(--text-faded); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Searching</span>
+                        <span id="queue-timer" style="font-size: 1.1rem; color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums;">00:00</span>
                     </div>
                 </div>
             </div>
@@ -713,6 +772,7 @@
             const gridMenu = document.getElementById('main-menu');
             const shopBtn = document.getElementById('shop-btn');
             const queueContainer = document.getElementById('queue-container');
+            const cancelBtn = document.getElementById('cancel-queue-btn');
 
             if (active) {
                 gridMenu.classList.add('grid-disabled');
@@ -721,8 +781,13 @@
                 document.getElementById('queue-action-label').innerText = statusLabel;
                 queueContainer.style.display = 'flex';
                 
-                // Adjust cancel button text based on mode
-                const cancelBtn = document.getElementById('cancel-queue-btn');
+                // Reset styling in case it was modified by matchFound previously
+                cancelBtn.classList.remove('pulse-btn');
+                cancelBtn.classList.add('btn-cancel');
+                cancelBtn.style.background = 'var(--error)';
+                cancelBtn.style.pointerEvents = 'auto';
+                document.querySelector('#queue-status .spinner').style.display = 'block';
+
                 cancelBtn.innerHTML = mode === 'ranked' ? '<i class="fa-solid fa-xmark"></i> Cancel Matchmaking' : '<i class="fa-solid fa-xmark"></i> Cancel Invite';
                 
                 startTimer();
@@ -761,6 +826,7 @@
             cancelBtn.innerHTML = '<i class="fa-solid fa-check"></i> Match Found!';
             cancelBtn.style.background = 'var(--accent)';
             cancelBtn.classList.remove('btn-cancel');
+            cancelBtn.classList.add('pulse-btn');
             cancelBtn.style.pointerEvents = 'none';
             
             document.querySelector('#queue-status .spinner').style.display = 'none';
@@ -773,7 +839,7 @@
             }
 
             const targetPage = (mode === 'ranked') ? 'game.html' : '1v1.html';
-            setTimeout(() => { window.location.href = `${targetPage}?${matchId}`; }, 1500);
+            setTimeout(() => { window.location.href = `${targetPage}?${matchId}`; }, 1800);
         }
 
         window.addEventListener('beforeunload', () => {
