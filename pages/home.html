@@ -12,7 +12,7 @@
     <script src="../../data/js/theme.js"></script>
     
     <style>
-        /* --- Base & Animated Background --- */
+        /* --- Base Layout --- */
         body { 
             background-color: var(--bg); 
             color: var(--text-bright); 
@@ -24,25 +24,6 @@
             height: 100vh; 
             overflow: hidden; 
             position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: absolute;
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, rgba(var(--accent-rgb, 100, 150, 255), 0.05) 0%, transparent 60%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: -1;
-            animation: pulseGlow 8s infinite alternate ease-in-out;
-            pointer-events: none;
-        }
-
-        @keyframes pulseGlow {
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
         }
         
         #app { 
@@ -92,7 +73,6 @@
             flex-direction: column;
             align-items: center;
             margin-bottom: 3rem;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         .ranked-title {
@@ -108,16 +88,16 @@
         .season-badge {
             display: inline-flex;
             align-items: center;
-            background: linear-gradient(135deg, var(--accent), #e2b62b);
-            color: #000;
+            background: rgba(255,255,255,0.07);
+            color: var(--text-bright);
+            border: 1px solid rgba(255,255,255,0.1);
             padding: 4px 14px;
             border-radius: 20px;
             font-size: 0.85rem;
-            font-weight: 800;
+            font-weight: 600;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             margin-top: 0.8rem;
-            box-shadow: 0 4px 15px rgba(226, 182, 43, 0.3);
         }
 
         /* --- Modes Grid --- */
@@ -138,35 +118,33 @@
         }
 
         .mode-card {
-            background: linear-gradient(180deg, var(--card-bg) 0%, rgba(0,0,0,0.2) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.03);
             border-radius: 20px;
             padding: 50px 25px;
             text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.25s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
             cursor: pointer;
-            overflow: hidden;
         }
 
-        /* Game-style hover state */
+        /* Clean, non-glowing hover state */
         .mode-card:not(.locked):hover {
             border-color: var(--accent);
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(var(--accent-rgb, 100, 150, 255), 0.2);
-            background: linear-gradient(180deg, var(--card-bg) 0%, rgba(var(--accent-rgb, 100, 150, 255), 0.1) 100%);
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
         }
 
         .mode-card i {
             font-size: 3rem;
             color: var(--text-faded);
             margin-bottom: 1.5rem;
-            transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+            transition: color 0.25s ease;
         }
 
         .mode-card h2 {
@@ -188,11 +166,10 @@
 
         .mode-card:not(.locked):hover i {
             color: var(--accent);
-            transform: scale(1.15) translateY(-5px);
         }
 
         .mode-card.locked {
-            opacity: 0.4;
+            opacity: 0.25;
             cursor: not-allowed;
             filter: grayscale(1);
         }
@@ -221,23 +198,22 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
         }
 
         .btn-shop { 
             background: var(--card-bg); 
             color: var(--text-bright); 
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .btn-shop:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
             transform: translateY(-2px);
         }
 
         .btn-locked, .btn-locked:hover {
-            opacity: 0.35 !important;
+            opacity: 0.25 !important;
             cursor: not-allowed !important;
             pointer-events: none !important;
             transform: none !important;
@@ -249,10 +225,10 @@
             color: white;
         }
         
-        .btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 50, 50, 0.3); }
+        .btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .btn-play { background: var(--accent); color: white; }
-        .btn-play:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(var(--accent-rgb, 100, 150, 255), 0.3); }
+        .btn-play:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .icon-wrapper { position: relative; display: inline-flex; }
         .lock-badge {
@@ -273,19 +249,17 @@
             align-items: center; 
             justify-content: center;
             gap: 20px;
-            animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         #queue-status {
             display: flex;
             align-items: center;
             gap: 15px;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.2);
             padding: 12px 24px;
             border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .spinner {
@@ -299,16 +273,6 @@
 
         .queue-text { display: flex; flex-direction: column; text-align: left; }
 
-        .pulse-btn {
-            animation: pulseBtn 1.5s infinite;
-        }
-
-        @keyframes pulseBtn {
-            0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb, 100, 150, 255), 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(var(--accent-rgb, 100, 150, 255), 0); }
-            100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb, 100, 150, 255), 0); }
-        }
-
         /* --- Modals --- */
         .modal-overlay {
             position: fixed;
@@ -316,35 +280,34 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2000;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.25s ease;
         }
 
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
 
         .challenge-modal {
-            background: linear-gradient(180deg, var(--card-bg) 0%, #1a1a1a 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             padding: 30px;
             border-radius: 20px;
             width: 100%;
             max-width: 380px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
             gap: 20px;
-            transform: scale(0.95) translateY(20px);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.95);
+            transition: all 0.25s ease;
         }
 
-        .modal-overlay.show .challenge-modal { transform: scale(1) translateY(0); }
+        .modal-overlay.show .challenge-modal { transform: scale(1); }
 
         .modal-title {
             font-size: 1.4rem;
@@ -357,29 +320,29 @@
         }
 
         #target-player-input {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             color: var(--text-bright);
             font-family: var(--font);
             font-size: 1.1rem;
             padding: 14px;
             outline: none;
-            transition: all 0.2s;
+            transition: border-color 0.2s;
             width: 100%;
             box-sizing: border-box;
         }
 
-        #target-player-input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(var(--accent-rgb, 100, 150, 255), 0.2); }
+        #target-player-input:focus { border-color: var(--accent); }
 
         .modal-buttons { display: flex; gap: 12px; }
 
         .btn-modal-close {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             color: var(--text-faded);
             flex: 1;
         }
-        .btn-modal-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-bright); }
+        .btn-modal-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-bright); }
 
         /* --- Toasts & Alerts --- */
         #error-toast {
@@ -397,17 +360,16 @@
             align-items: center;
             gap: 12px;
             z-index: 3000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         #error-toast.show { transform: translate(-50%, 0); }
         
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Responsive scaling for smaller/shorter screens --- */
+        /* --- Shorter/Responsive Adjustments --- */
         @media (max-width: 900px) { 
             .modes-grid { grid-template-columns: repeat(2, 1fr); gap: 16px;} 
             .mode-card { padding: 35px 20px; }
@@ -420,14 +382,13 @@
             .ranked-title { font-size: 3rem; }
         }
 
-        /* Essential fix for wide but short screens (like small laptops) */
         @media (max-height: 750px) {
             #app { padding: 1rem; }
             .header-stats { margin-bottom: 1rem; }
             .title-container { margin-bottom: 1.5rem; }
             .ranked-title { font-size: 2.8rem; }
             .modes-grid { gap: 16px; }
-            .mode-card { padding: 25px 20px; } /* Compress height */
+            .mode-card { padding: 25px 20px; }
             .mode-card i { font-size: 2rem; margin-bottom: 0.8rem; }
             .mode-card h2 { font-size: 1.2rem; }
             .mode-card p { font-size: 0.8rem; margin-top: 6px; }
@@ -442,6 +403,7 @@
         <span id="error-text">Error message</span>
     </div>
 
+    <!-- Ranked Sub-Menu Modal -->
     <div class="modal-overlay" id="ranked-modal-overlay" onclick="closeRankedModal()">
         <div class="challenge-modal" onclick="event.stopPropagation()">
             <h3 class="modal-title"><i class="fa-solid fa-trophy" style="color:var(--accent); margin-right:10px;"></i>Multiplayer</h3>
@@ -450,7 +412,7 @@
                 <button class="btn btn-play" style="width: 100%;" onclick="startMatchmaking('ranked')">
                     <i class="fa-solid fa-globe"></i> Matchmaking
                 </button>
-                <button class="btn btn-play" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-bright); box-shadow: none;" onclick="openChallengeModalFromRanked()">
+                <button class="btn btn-play" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-bright);" onclick="openChallengeModalFromRanked()">
                     <i class="fa-solid fa-user-plus"></i> Challenge 1v1
                 </button>
                 <button class="btn btn-modal-close" style="width: 100%; margin-top: 5px;" onclick="closeRankedModal()">Cancel</button>
@@ -458,6 +420,7 @@
         </div>
     </div>
 
+    <!-- 1v1 Challenge Modal -->
     <div class="modal-overlay" id="challenge-modal-overlay" onclick="closeChallengeModal()">
         <div class="challenge-modal" onclick="event.stopPropagation()">
             <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--accent); margin-right:10px;"></i>1v1 Challenge</h3>
@@ -470,6 +433,7 @@
     </div>
 
     <div id="app">
+        <!-- Top Stats -->
         <div class="header-stats" id="profile-stats">
             <div class="stat-box">
                 <i class="fa-solid fa-user"></i> <span id="username-display">Loading...</span>
@@ -484,6 +448,7 @@
             <div class="season-badge">Season 1</div>
         </div>
 
+        <!-- Unified Grid Menu -->
         <div class="modes-grid" id="main-menu">
             <a href="singleplayer/home.html" class="mode-card">
                 <i class="fa-solid fa-keyboard"></i>
@@ -504,6 +469,7 @@
             </div>
         </div>
 
+        <!-- Bottom Actions (Shop & Queue Status) -->
         <div class="bottom-actions">
             <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
                 <span class="icon-wrapper">
@@ -559,7 +525,6 @@
             isLoggedIn = true;
             accessToken = session.access_token;
 
-            // Unlock UI
             document.getElementById('card-practice').classList.remove('locked');
             document.getElementById('card-ranked').classList.remove('locked');
             document.getElementById('shop-btn').classList.remove('btn-locked');
@@ -589,7 +554,6 @@
             errorTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // --- Grid Click Handlers ---
         function handleModeClick(mode) {
             if (!isLoggedIn) {
                 return showError("Please log in to access this mode.");
@@ -602,11 +566,11 @@
             }
         }
 
-        // --- Modals ---
         function openRankedModal() {
             document.getElementById('ranked-modal-overlay').classList.add('show');
         }
 
+        // --- Modals ---
         function closeRankedModal() {
             document.getElementById('ranked-modal-overlay').classList.remove('show');
         }
@@ -622,7 +586,7 @@
             document.getElementById('target-player-input').value = '';
         }
 
-        // --- Timer Logic ---
+        // --- Timer ---
         function startTimer() {
             seconds = 0;
             const timerDisplay = document.getElementById('queue-timer');
@@ -639,7 +603,7 @@
             document.getElementById('queue-timer').innerText = "00:00";
         }
 
-        // --- Matchmaking & Queueing ---
+        // --- Queue Functions ---
         async function startMatchmaking(mode) {
             closeRankedModal();
             
@@ -781,9 +745,6 @@
                 document.getElementById('queue-action-label').innerText = statusLabel;
                 queueContainer.style.display = 'flex';
                 
-                // Reset styling in case it was modified by matchFound previously
-                cancelBtn.classList.remove('pulse-btn');
-                cancelBtn.classList.add('btn-cancel');
                 cancelBtn.style.background = 'var(--error)';
                 cancelBtn.style.pointerEvents = 'auto';
                 document.querySelector('#queue-status .spinner').style.display = 'block';
@@ -825,8 +786,6 @@
             const cancelBtn = document.getElementById('cancel-queue-btn');
             cancelBtn.innerHTML = '<i class="fa-solid fa-check"></i> Match Found!';
             cancelBtn.style.background = 'var(--accent)';
-            cancelBtn.classList.remove('btn-cancel');
-            cancelBtn.classList.add('pulse-btn');
             cancelBtn.style.pointerEvents = 'none';
             
             document.querySelector('#queue-status .spinner').style.display = 'none';
