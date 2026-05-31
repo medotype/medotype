@@ -129,13 +129,12 @@
         </div>
 
         <div class="bottom-actions">
-            <button class="btn btn-shop btn-locked" id="shop-btn" disabled>
-                <span class="icon-wrapper">
-                    <i class="fa-solid fa-store" id="shop-icon" style="margin-right: 8px;"></i>
-                    <i class="fa-solid fa-lock lock-badge"></i>
-                </span>
-                Shop
-            </button>
+<button class="btn btn-shop" id="shop-btn">
+    <span class="icon-wrapper">
+        <i class="fa-solid fa-store" id="shop-icon" style="margin-right: 8px;"></i>
+    </span>
+    Shop
+</button>
 
             <div id="queue-container">
                 <button class="btn btn-cancel" id="cancel-queue-btn" onclick="stopQueueUI()">
@@ -171,17 +170,14 @@
         let queueSubscription = null;
         let errorTimeout;
 
-        // --- Audio Setup ---
-// --- Audio Setup ---
+
         const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
         lobbyMusic.loop = true;
 
-        // Function to safely extract settings and apply them to the audio object
         function applyAudioSettings() {
             const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
             const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15%
 
-            // Calculate exact decimal value (0.0 to 1.0) for JavaScript
             lobbyMusic.volume = parseInt(musicVolumeSetting, 10) / 100;
 
             return musicEnabled;
@@ -545,6 +541,14 @@ function startLobby() {
                 bgContainer.appendChild(wordEl);
             }
         }
+
+const shopBtn = document.getElementById('shop-btn');
+
+if (shopBtn) {
+    shopBtn.addEventListener('click', function() {
+        window.location.href = '/shop/index.html'; 
+    });
+}
 
         // --- App Initializations ---
         loadUserProfile();
