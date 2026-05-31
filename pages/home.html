@@ -11,9 +11,53 @@
     <link rel="stylesheet" href="../../data/css/root.css">
     <link rel="stylesheet" href="home.css">
     <script src="../../data/js/theme.js"></script>
-    
+
+    <style>
+        /* Splash screen styling */
+        #welcome-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0b0c10; /* fallback dark background */
+            background: var(--bg, #0b0c10);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            cursor: pointer;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        #welcome-splash h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--text-bright, #ffffff);
+            margin-bottom: 15px;
+            letter-spacing: -0.03em;
+        }
+        #welcome-splash p {
+            font-size: 1.1rem;
+            color: var(--accent, #4fc3f7);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            animation: pulse 1.8s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
+
+    <div id="welcome-splash" onclick="startLobby()">
+        <h1>MeDoType</h1>
+        <p>Click anywhere to continue</p>
+    </div>
 
     <div id="background-words"></div>
 
@@ -130,19 +174,21 @@
         // --- Audio Setup ---
         const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
         lobbyMusic.loop = true;
-        lobbyMusic.volume = 0.4; // Adjusted to 40% volume so it isn't too loud by default
+        lobbyMusic.volume = 0.15; // Set to a quieter, comfortable ambient level (15%)
 
-        function initLobbyMusic() {
-            lobbyMusic.play().catch(() => {
-                // Autoplay restriction triggered; play on first user interaction instead
-                const playOnInteraction = () => {
-                    lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
-                    document.removeEventListener('click', playOnInteraction);
-                    document.removeEventListener('keydown', playOnInteraction);
-                };
-                document.addEventListener('click', playOnInteraction);
-                document.addEventListener('keydown', playOnInteraction);
-            });
+        // Called when the user clicks the initial screen overlay
+        function startLobby() {
+            // Fade out splash overlay
+            const splash = document.getElementById('welcome-splash');
+            splash.style.opacity = '0';
+            
+            // Completely remove overlay from DOM after transition completes
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+
+            // Safely start audio playback now that interaction is secured
+            lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
         }
 
         async function loadUserProfile() {
@@ -474,9 +520,9 @@
             }
         }
 
+        // --- App Initializations ---
         loadUserProfile();
         createFloatingWords();
-        initLobbyMusic();
     </script>
 </body>
 </html>
