@@ -312,65 +312,81 @@
 
     <div id="toast">Avatar updated successfully!</div>
 
-    <script>
-    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
-    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+   <script>
+const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    let myId = null;
-    let myElo = 0;
-    let equippedAvatar = "";
+let myId = null;
+let myElo = 0;
+let equippedAvatarId = "0"; // Tracks the equipped ID from your profiles table
 
-    const shopCatalog = [
-        { id: "0", name: "Default", requiredElo: 0, src: "../../data/images/0.png" },
-        { id: "50", name: "Melt", requiredElo: 50, src: "../../data/images/50.png" },
-        { id: "125", name: "SOS", requiredElo: 125, src: "../../data/images/125.png" },
-        { id: "300", name: "Demon", requiredElo: 300, src: "../../data/images/300.png" },
-        { id: "400", name: "Angel", requiredElo: 400, src: "../../data/images/400.png" }
-    ];
+// Your catalog with IDs and Categories built-in
+const shopCatalog = [
+    { id: "0", name: "Default", requiredElo: 0, src: "../../data/images/0.png", category: "Starter" },
+    { id: "50", name: "Melt", requiredElo: 50, src: "../../data/images/50.png", category: "Bronze Tier" },
+    { id: "125", name: "SOS", requiredElo: 125, src: "../../data/images/125.png", category: "Silver Tier" },
+    { id: "300", name: "Demon", requiredElo: 300, src: "../../data/images/300.png", category: "Gold Tier" },
+    { id: "400", name: "Angel", requiredElo: 400, src: "../../data/images/400.png", category: "Diamond Tier" }
+];
 
-    async function initShop() {
-        console.log("[SHOP] Fetching user verification data...");
-        const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
-        
-        if (sessionErr || !session) {
-            console.error("[SHOP] Session validation failed:", sessionErr);
-            return window.location.href = 'home.html';
-        }
-        
-        myId = session.user.id;
+async function initShop() {
+    console.log("[SHOP] Fetching user verification data...");
+    const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+    
+    if (sessionErr || !session) {
+        console.error("[SHOP] Session validation failed:", sessionErr);
+        return window.location.href = 'home.html';
+    }
+    
+    myId = session.user.id;
 
-        const { data: profile, error: profileErr } = await _supabase
-            .from('profiles')
-            .select('elo, avatar_url')
-            .eq('id', myId)
-            .single();
+    -- Pulling from your actual PROFILES table
+    const { data: profile, error: profileErr } = await _supabase
+        .from('profiles')
+        .select('elo, avatar_id') 
+        .eq('id', myId)
+        .single();
 
-        if (profileErr) {
-            console.warn("[SHOP] Error loading extended profile data, initializing defaults:", profileErr);
-        }
-
-        myElo = profile?.elo || 0;
-        equippedAvatar = profile?.avatar_url || "";
-
-        document.getElementById('user-elo').innerText = myElo;
-        
-        renderShop();
+    if (profileErr) {
+        console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
     }
 
-    function renderShop() {
-        const grid = document.getElementById('shop-grid-container');
-        grid.innerHTML = "";
+    myElo = profile?.elo || 0;
+    equippedAvatarId = profile?.avatar_id || "0"; 
 
-        shopCatalog.forEach(item => {
+    document.getElementById('user-elo').innerText = myElo;
+    
+    renderShop();
+}
+
+function renderShop() {
+    const container = document.getElementById('shop-grid-container');
+    container.innerHTML = "";
+
+    // Grouping items by category dynamically from the catalog above
+    const categories = [...new Set(shopCatalog.map(item => item.category))];
+
+    categories.forEach(category => {
+        // Create a category section header
+        const header = document.createElement('h2');
+        header.className = 'category-header';
+        header.style.cssText = "width: 100%; grid-column: 1 / -1; margin-top: 1.5rem; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 1.1rem; letter-spacing: 0.05em;";
+        header.innerText = category;
+        container.appendChild(header);
+
+        // Filter and display items belonging to this category
+        const itemsInCategory = shopCatalog.filter(item => item.category === category);
+
+        itemsInCategory.forEach(item => {
             const isUnlocked = myElo >= item.requiredElo;
-            const isEquipped = equippedAvatar === item.src;
+            const isEquipped = equippedAvatarId === item.id;
             
             let actionBtnHtml = "";
             if (isEquipped) {
                 actionBtnHtml = `<button class="btn-action equipped" disabled>Equipped</button>`;
             } else if (isUnlocked) {
-                actionBtnHtml = `<button class="btn-action" onclick="equipItem('${item.src}')">Equip</button>`;
+                actionBtnHtml = `<button class="btn-action" onclick="equipItem('${item.id}')">Equip</button>`;
             } else {
                 actionBtnHtml = `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Locked</button>`;
             }
@@ -391,39 +407,42 @@
                 </div>
                 ${actionBtnHtml}
             `;
-            grid.appendChild(card);
+            container.appendChild(card);
         });
+    });
+}
+
+async function equipItem(itemId) {
+    equippedAvatarId = itemId;
+
+    -- Updating your actual PROFILES table on the server side
+    const { error } = await _supabase
+        .from('profiles')
+        .update({ avatar_id: itemId })
+        .eq('id', myId);
+
+    if (error) {
+        console.error("[SHOP] Error equipping item:", error);
+        showToast("Failed to equip asset.");
+        return;
     }
 
-    async function equipItem(itemSrc) {
-        equippedAvatar = itemSrc;
+    showToast("Avatar successfully updated!");
+    renderShop(); 
+}
 
-        const { error } = await _supabase.from('profiles').update({
-            avatar_url: itemSrc
-        }).eq('id', myId);
+let toastTimeout;
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
 
-        if (error) {
-            console.error("[SHOP] Configuration assignment error:", error);
-            showToast("Failed to equip asset.");
-            return;
-        }
-
-        showToast("Avatar successfully updated!");
-        renderShop();
-    }
-
-    let toastTimeout;
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.innerText = message;
-        toast.classList.add('show');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
-    initShop();
-    </script>
+initShop();
+</script>
 </body>
 </html>
