@@ -127,6 +127,24 @@
         let queueSubscription = null;
         let errorTimeout;
 
+        // --- Audio Setup ---
+        const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
+        lobbyMusic.loop = true;
+        lobbyMusic.volume = 0.4; // Adjusted to 40% volume so it isn't too loud by default
+
+        function initLobbyMusic() {
+            lobbyMusic.play().catch(() => {
+                // Autoplay restriction triggered; play on first user interaction instead
+                const playOnInteraction = () => {
+                    lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
+                    document.removeEventListener('click', playOnInteraction);
+                    document.removeEventListener('keydown', playOnInteraction);
+                };
+                document.addEventListener('click', playOnInteraction);
+                document.addEventListener('keydown', playOnInteraction);
+            });
+        }
+
         async function loadUserProfile() {
             const { data: { session } } = await _supabase.auth.getSession();
             
@@ -426,8 +444,6 @@
             }
         });
 
-        loadUserProfile();
-
         function createFloatingWords() {
             const typingWords = [
                 "hello", "goodbye", "client", "wording", "medotype", 
@@ -458,7 +474,9 @@
             }
         }
 
+        loadUserProfile();
         createFloatingWords();
+        initLobbyMusic();
     </script>
 </body>
 </html>
