@@ -172,40 +172,51 @@
         let errorTimeout;
 
         // --- Audio Setup ---
-const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
+// --- Audio Setup ---
+        const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
         lobbyMusic.loop = true;
 
+        // Function to safely extract settings and apply them to the audio object
         function applyAudioSettings() {
             const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
-            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15
-setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
+            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15%
 
-            // Apply the volume and state settings right before playing
-            const shouldPlay = applyAudioSettings();
+            // Calculate exact decimal value (0.0 to 1.0) for JavaScript
+            lobbyMusic.volume = parseInt(musicVolumeSetting, 10) / 100;
 
-            if (shouldPlay) {
-                lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
-            }
+            return musicEnabled;
         }
 
+        // Handle live multi-tab updates seamlessly
         window.addEventListener('storage', (e) => {
             if (e.key === 'lobby-music-volume' || e.key === 'lobby-music-enabled') {
                 const shouldPlay = applyAudioSettings();
                 if (!shouldPlay) {
                     lobbyMusic.pause();
                 } else if (lobbyMusic.paused) {
-                    lobbyMusic.play().catch(err => console.log(err));
+                    lobbyMusic.play().catch(err => console.log("Audio play blocked: ", err));
                 }
             }
         });
+
         // Called when the user clicks the initial screen overlay
         function startLobby() {
             // Fade out splash overlay
             const splash = document.getElementById('welcome-splash');
             splash.style.opacity = '0';
             
+            // Completely remove overlay from DOM after transition completes
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+
+            // Fetch the accurate user preferences right at launch
+            const shouldPlay = applyAudioSettings();
+
+            if (shouldPlay) {
+                lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
+            }
+        }
             // Completely remove overlay from DOM after transition completes
             setTimeout(() => {
                 splash.style.display = 'none';
