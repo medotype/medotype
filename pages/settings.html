@@ -149,6 +149,11 @@
             padding-bottom: 0;
         }
 
+        .setting-info {
+            flex: 1;
+            padding-right: 1rem;
+        }
+
         .setting-info h3 {
             margin: 0 0 0.25rem 0;
             font-size: 1rem;
@@ -159,6 +164,61 @@
             margin: 0;
             font-size: 0.85rem;
             color: var(--text-faded);
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Volume Range Slider */
+        .volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg);
+            outline: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s;
+        }
+
+        .volume-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .volume-text {
+            font-size: 0.85rem;
+            color: var(--text-bright);
+            width: 35px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }
 
         select {
@@ -221,19 +281,37 @@
 
         <div class="settings-section">
             <h2><i class="fa-solid fa-palette"></i> Appearance</h2>
-            <div class="theme-grid" id="themeGrid">
-                </div>
+            <div class="theme-grid" id="themeGrid"></div>
         </div>
 
-        <div class="settings-section section-disabled">
-            <h2>
-                <i class="fa-solid fa-volume-high"></i> Audio
-                <span class="soon-badge">Coming Soon</span>
-            </h2>
+        <div class="settings-section">
+            <h2><i class="fa-solid fa-volume-high"></i> Audio</h2>
             
             <div class="setting-row">
                 <div class="setting-info">
-                    <h3>Typing Sounds</h3>
+                    <h3>Lobby Music</h3>
+                    <p>Play atmospheric background music while in menus</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="musicToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-row" id="volumeRow">
+                <div class="setting-info">
+                    <h3>Music Volume</h3>
+                    <p>Adjust the background lobby track balance</p>
+                </div>
+                <div class="setting-control">
+                    <input type="range" id="musicVolume" class="volume-slider" min="0" max="100" value="15">
+                    <span id="volumeVal" class="volume-text">15%</span>
+                </div>
+            </div>
+
+            <div class="setting-row section-disabled" style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1.5rem;">
+                <div class="setting-info">
+                    <h3>Typing Sounds <span class="soon-badge">Coming Soon</span></h3>
                     <p>Play a sound on every keystroke</p>
                 </div>
                 <label class="switch">
@@ -242,9 +320,9 @@
                 </label>
             </div>
 
-            <div class="setting-row">
+            <div class="setting-row section-disabled">
                 <div class="setting-info">
-                    <h3>Sound Pack</h3>
+                    <h3>Sound Pack <span class="soon-badge">Coming Soon</span></h3>
                     <p>Choose your keyboard switch style</p>
                 </div>
                 <select id="soundPack" disabled>
@@ -269,11 +347,11 @@
         ];
 
         const themeGrid = document.getElementById('themeGrid');
-        
         const savedTheme = localStorage.getItem('user-theme') || 'default';
 
         if (savedTheme !== 'default') document.body.className = savedTheme;
 
+        // Populate Theme Grid
         themes.forEach(theme => {
             const card = document.createElement('div');
             card.className = `theme-card ${savedTheme === theme.id ? 'active' : ''}`;
@@ -302,6 +380,56 @@
                 }
             });
         }
+
+        // --- Audio Settings Configuration Logic ---
+        const musicToggle = document.getElementById('musicToggle');
+        const musicVolume = document.getElementById('musicVolume');
+        const volumeVal = document.getElementById('volumeVal');
+        const volumeRow = document.getElementById('volumeRow');
+
+        // Fetch user audio properties or fallback to defaults
+        const savedMusicState = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
+        const savedVolumeLevel = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15%
+
+        // Initialize UI Elements State
+        musicToggle.checked = savedMusicState;
+        musicVolume.value = savedVolumeLevel;
+        volumeVal.innerText = `${savedVolumeLevel}%`;
+        if(!savedMusicState) {
+            volumeRow.style.opacity = '0.4';
+            musicVolume.disabled = true;
+        }
+
+        // Track Music Availability Configuration Check
+        musicToggle.addEventListener('change', (e) => {
+            const isEnabled = e.target.checked;
+            localStorage.setItem('lobby-music-enabled', isEnabled);
+            
+            if (isEnabled) {
+                volumeRow.style.opacity = '1';
+                musicVolume.disabled = false;
+            } else {
+                volumeRow.style.opacity = '0.4';
+                musicVolume.disabled = true;
+            }
+
+            // Optional Communication Dispatch to active Audio Engine elements if present
+            window.dispatchEvent(new CustomEvent('lobby-audio-update', { 
+                detail: { enabled: isEnabled, volume: musicVolume.value / 100 } 
+            }));
+        });
+
+        // Track Volume Sliding Updates
+        musicVolume.addEventListener('input', (e) => {
+            const vol = e.target.value;
+            volumeVal.innerText = `${vol}%`;
+            localStorage.setItem('lobby-music-volume', vol);
+
+            // Optional Communication Dispatch to active Audio Engine elements if present
+            window.dispatchEvent(new CustomEvent('lobby-audio-update', { 
+                detail: { enabled: musicToggle.checked, volume: vol / 100 } 
+            }));
+        });
     </script>
 </body>
 </html>
