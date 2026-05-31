@@ -2,84 +2,482 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | Unsupported Device</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/data/css/root.css">
-    <script src="../../data/js/theme.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MeDoType Mini | Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background-color: var(--bg);
-            color: var(--text-bright);
-            font-family: var(--font);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+        :root {
+            --bg: #111216;
+            --card-bg: #1c1d24;
+            --accent: #5c6bc0;
+            --text-bright: #f5f6f8;
+            --text-faded: #656874;
+            --error: #ef5350;
+            --font: 'Inter', sans-serif;
         }
 
-        .unsupported-card {
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 24px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .stat-label { 
-            color: var(--text-faded); 
-            text-transform: uppercase; 
-            font-size: 0.75rem; 
-            letter-spacing: 0.15em; 
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-bright); 
+            font-family: var(--font); 
             margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100dvh; 
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .error-val { 
-            font-size: 2.2rem; 
-            font-weight: 600; 
-            color: var(--accent); 
-            margin: 1.5rem 0; 
-            text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); 
-            line-height: 1.2;
-        }
-
-        .status-msg { 
-            font-size: 0.8rem; 
-            padding: 12px; 
-            border-radius: 8px; 
+        #app { 
             width: 100%; 
-            box-sizing: border-box; 
-            line-height: 1.4;
+            max-width: 420px; /* Snug fit for vertical mobile profiles */
+            text-align: center; 
+            padding: 1rem; 
+            box-sizing: border-box;
+            position: relative;
         }
         
-        .msg-guest { 
-            background: rgba(100, 102, 105, 0.1); 
-            color: var(--text-faded); 
+        /* Mobile Mode Navigation */
+        .mode-settings-container { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+        .mode-group { display: flex; background: var(--card-bg); padding: 4px; border-radius: 12px; gap: 2px; }
+        .mode-item { padding: 8px 12px; font-size: 0.8rem; font-weight: 600; color: var(--text-faded); cursor: pointer; border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; gap: 4px; }
+        .mode-item.active { color: var(--accent); background: rgba(255, 255, 255, 0.03); }
+        .mode-item.blitz-active { color: #ff4500; text-shadow: 0 0 10px rgba(255, 69, 0, 0.3); }
+        
+        /* Stats Dashboard */
+        .header-stats { display: flex; justify-content: center; align-items: center; gap: 20px; width: 100%; margin-bottom: 1.5rem; height: 2rem; }
+        .stat-box { display: flex; align-items: center; gap: 6px; font-size: 1.05rem; font-weight: 500; color: var(--text-faded); min-width: 65px; justify-content: center; font-variant-numeric: tabular-nums; }
+        .stat-box i { color: var(--accent); font-size: 0.95rem; }
+        #combo-stat { transition: transform 0.1s; }
+        #combo-stat.broken { color: var(--error); transform: translateX(-5px); }
+
+        /* Left-Aligned, Fixed-Height Multi-line Viewport */
+        #typing-viewport { 
+            height: 80px; /* Strictly keeps 2 lines visible */
+            overflow: hidden; 
+            position: relative; 
+            margin-bottom: 1rem; 
+            background: rgba(255,255,255,0.01);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px dashed rgba(255,255,255,0.06);
+            box-sizing: border-box;
         }
+        
+        /* Left-aligned layout stops words from jumping horizontally on wrap */
+        #word-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px 12px; 
+            justify-content: flex-start; 
+            align-items: flex-start; 
+            position: relative; 
+            top: 0; 
+            transition: top 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        
+        .word { 
+            font-size: 1.25rem; /* Downscaled perfectly for 360px vertical screens */
+            font-weight: 400; 
+            color: var(--text-faded); 
+            letter-spacing: -0.01em; 
+            position: relative; 
+            display: inline-block; 
+            white-space: nowrap; 
+            line-height: 1.4;
+        }        
+        .letter { position: relative; transition: color 0.05s ease; }
+        .letter.correct { color: var(--text-bright); }
+        .letter.incorrect { color: var(--error); border-bottom: 2px solid var(--error); }
+        
+        /* Smooth Mobile Caret */
+        .letter.active-char::before { content: ''; position: absolute; left: -1px; top: 15%; height: 70%; width: 2px; background-color: var(--accent); animation: blink 1s infinite; }
+        .word.active-end::after { content: ''; position: absolute; right: -5px; top: 15%; height: 70%; width: 2px; background-color: var(--accent); animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        #tap-prompt { font-size: 0.85rem; color: var(--accent); margin-top: 0.5rem; opacity: 0.8; font-weight: 500; }
+
+        /* Safe Hidden Proxy Input for Mobile Layouts */
+        #mobile-input-proxy { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            opacity: 0; 
+            pointer-events: none; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+        }
+
+        /* Results Modal Overlay */
+        #results-screen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 2rem; border-radius: 20px; width: 85%; max-width: 320px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 10; flex-direction: column; align-items: center; box-sizing: border-box; }
+        .stat-val { font-size: 3.2rem; font-weight: 600; color: var(--accent); margin: 0; }
+        .stat-label { color: var(--text-faded); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; margin: 4px 0; }
+        #pb-tag { color: #ffd700; font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: none; text-transform: uppercase; }
+        
+        #restart-btn { margin-top: 1.5rem; background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 10px; font-family: var(--font); font-weight: 600; cursor: pointer; width: 100%; -webkit-appearance: none; }
     </style>
 </head>
 <body>
 
-    <div class="unsupported-card">
-        <p class="stat-label">MeDoType</p>
-        <h1 class="error-val">Mobile isn't supported yet</h1>
+    <input type="text" id="mobile-input-proxy" autocomplete="off" autocapitalize="none" spellcheck="false">
 
-        <div class="status-msg msg-guest">
-            Please switch to a desktop device with a physical keyboard to play.
+    <div id="app">
+        <div class="mode-settings-container">
+            <div class="mode-group" id="mode-nav"></div>
+        </div>
+        
+        <div class="header-stats">
+            <div id="mode-stat-container" class="stat-box">
+                <i id="mode-icon" class="fa-solid fa-clock"></i> <span id="stat-val">--</span>
+            </div>
+            <div id="live-wpm-container" class="stat-box">
+                <i class="fa-solid fa-bolt"></i> <span id="wpm-val">0</span>
+            </div>
+            <div id="combo-stat" class="stat-box">
+                <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
+            </div>
+        </div>
+
+        <div id="typing-viewport">
+            <div id="word-container"></div>
+        </div>
+        
+        <div id="tap-prompt"><i class="fa-solid fa-keyboard"></i> Tap the box above to start typing</div>
+
+        <div id="results-screen">
+            <p class="stat-label">Words Per Minute</p>
+            <h1 class="stat-val" id="wpm-display">0</h1>
+            <p class="stat-label" id="acc-display">Acc: 0%</p>
+            <div id="pb-tag"><i class="fa-solid fa-crown"></i> New Personal Best!</div>
+            <button id="restart-btn" onclick="resetGame()">Try Again</button>
         </div>
     </div>
 
+    <script>
+        const availableModes = [
+            { id: "time15", type: "time", label: "15s", value: 15, renderCount: 40 },
+            { id: "time30", type: "time", label: "30s", value: 30, renderCount: 65 },
+            { id: "words25", type: "words", label: "25w", value: 25, renderCount: 25 },
+            { id: "blitz", type: "time", label: "Blitz", value: 20, renderCount: 50 }
+        ];
+
+        const fallbackWords = ["the", "of", "and", "to", "in", "is", "you", "that", "it", "he", "was", "for", "on", "are", "as", "with", "his", "they", "at", "be", "this", "have", "from", "or", "one", "had", "by", "word", "but", "not", "what", "all", "were", "we", "when", "your", "can", "said", "there", "use", "an", "each", "which", "she", "do", "how", "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these", "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", "more", "write", "go", "see", "number", "no", "way", "could", "people", "my", "than", "first", "water", "been", "call", "who", "oil", "its", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part"];
+        let wordsList = [...fallbackWords];
+        let activeModeConfig = availableModes[0];
+
+        let isStarted = false;
+        let activeWordIdx = 0;
+        let activeCharIdx = 0;
+        let startTime = null;
+        let timerInterval = null;
+        let correctChars = 0;
+        let totalKeystrokes = 0;
+        let keyPressTimestamps = [];
+        let currentCombo = 0;
+
+        const container = document.getElementById('word-container');
+        const statVal = document.getElementById('stat-val');
+        const wpmVal = document.getElementById('wpm-val');
+        const comboStat = document.getElementById('combo-stat');
+        const comboVal = document.getElementById('combo-val');
+        const modeIcon = document.getElementById('mode-icon');
+        const results = document.getElementById('results-screen');
+        const inputProxy = document.getElementById('mobile-input-proxy');
+        const viewport = document.getElementById('typing-viewport');
+        const tapPrompt = document.getElementById('tap-prompt');
+
+        // Capture window clicks inside the typing zone to force open keyboard
+        viewport.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(results.style.display !== 'flex') {
+                inputProxy.focus();
+                tapPrompt.style.opacity = '0.3';
+            }
+        });
+
+        document.addEventListener('click', () => {
+            if(results.style.display !== 'flex' && isStarted === false) {
+                tapPrompt.style.opacity = '1';
+            }
+        });
+
+        function initApp() {
+            buildNav();
+            selectMode(availableModes[0]);
+            setupMobileInputEngine();
+        }
+
+        function buildNav() {
+            const nav = document.getElementById('mode-nav');
+            nav.innerHTML = '';
+            availableModes.forEach(mode => {
+                const div = document.createElement('div');
+                div.className = 'mode-item';
+                div.id = `mode-${mode.id}`;
+                let iconClass = mode.type === 'time' ? 'fa-clock' : 'fa-font';
+                if (mode.id === 'blitz') iconClass = 'fa-fire';
+                div.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${mode.label}`;
+                div.onclick = (e) => { e.stopPropagation(); selectMode(mode); };
+                nav.appendChild(div);
+            });
+        }
+
+        function selectMode(mode) {
+            activeModeConfig = mode;
+            document.querySelectorAll('.mode-item').forEach(el => el.classList.remove('active', 'blitz-active'));
+            const activeEl = document.getElementById(`mode-${mode.id}`);
+            if (activeEl) {
+                activeEl.classList.add(mode.id === 'blitz' ? 'blitz-active' : 'active');
+            }
+            resetGame();
+        }
+
+        function updateCaret() {
+            document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
+                el.classList.remove('active-char', 'active-end', 'active');
+            });
+
+            const words = container.querySelectorAll('.word');
+            const currentWord = words[activeWordIdx];
+            if (!currentWord) return;
+
+            currentWord.classList.add('active');
+            const letters = currentWord.querySelectorAll('.letter');
+
+            if (activeCharIdx < letters.length) {
+                letters[activeCharIdx].classList.add('active-char');
+            } else {
+                currentWord.classList.add('active-end');
+            }
+        }
+
+        function updateCombo(reset = false) {
+            if (reset) {
+                currentCombo = 0;
+                comboStat.classList.add('broken');
+                setTimeout(() => comboStat.classList.remove('broken'), 200);
+            } else {
+                currentCombo++;
+            }
+            comboVal.innerText = currentCombo;
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            isStarted = false;
+            activeWordIdx = 0;
+            activeCharIdx = 0;
+            correctChars = 0;
+            totalKeystrokes = 0;
+            startTime = null;
+            keyPressTimestamps = [];
+            currentCombo = 0;
+            comboVal.innerText = "0";
+            wpmVal.innerText = "0";
+
+            container.style.top = "0px";
+            results.style.display = 'none';
+            tapPrompt.style.opacity = '1';
+            
+            // "abc" baseline guarantees input mutations work everywhere
+            inputProxy.value = "abc"; 
+
+            if (activeModeConfig.type === 'time') {
+                modeIcon.className = 'fa-solid fa-clock';
+                statVal.innerText = activeModeConfig.value;
+            } else {
+                modeIcon.className = 'fa-solid fa-font';
+                statVal.innerText = `0 / ${activeModeConfig.value}`;
+            }
+
+            const count = activeModeConfig.renderCount || 30;
+            const shuffled = [...wordsList].sort(() => Math.random() - 0.5).slice(0, count);
+            
+            container.innerHTML = shuffled.map((w) => `
+                <span class="word">${w.split('').map(c => `<span class="letter">${c}</span>`).join('')}</span>
+            `).join('');
+
+            updateCaret();
+        }
+
+        function updateLiveStats() {
+            if (!startTime) return;
+            const elapsedMs = Date.now() - startTime;
+            const durationMinutes = elapsedMs / 60000;
+            const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+            wpmVal.innerText = currentWpm;
+
+            if (activeModeConfig.type === 'time') {
+                let left = Math.ceil(activeModeConfig.value - (elapsedMs / 1000));
+                if (left <= 0) {
+                    left = 0;
+                    finish();
+                }
+                statVal.innerText = left;
+            }
+        }
+
+        // Mutation tracking system logic built specifically for mobile engines
+        function setupMobileInputEngine() {
+            const baseline = "abc";
+            inputProxy.value = baseline;
+            
+            inputProxy.addEventListener('input', () => {
+                if (results.style.display === 'flex' || !activeModeConfig) return;
+                
+                const curVal = inputProxy.value;
+                
+                // If text length drops below baseline, a deletion action occurred
+                if (curVal.length < baseline.length) {
+                    processBackspace();
+                } 
+                // Buffer added text strings
+                else if (curVal.length > baseline.length) {
+                    const insertedText = curVal.substring(baseline.length);
+                    
+                    if (insertedText === " ") {
+                        processSpace();
+                    } else {
+                        // Flushes multi-key updates (like swift typing/predictive selections)
+                        for (let i = 0; i < insertedText.length; i++) {
+                            processAlphaCharacter(insertedText.charAt(i));
+                        }
+                    }
+                }
+                
+                inputProxy.value = baseline; // Instantly lock baseline state
+                updateCaret();
+            });
+        }
+
+        function startSystemClock() {
+            isStarted = true;
+            startTime = Date.now();
+            timerInterval = setInterval(updateLiveStats, 1000);
+            tapPrompt.style.opacity = '0.1';
+        }
+
+        function processAlphaCharacter(char) {
+            if (!isStarted) startSystemClock();
+
+            const words = container.querySelectorAll('.word');
+            const currentWord = words[activeWordIdx];
+            if (!currentWord) return;
+            const letters = currentWord.querySelectorAll('.letter');
+
+            if (activeCharIdx < letters.length) {
+                totalKeystrokes++;
+                keyPressTimestamps.push(Date.now());
+                
+                if (char === letters[activeCharIdx].innerText) {
+                    letters[activeCharIdx].classList.add('correct');
+                    correctChars++;
+                    updateCombo(false);
+                } else {
+                    letters[activeCharIdx].classList.add('incorrect');
+                    updateCombo(true);
+                }
+                activeCharIdx++;
+
+                if (activeModeConfig.type === 'words' && activeWordIdx === activeModeConfig.value - 1 && activeCharIdx === letters.length) {
+                    finish();
+                }
+            }
+        }
+
+        function processBackspace() {
+            const words = container.querySelectorAll('.word');
+            const currentWord = words[activeWordIdx];
+            if (!currentWord) return;
+            const letters = currentWord.querySelectorAll('.letter');
+
+            if (activeCharIdx > 0) {
+                activeCharIdx--;
+                letters[activeCharIdx].className = 'letter';
+            } else if (activeWordIdx > 0) {
+                activeWordIdx--;
+                const prevWord = words[activeWordIdx];
+                const prevLetters = prevWord.querySelectorAll('.letter');
+                activeCharIdx = prevLetters.length;
+                handleScroll(prevWord);
+                if (activeModeConfig.type === 'words') statVal.innerText = `${activeWordIdx} / ${activeModeConfig.value}`;
+            }
+        }
+
+        function processSpace() {
+            if (!isStarted) return;
+            const words = container.querySelectorAll('.word');
+            
+            if (activeCharIdx > 0) {
+                if (activeModeConfig.type === 'words' && activeWordIdx + 1 >= activeModeConfig.value) {
+                    finish(); 
+                    return;
+                }
+                activeWordIdx++;
+                activeCharIdx = 0;
+                
+                if (activeWordIdx < words.length) {
+                    handleScroll(words[activeWordIdx]);
+                }
+                if (activeModeConfig.type === 'words') statVal.innerText = `${activeWordIdx} / ${activeModeConfig.value}`;
+            }
+        }
+
+        function handleScroll(activeWord) {
+            const offset = activeWord.offsetTop;
+            // Snaps line transitions up dynamically based on line-height variations
+            if (offset > 25) {
+                container.style.top = `-${offset - 5}px`;
+            } else {
+                container.style.top = "0px";
+            }
+        }
+
+        function finish() {
+            clearInterval(timerInterval);
+            inputProxy.blur();
+
+            const durationMinutes = (Date.now() - startTime) / 60000;
+            const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+            const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
+
+            let isBot = false;
+            if (keyPressTimestamps.length > 10) {
+                let intervals = [];
+                for (let i = 1; i < keyPressTimestamps.length; i++) {
+                    intervals.push(keyPressTimestamps[i] - keyPressTimestamps[i - 1]);
+                }
+                let avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
+                if (Math.sqrt(variance) < 4 || wpm > 280) isBot = true;
+            }
+
+            let isNewPB = false;
+            if (!isBot && wpm >= 10 && acc >= 50) {
+                const storageKey = `medotype_pb_${activeModeConfig.id}`;
+                const localPB = localStorage.getItem(storageKey) || 0;
+                if (wpm > parseInt(localPB)) {
+                    localStorage.setItem(storageKey, wpm);
+                    isNewPB = true;
+                }
+            }
+
+            document.getElementById('wpm-display').innerText = wpm;
+            document.getElementById('acc-display').innerText = `Acc: ${acc}%`;
+            document.getElementById('pb-tag').style.display = isNewPB ? 'block' : 'none';
+            results.style.display = 'flex';
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (results.style.display !== 'flex' && document.activeElement !== inputProxy) {
+                inputProxy.focus();
+            }
+        });
+
+        initApp();
+    </script>
 </body>
 </html>
