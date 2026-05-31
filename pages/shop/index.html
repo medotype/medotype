@@ -413,7 +413,6 @@ function renderShop() {
 async function equipItem(itemId) {
     equippedAvatarId = itemId;
 
-    -- Updating your actual PROFILES table on the server side
     const { error } = await _supabase
         .from('profiles')
         .update({ avatar_id: itemId })
