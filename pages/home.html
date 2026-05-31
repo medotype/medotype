@@ -408,7 +408,7 @@
                 queueSubscription = null;
             }
 
-            const targetPage = (mode === 'ranked') ? 'game.html' : '1v1.html';
+            const targetPage = (mode === 'ranked') ? '/ranked/game.html' : '/ranked/1v1.html';
             setTimeout(() => { window.location.href = `${targetPage}?${matchId}`; }, 1800);
         }
 
