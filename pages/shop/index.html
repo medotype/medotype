@@ -128,7 +128,6 @@
             margin-top: 2px;
         }
 
-        /* --- Catalog Grid --- */
         .shop-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -150,7 +149,6 @@
             box-sizing: border-box;
         }
 
-        /* Clean, non-glowing card hover */
         .shop-card:not(.locked):hover {
             transform: translateY(-4px);
             border-color: var(--accent);
@@ -219,7 +217,6 @@
             color: #10b981;
         }
 
-        /* --- Buttons --- */
         .btn-action {
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-bright);
@@ -254,7 +251,6 @@
             opacity: 1 !important;
         }
 
-        /* --- Clean Matte Notification Toast --- */
         #toast {
             position: fixed;
             bottom: 24px;
@@ -294,8 +290,7 @@
 <body>
 
     <div id="app">
-        <!-- Structural Fix: Added functional navigation container back button -->
-        <button class="btn-back" onclick="window.location.href='home.html'">
+        <button class="btn-back" onclick="window.location.href='../home.html'">
             <i class="fa-solid fa-arrow-left"></i> Back to Home
         </button>
         
