@@ -199,30 +199,30 @@
             }
         });
 
-        // Called when the user clicks the initial screen overlay
         function startLobby() {
-            // Fade out splash overlay
-            const splash = document.getElementById('welcome-splash');
-            splash.style.opacity = '0';
-            
-            // Completely remove overlay from DOM after transition completes
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
+    const splash = document.getElementById('welcome-splash');
 
-            // Fetch the accurate user preferences right at launch
+    splash.style.opacity = '0';
+
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
+    const shouldPlay = applyAudioSettings();
+
+    if (shouldPlay) {
+        lobbyMusic.play().catch(err => {
+            console.log("Audio playback failed:", err);
+        });
+    }
+}
             const shouldPlay = applyAudioSettings();
 
             if (shouldPlay) {
                 lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
             }
         }
-            // Completely remove overlay from DOM after transition completes
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
 
-            // Safely start audio playback now that interaction is secured
             lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
         }
 
