@@ -15,6 +15,8 @@
 </head>
 <body>
 
+    <div id="background-words"></div>
+
     <div id="error-toast">
         <i class="fa-solid fa-circle-exclamation"></i>
         <span id="error-text">Error message</span>
@@ -62,7 +64,6 @@
             <div class="season-badge">Season 1</div>
         </div>
 
-        <!-- Unified Grid Menu -->
         <div class="modes-grid" id="main-menu">
             <a href="singleplayer/home.html" class="mode-card">
                 <i class="fa-solid fa-keyboard"></i>
@@ -426,6 +427,38 @@
         });
 
         loadUserProfile();
+
+        function createFloatingWords() {
+            const typingWords = [
+                "hello", "goodbye", "client", "wording", "medotype", 
+                "zinc", "mcskully", "practice", "keyboard", "earth", 
+                "people", "germany", "world", "fly", "little", "living"
+            ];
+            const bgContainer = document.getElementById('background-words');
+            const numWords = 30; 
+
+            for (let i = 0; i < numWords; i++) {
+                let wordEl = document.createElement('div');
+                wordEl.classList.add('floating-word');
+                
+                wordEl.innerText = typingWords[Math.floor(Math.random() * typingWords.length)];
+                
+                wordEl.style.top = Math.random() * 100 + 'vh';
+                
+                let duration = Math.random() * 25 + 15;
+                wordEl.style.animationDuration = duration + 's';
+                
+                let delay = Math.random() * -40; 
+                wordEl.style.animationDelay = delay + 's';
+                
+                wordEl.style.fontSize = (Math.random() * 2 + 1) + 'rem';
+                wordEl.style.opacity = Math.random() * 0.05 + 0.03; 
+                
+                bgContainer.appendChild(wordEl);
+            }
+        }
+
+        createFloatingWords();
     </script>
 </body>
 </html>
