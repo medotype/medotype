@@ -199,7 +199,7 @@
             }
         });
 
-        function startLobby() {
+function startLobby() {
     const splash = document.getElementById('welcome-splash');
 
     splash.style.opacity = '0';
@@ -216,15 +216,6 @@
         });
     }
 }
-            const shouldPlay = applyAudioSettings();
-
-            if (shouldPlay) {
-                lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
-            }
-        }
-
-            lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
-        }
 
         async function loadUserProfile() {
             const { data: { session } } = await _supabase.auth.getSession();
