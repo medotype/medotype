@@ -319,9 +319,8 @@ const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
 let myId = null;
 let myElo = 0;
-let equippedAvatarId = "0"; // Tracks the equipped ID from your profiles table
+let equippedAvatarId = "0";
 
-// Your catalog with IDs and Categories built-in
 const shopCatalog = [
     { id: "0", name: "Default", requiredElo: 0, src: "../../data/images/0.png", category: "Starter" },
     { id: "50", name: "Melt", requiredElo: 50, src: "../../data/images/50.png", category: "Bronze Tier" },
@@ -341,7 +340,6 @@ async function initShop() {
     
     myId = session.user.id;
 
-    -- Pulling from your actual PROFILES table
     const { data: profile, error: profileErr } = await _supabase
         .from('profiles')
         .select('elo, avatar_id') 
