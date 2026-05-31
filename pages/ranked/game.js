@@ -455,9 +455,9 @@ async function endMatch() {
     } else if (myTotalScore < oppTotalScore) {
         resultText.innerText = "DEFEAT";
         resultText.style.color = "var(--error)";
-        eloText.innerText = "-25 Elo";
+        eloText.innerText = "-10 Elo";
         eloText.className = "elo-change negative";
-        newElo = Math.max(0, newElo - 25);
+        newElo = Math.max(0, newElo - 10);
     } else {
         resultText.innerText = "DRAW";
         resultText.style.color = "var(--text-bright)";
