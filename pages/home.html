@@ -172,10 +172,34 @@
         let errorTimeout;
 
         // --- Audio Setup ---
-        const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
+const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
         lobbyMusic.loop = true;
-        lobbyMusic.volume = 0.15; // Set to a quieter, comfortable ambient level (15%)
 
+        function applyAudioSettings() {
+            const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
+            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15
+setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+
+            // Apply the volume and state settings right before playing
+            const shouldPlay = applyAudioSettings();
+
+            if (shouldPlay) {
+                lobbyMusic.play().catch(err => console.log("Audio playback failed: ", err));
+            }
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'lobby-music-volume' || e.key === 'lobby-music-enabled') {
+                const shouldPlay = applyAudioSettings();
+                if (!shouldPlay) {
+                    lobbyMusic.pause();
+                } else if (lobbyMusic.paused) {
+                    lobbyMusic.play().catch(err => console.log(err));
+                }
+            }
+        });
         // Called when the user clicks the initial screen overlay
         function startLobby() {
             // Fade out splash overlay
