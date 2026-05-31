@@ -1,4 +1,4 @@
-      body { 
+body { 
             background-color: var(--bg); 
             color: var(--text-bright); 
             font-family: var(--font); 
@@ -158,7 +158,6 @@
             filter: grayscale(1);
         }
 
-        /* --- Buttons & Utility --- */
         .bottom-actions {
             margin-top: 2.5rem;
             display: flex;
@@ -227,7 +226,6 @@
         }
         .btn-locked .lock-badge { opacity: 1; transform: scale(1); }
 
-        /* --- Queue Status UI --- */
         #queue-container {
             display: none; 
             align-items: center; 
@@ -327,7 +325,6 @@
         }
         .btn-modal-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-bright); }
 
-        /* --- Toasts & Alerts --- */
         #error-toast {
             position: fixed;
             top: 20px;
@@ -375,4 +372,31 @@
             .mode-card h2 { font-size: 1.2rem; }
             .mode-card p { font-size: 0.8rem; margin-top: 6px; }
             .bottom-actions { margin-top: 1.5rem; }
+        }
+
+        #background-words {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0; 
+            pointer-events: none; 
+        }
+
+        .floating-word {
+            position: absolute;
+            color: var(--text-faded, rgba(255, 255, 255, 0.5));
+            font-family: var(--font);
+            font-weight: 800;
+            text-transform: uppercase;
+            white-space: nowrap;
+            animation: flyBy linear infinite;
+            user-select: none; 
+        }
+
+        @keyframes flyBy {
+            0% { transform: translateX(-100vw); }
+            100% { transform: translateX(100vw); }
         }
