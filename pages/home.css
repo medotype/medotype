@@ -85,7 +85,6 @@ body {
             margin-top: 0.8rem;
         }
 
-        /* --- Modes Grid --- */
         .modes-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
