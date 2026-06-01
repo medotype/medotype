@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MeDoType | Leaderboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../data/css/root.css">
+    <script src="../data/js/theme.js"></script>
+    <script src="../data/js/digbick.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --silver: #C0C0C0;
+            --bronze: #CD7F32;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-bright); 
+            font-family: var(--font); 
+            margin: 0; 
+            padding: 40px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 800px; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Back Button Styles */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-faded);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            align-self: flex-start;
+            transition: color 0.2s ease;
+        }
+
+        .back-btn:hover {
+            color: var(--accent);
+        }
+
+        /* Category Navigation Styles */
+        .category-nav {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 2rem;
+            justify-content: center;
+            border-bottom: 2px solid rgba(255,255,255,0.05);
+            padding-bottom: 15px;
+            width: 100%;
+        }
+
+        .category-btn {
+            background: none;
+            border: none;
+            color: var(--text-faded);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-family: var(--font);
+            transition: 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .category-btn:hover { color: var(--text-bright); }
+        .category-btn.active { color: var(--accent); }
+
+        .category-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -17px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 2.5rem; 
+            gap: 15px;
+        }
+
+        .header h1 { 
+            margin: 0; 
+            font-size: 1.6rem; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            letter-spacing: -0.02em;
+            white-space: nowrap;
+        }
+
+        .header h1 i { color: var(--accent); }
+
+        .mode-nav { 
+            background: var(--card-bg); 
+            padding: 5px; 
+            border-radius: 12px; 
+            display: flex; 
+            gap: 5px; 
+            border: 1px solid rgba(255,255,255,0.03);
+            /* Allows horizontal scrolling on narrow screens */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        /* Hide scrollbar for mode-nav */
+        .mode-nav::-webkit-scrollbar { display: none; }
+
+        .mode-btn { 
+            background: transparent; 
+            border: none; 
+            color: var(--text-faded); 
+            padding: 8px 16px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 0.85rem;
+            transition: 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .mode-btn:hover { color: var(--text-bright); }
+        .mode-btn.active { 
+            background: var(--bg); 
+            color: var(--accent); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .board-card { 
+            background: var(--card-bg); 
+            border-radius: 20px; 
+            padding: 10px 10px 20px 10px; 
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto; /* Allows table scrolling if absolutely necessary */
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        th { 
+            text-align: left; 
+            padding: 20px; 
+            color: var(--text-faded); 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em;
+            border-bottom: 2px solid var(--bg);
+        }
+
+        td { 
+            padding: 18px 20px; 
+            border-bottom: 1px solid rgba(255,255,255,0.02); 
+            font-size: 1rem;
+        }
+
+        .rank-col { width: 60px; color: var(--text-faded); font-weight: 600; }
+        .user-col { font-weight: 500; }
+        .wpm-col { color: var(--accent); font-weight: 700; text-align: right; }
+        .acc-col { color: var(--text-faded); text-align: right; width: 100px; font-size: 0.9rem; }
+
+        #status { text-align: center; padding: 60px 20px; color: var(--text-faded); font-style: italic; }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px 0;
+            margin-top: 10px;
+        }
+
+        .page-btn {
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-bright);
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: var(--font);
+            transition: 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: var(--text-faded);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+
+        @media (max-width: 600px) {
+            body { 
+                padding: 20px 10px; /* Reduce outer padding */
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.4rem;
+            }
+
+            .mode-nav {
+                width: 100%; /* Force full width so it can scroll horizontally */
+                box-sizing: border-box;
+            }
+
+            .category-nav {
+                gap: 15px; /* Tighter gap for tabs */
+            }
+
+            .category-btn {
+                font-size: 1rem;
+            }
+
+            /* Compress table padding and font sizes for narrow screens */
+            th { 
+                padding: 12px 10px; 
+                font-size: 0.65rem; 
+            }
+            td { 
+                padding: 14px 10px; 
+                font-size: 0.9rem; 
+            }
+            .rank-col { 
+                width: 40px; 
+            }
+            .acc-col { 
+                width: 70px; 
+            }
+
+            .pagination {
+                padding: 15px 10px 0;
+            }
+            .page-btn {
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-btn">
+        <i class="fa-solid fa-arrow-left"></i> Back to Home
+    </a>
+
+    <div class="category-nav">
+        <button class="category-btn active" id="cat-single" onclick="switchCategory('singleplayer')">Singleplayer</button>
+        <button class="category-btn" id="cat-ranked" onclick="switchCategory('ranked')">Ranked</button>
+    </div>
+
+    <div class="header">
+        <h1><i class="fa-solid fa-trophy"></i> Leaderboard</h1>
+        <div class="mode-nav" id="mode-nav"></div>
+    </div>
+
+    <div class="board-card">
+        <table id="lb-table" style="display:none">
+            <thead>
+                <tr id="table-headers">
+                    </tr>
+            </thead>
+            <tbody id="lb-body"></tbody>
+        </table>
+
+        <div id="status">fetching modes...</div>
+
+        <div class="pagination" id="pagination" style="display:none">
+            <button class="page-btn" id="prev-btn" onclick="changePage(-1)">Prev</button>
+            <span class="page-info" id="page-info">Page 1</span>
+            <button class="page-btn" id="next-btn" onclick="changePage(1)">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    let currentData = [];
+    let currentPage = 1;
+    let availableModes = [];
+    const ITEMS_PER_PAGE = 10;
+
+    let currentCategory = 'singleplayer';
+
+    async function initModes() {
+        try {
+            const response = await fetch('../data/json/modelist.json');
+            if(!response.ok) throw new Error("JSON not found");
+            availableModes = await response.json();
+
+            buildNav();
+
+            if (availableModes.length > 0) {
+                fetchLeaderboardData(availableModes[0].id);
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('status').innerText = "Error loading modes";
+        }
+    }
+
+    function buildNav() {
+        const nav = document.getElementById('mode-nav');
+        nav.innerHTML = '';
+
+        availableModes.forEach((mode, index) => {
+            const btn = document.createElement('button');
+            btn.className = index === 0 ? 'mode-btn active' : 'mode-btn';
+            btn.innerText = mode.label;
+            btn.onclick = (e) => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                fetchLeaderboardData(mode.id);
+            };
+            nav.appendChild(btn);
+        });
+    }
+
+    // Category Switcher
+    function switchCategory(cat) {
+        currentCategory = cat;
+        document.getElementById('cat-single').classList.toggle('active', cat === 'singleplayer');
+        document.getElementById('cat-ranked').classList.toggle('active', cat === 'ranked');
+
+        const modeNav = document.getElementById('mode-nav');
+
+        if (cat === 'singleplayer') {
+            modeNav.style.display = 'flex';
+            if (availableModes.length > 0) fetchLeaderboardData(availableModes[0].id);
+
+            document.querySelectorAll('.mode-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === 0);
+            });
+        } else {
+            modeNav.style.display = 'none';
+            fetchRankedData();
+        }
+    }
+
+    // Fetch Ranked Data (Elo from Profiles)
+    async function fetchRankedData() {
+        const status = document.getElementById('status');
+        const table = document.getElementById('lb-table');
+        const pagination = document.getElementById('pagination');
+
+        table.style.display = 'none';
+        pagination.style.display = 'none';
+        status.style.display = 'block';
+        status.innerText = 'fetching ranked standings...';
+
+        try {
+            const { data: profiles, error } = await _supabase
+                .from('profiles')
+                .select('username, elo')
+                .order('elo', { ascending: false })
+                .limit(500);
+
+            if (error) throw error;
+            if (!profiles || profiles.length === 0) {
+                status.innerText = 'no ranked players found';
+                return;
+            }
+
+            currentData = profiles.map(p => ({
+                username: p.username || "Unknown",
+                elo: p.elo || 0
+            }));
+
+            currentPage = 1;
+            status.style.display = 'none';
+            table.style.display = 'table';
+            renderPage();
+        } catch (err) {
+            console.error("Ranked Load Failed:", err);
+            status.innerText = "Error loading ranked standings.";
+        }
+    }
+
+    // Fetch Singleplayer Data
+    async function fetchLeaderboardData(modeId) {
+        const status = document.getElementById('status');
+        const table = document.getElementById('lb-table');
+        const pagination = document.getElementById('pagination');
+
+        table.style.display = 'none';
+        pagination.style.display = 'none';
+        status.style.display = 'block';
+        status.innerText = 'fetching standings...';
+
+        try {
+            const { data: scores, error: sErr } = await _supabase
+                .from('scores')
+                .select('wpm, accuracy, user_id')
+                .eq('mode', modeId)
+                .order('wpm', { ascending: false })
+                .order('accuracy', { ascending: false })
+                .limit(500); 
+
+            if (sErr) throw sErr;
+            if (!scores || scores.length === 0) {
+                status.innerText = 'no scores found yet';
+                return;
+            }
+
+            const uniqueScores = [];
+            const seenUsers = new Set();
+            for (const s of scores) {
+                if (!seenUsers.has(s.user_id)) {
+                    seenUsers.add(s.user_id);
+                    uniqueScores.push(s);
+                }
+            }
+
+            const userIds = Array.from(seenUsers);
+            const { data: profiles, error: pErr } = await _supabase
+                .from('profiles')
+                .select('id, username')
+                .in('id', userIds);
+
+            if (pErr) throw pErr;
+
+            const profileMap = Object.fromEntries(profiles.map(p => [p.id, p.username]));
+
+            currentData = uniqueScores.map(s => ({
+                ...s,
+                username: profileMap[s.user_id] || "Guest"
+            }));
+
+            currentPage = 1;
+            status.style.display = 'none';
+            table.style.display = 'table';
+            renderPage();
+
+        } catch (err) {
+            console.error("Leaderboard Load Failed:", err);
+            status.innerText = "Error loading standings.";
+        }
+    }
+
+    // Dynamic Render Logic
+    function renderPage() {
+        const body = document.getElementById('lb-body');
+        const headers = document.getElementById('table-headers');
+        const pagination = document.getElementById('pagination');
+        body.innerHTML = '';
+
+        if (currentCategory === 'singleplayer') {
+            headers.innerHTML = `
+                <th class="rank-col">#</th>
+                <th>user</th>
+                <th style="text-align:right">wpm</th>
+                <th style="text-align:right">accuracy</th>
+            `;
+        } else {
+            headers.innerHTML = `
+                <th class="rank-col">#</th>
+                <th>user</th>
+                <th style="text-align:right">elo rating</th>
+            `;
+        }
+
+        const totalPages = Math.ceil(currentData.length / ITEMS_PER_PAGE);
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const pageData = currentData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+        pageData.forEach((s, i) => {
+            const absoluteRank = startIndex + i + 1;
+
+            let rowStyle = 'color: inherit';
+            let crownIcon = '';
+
+            if (absoluteRank === 1) {
+                rowStyle = `color: var(--gold); font-weight: 700;`;
+                crownIcon = '<i class="fa-solid fa-crown" style="margin-right: 8px; font-size: 0.8rem;"></i>';
+            } else if (absoluteRank === 2) {
+                rowStyle = `color: var(--silver); font-weight: 600;`;
+            } else if (absoluteRank === 3) {
+                rowStyle = `color: var(--bronze); font-weight: 600;`;
+            }
+
+            if (currentCategory === 'singleplayer') {
+                body.innerHTML += `
+                    <tr>
+                        <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
+                        <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
+                        <td class="wpm-col">${s.wpm}</td>
+                        <td class="acc-col">${s.accuracy}%</td>
+                    </tr>`;
+            } else {
+                body.innerHTML += `
+                    <tr>
+                        <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
+                        <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
+                        <td class="wpm-col">${s.elo}</td>
+                    </tr>`;
+            }
+        });
+
+        if (totalPages > 1) {
+            pagination.style.display = 'flex';
+            document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage === totalPages;
+        } else {
+            pagination.style.display = 'none';
+        }
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        renderPage();
+    }
+
+    initModes();
+</script>
+</body>
+</html>
