@@ -244,7 +244,7 @@
             <div id="stats-display">
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <span class="stat-label">Coins / Elo</span>
+                        <span class="stat-label">Coins</span>
                         <div class="stat-value" id="user-elo">--</div>
                         <div class="stat-sub">Current Balance</div>
                     </div>
@@ -307,18 +307,16 @@
             document.getElementById('display-username').innerText = username;
             document.getElementById('display-email').innerText = user.email;
 
-            // Fetch profile data for Elo/Coins and Avatar
             try {
                 const { data: profile, error: pError } = await _supabase
                     .from('profiles')
-                    .select('coins, avatar_id') // Using coins as your shop elo tracker
+                    .select('coins, avatar_id') 
                     .eq('id', userId)
                     .single();
                 
                 if (profile && !pError) {
                     document.getElementById('user-elo').innerText = profile.coins ?? 0;
                     
-                    // Render Avatar
                     const avatarId = profile.avatar_id || "0";
                     const imgEl = document.getElementById('profile-img');
                     const fallbackEl = document.getElementById('profile-fallback');
