@@ -337,7 +337,7 @@ async function initShop() {
     
     if (sessionErr || !session) {
         console.error("[SHOP] Session validation failed:", sessionErr);
-        return window.location.href = 'home.html';
+        return window.location.href = '/pages/home.html';
     }
     
     myId = session.user.id;
