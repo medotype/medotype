@@ -346,7 +346,7 @@ async function initShop() {
         .from('profiles')
         .select('coins, avatar_id') 
         .eq('id', myId)
-        .single();
+        .maybeSingle();
 
     if (profileErr) {
         console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
