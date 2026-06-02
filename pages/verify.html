@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Verifying Email</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+
+    <style>
+        body {
+            background-color: var(--bg, #0e1117);
+            color: var(--text-bright, #ffffff);
+            font-family: var(--font, 'Inter', sans-serif);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .verify-card {
+            background: var(--card-bg, #161b22);
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .status-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent, #3b82f6);
+            transition: color 0.3s ease;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h2 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem 0; }
+        p { color: var(--text-faded, #8b949e); font-size: 0.9rem; margin: 0 0 1.5rem 0; }
+
+        .btn {
+            background: var(--accent, #3b82f6);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+            display: none; /* Only shows up if auto-redirect fails */
+        }
+        .btn:hover { filter: brightness(1.1); }
+    </style>
+</head>
+<body>
+
+    <div class="verify-card">
+        <div id="icon-container">
+            <i class="fa-solid fa-circle-notch spinner status-icon"></i>
+        </div>
+        <h2 id="headline">Verifying your account</h2>
+        <p id="subtext">Syncing credentials with Supabase...</p>
+        <button id="manual-btn" class="btn" onclick="location.href='home.html'">Go to Home</button>
+    </div>
+
+    <script>
+        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        async function processVerification() {
+            const iconContainer = document.getElementById('icon-container');
+            const headline = document.getElementById('headline');
+            const subtext = document.getElementById('subtext');
+            const manualBtn = document.getElementById('manual-btn');
+
+            // Wait briefly to allow the Supabase client to automatically parse 
+            // the access_token/hash fragments directly out of the address bar url
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Grab the parsed session status
+            const { data: { session }, error } = await _supabase.auth.getSession();
+
+            if (error) {
+                console.error("Verification error:", error);
+                iconContainer.innerHTML = `<i class="fa-solid fa-circle-xmark status-icon" style="color: var(--error, #ef4444)"></i>`;
+                headline.innerText = "Verification Failed";
+                subtext.innerText = "The link may be expired or invalid. Try logging in again.";
+                manualBtn.innerText = "Back to Login";
+                manualBtn.onclick = () => location.href = '/pages/account.html';
+                manualBtn.style.display = "block";
+                return;
+            }
+
+            if (session) {
+                iconContainer.innerHTML = `<i class="fa-solid fa-circle-check status-icon" style="color: var(--success, #10b981)"></i>`;
+                headline.innerText = "Email Verified!";
+                subtext.innerText = "Redirecting you to the home dashboard...";
+                manualBtn.style.display = "block"; 
+
+                setTimeout(() => {
+                    location.href = '/index.html';
+                }, 2500);
+            } else {
+                iconContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation status-icon" style="color: #eab308"></i>`;
+                headline.innerText = "No Session Found";
+                subtext.innerText = "Please log in to access your profile.";
+                manualBtn.innerText = "Go to Login";
+                manualBtn.onclick = () => location.href = '/index.html';
+                manualBtn.style.display = "block";
+            }
+        }
+
+        processVerification();
+    </script>
+</body>
+</html>
