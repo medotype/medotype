@@ -13,10 +13,10 @@ Simplistic typing game.
 - Account system
 - Themes
 - User searching
+- Shop
 
 
 ## To do
 - Levels
 - Keyboard sounds
 - Profile pictures
-- Add shop
