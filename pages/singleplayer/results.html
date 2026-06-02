@@ -6,6 +6,7 @@
     <title>MeDoType | Results</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/data/css/root.css">
     <script src="../../data/js/theme.js"></script>
 
@@ -41,7 +42,25 @@
 
         .stat-label { color: var(--text-faded); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.15em; margin: 0; }
         .stat-val { font-size: 5.5rem; font-weight: 600; color: var(--accent); margin: 0.2rem 0; text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
-        .acc-val { color: var(--text-bright); font-size: 1.2rem; margin-bottom: 2rem; font-weight: 400; }
+        .acc-val { color: var(--text-bright); font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 400; }
+        
+        /* Gold Coin Display */
+        .coin-reward { 
+            color: #eab308; /* Nice gold tone */
+            font-size: 1.3rem; 
+            font-weight: 600; 
+            margin-bottom: 2rem; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px;
+            animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
         .status-msg { font-size: 0.8rem; margin-bottom: 1.5rem; padding: 8px; border-radius: 8px; width: 100%; box-sizing: border-box; }
         .msg-saved { background: rgba(16, 185, 129, 0.1); color: var(--success); }
@@ -71,7 +90,9 @@
     <div class="results-card">
         <p class="stat-label">Words Per Minute</p>
         <h1 class="stat-val" id="wpm">0</h1>
-        <p class="acc-val" id="acc">ACC: 0%</p>
+        <p class="acc-val" id="acc">ACCURACY: 0%</p>
+        
+        <div id="coin-container"></div>
 
         <div id="status-container" class="status-msg">Checking status...</div>
         <div id="action-area"></div>
@@ -88,12 +109,22 @@
             const acc = params.get('acc') || 0;
             const mode = (params.get('mode') || 'time_15').replace('_', ' ');
             const isSaved = params.get('saved') === 'true';
+            const coins = parseInt(params.get('coins')) || 0;
 
             document.getElementById('wpm').innerText = wpm;
             document.getElementById('acc').innerText = `ACCURACY: ${acc}%`;
 
+            const coinContainer = document.getElementById('coin-container');
             const statusBox = document.getElementById('status-container');
             const actionArea = document.getElementById('action-area');
+
+            if (isSaved && coins > 0) {
+                coinContainer.className = "coin-reward";
+                coinContainer.innerHTML = `<i class="fa-solid fa-coins"></i> +${coins} Coins`;
+            } else {
+                coinContainer.style.display = "none";
+                document.getElementById('acc').style.marginBottom = "2rem";
+            }
 
             if (isSaved) {
                 statusBox.innerText = `✓ Score saved to your ${mode} profile`;
