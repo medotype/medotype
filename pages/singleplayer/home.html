@@ -15,7 +15,6 @@
         
         #nav { margin-bottom: 3rem; display: inline-flex; background: var(--card-bg); padding: 6px; border-radius: 12px; gap: 5px; }
         
-        /* Smooth Stats Header */
         .header-stats { 
             display: flex; 
             justify-content: center; 
@@ -54,8 +53,8 @@
             color: var(--text-faded); 
             letter-spacing: -0.02em; 
             position: relative; 
-            display: inline-block; /* This prevents the word from splitting into two rows */
-            white-space: nowrap;   /* Ensures the cursor doesn't push a letter down */
+            display: inline-block; 
+            white-space: nowrap;  
         }        
         .letter { position: relative; transition: color 0.1s ease; }
         .letter.correct { color: var(--text-bright); }
@@ -388,13 +387,14 @@
             if (offset > 40) container.style.top = `-${offset}px`;
         }
 
-        async function finish() {
+async function finish() {
             clearInterval(timerInterval);
             const durationMinutes = (Date.now() - startTime) / 60000;
             const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
             const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
             let saved = false;
+            let earnedCoins = 0; // Track this for the results screen
             const { data: { session } } = await _supabase.auth.getSession();
 
             let isBot = false;
@@ -417,7 +417,7 @@
             const isWorthyScore = wpm >= 10 && acc >= 50;
 
             if (session && isWorthyScore && !isBot) {
-                const { error } = await _supabase
+                const { error: scoreError } = await _supabase
                     .from('scores')
                     .insert([{ 
                         user_id: session.user.id, 
@@ -425,10 +425,20 @@
                         accuracy: acc, 
                         mode: activeModeConfig.id
                     }]);
-                if (!error) saved = true;
+                
+                if (!scoreError) saved = true;
+
+                const { data: coinData, error: coinError } = await _supabase
+                    .rpc('reward_coins_for_game', { wpm_score: wpm, acc_score: acc });
+                
+                if (coinError) {
+                    console.error("Failed to reward coins:", coinError);
+                } else {
+                    earnedCoins = coinData; 
+                }
             }
 
-            window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}`;
+            window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}`;
         }
 
         initModes();
