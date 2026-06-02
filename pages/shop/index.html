@@ -301,8 +301,8 @@
             </div>
             <div class="user-balance-card">
                 <div>
-                    <div class="balance-label">Your Current Rank</div>
-                    <div class="balance-value"><span id="user-elo">0</span> ELO</div>
+                    <div class="balance-label">Your Coins</div>
+                    <div class="balance-value"><span id="user-elo">0</span> Coins</div>
                 </div>
             </div>
         </div>
@@ -344,7 +344,7 @@ async function initShop() {
 
     const { data: profile, error: profileErr } = await _supabase
         .from('profiles')
-        .select('elo, avatar_id') 
+        .select('coins, avatar_id') 
         .eq('id', myId)
         .single();
 
@@ -352,7 +352,7 @@ async function initShop() {
         console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
     }
 
-    myElo = profile?.elo || 0;
+    myElo = profile?.coins || 0;
     equippedAvatarId = profile?.avatar_id || "0"; 
 
     document.getElementById('user-elo').innerText = myElo;
