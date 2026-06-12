@@ -2,6 +2,10 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
 const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+let currentCombo = 0;
+const comboVal = document.getElementById('combo-val');
+const comboStat = document.getElementById('combo-stat');
+
 const matchId = new URLSearchParams(window.location.search).get('id') || window.location.search.replace('?', '');
 let matchChannel;
 
