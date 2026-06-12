@@ -446,18 +446,27 @@ async function endMatch() {
     
     let newElo = myElo;
     
+    const scoreDiff = Math.abs(myTotalScore - oppTotalScore);
+    const performanceBonus = Math.floor(scoreDiff * 0.15); 
+    
+    let eloChange = 0;
+
     if (myTotalScore > oppTotalScore) {
         resultText.innerText = "VICTORY";
         resultText.style.color = "#10b981";
-        eloText.innerText = "+25 Elo";
+        
+        eloChange = Math.min(15 + performanceBonus, 50);
+        eloText.innerText = `+${eloChange} Elo`;
         eloText.className = "elo-change";
-        newElo += 25;
+        newElo += eloChange;
     } else if (myTotalScore < oppTotalScore) {
         resultText.innerText = "DEFEAT";
         resultText.style.color = "var(--error)";
-        eloText.innerText = "-10 Elo";
+        
+        eloChange = Math.min(5 + performanceBonus, 30);
+        eloText.innerText = `-${eloChange} Elo`;
         eloText.className = "elo-change negative";
-        newElo = Math.max(0, newElo - 10);
+        newElo = Math.max(0, newElo - eloChange);
     } else {
         resultText.innerText = "DRAW";
         resultText.style.color = "var(--text-bright)";
@@ -467,6 +476,18 @@ async function endMatch() {
 
     if (newElo !== myElo) {
         await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
+    }
+
+
+    const estimatedAverageWpm = Math.floor(myTotalScore / TOTAL_ROUNDS);
+    
+    const { data: coinData, error: coinError } = await _supabase
+        .rpc('reward_coins_for_game', { wpm_score: estimatedAverageWpm, acc_score: 95 });
+        
+    if (coinError) {
+        console.error("Failed to reward coins:", coinError);
+    } else {
+        console.log(`Awarded ${coinData} coins!`);
     }
 
     await removeFromQueue(); 
