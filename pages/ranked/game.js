@@ -295,15 +295,23 @@ function startRoundSequence() {
     }, 1000);
 }
 
-window.addEventListener('keydown', (e) => {
-    if (gameState !== 'PLAYING') return;
-    if (e.key === 'Tab') { e.preventDefault(); return; }
-    if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== ' ') return;
-    if (e.key === ' ') e.preventDefault();
+} else if (e.key.length === 1) {
+        if (activeCharIdx < letters.length) {
+            totalKeystrokes++;
+            if (e.key === letters[activeCharIdx].innerText) {
+                letters[activeCharIdx].classList.add('correct');
+                correctChars++;
+                updateCombo(false); // NEW: Increase combo
+            } else {
+                letters[activeCharIdx].classList.add('incorrect');
+                updateCombo(true); // NEW: Break combo
+            }
+            activeCharIdx++;
 
-    if (!isStarted && e.key.length === 1) {
-        isStarted = true;
-        startTime = Date.now();
+            if (activeWordIdx === WORDS_PER_ROUND - 1 && activeCharIdx === letters.length) {
+                finishTyping(); return;
+            }
+        }
     }
 
     const words = container.querySelectorAll('.word');
