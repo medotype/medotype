@@ -94,6 +94,22 @@ async function initMatch() {
                 });
 }
 
+function updateCombo(reset = false) {
+    if (reset) {
+        currentCombo = 0;
+        comboStat.style.color = "var(--error)";
+        setTimeout(() => comboStat.style.color = "var(--accent)", 200);
+    } else {
+        currentCombo++;
+    }
+    comboVal.innerText = currentCombo;
+    
+    if (currentCombo > 0 && currentCombo % 10 === 0) {
+        comboStat.style.transform = "scale(1.2)";
+        setTimeout(() => comboStat.style.transform = "scale(1)", 150);
+    }
+}
+
 async function syncGame() {
     if (gameState === 'GAME_OVER') return;
 
