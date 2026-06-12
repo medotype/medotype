@@ -16,20 +16,23 @@
 <body>
 
     <div id="app">
-        <div class="match-header">
-            <div class="player-info">
-                <span class="player-name" id="my-name">Me</span>
-                <span class="player-score">Score: <span id="my-score">0</span></span>
-            </div>
-            <div class="round-info">
-                <span class="round-text">ROUND <span id="round-display">1</span></span>
-                <span class="round-status" id="round-status">Connecting...</span>
-            </div>
-            <div class="player-info right">
-                <span class="player-name" id="opp-name">Opponent</span>
-                <span class="player-score">Score: <span id="opp-score">0</span></span>
-            </div>
+ <div class="match-header">
+    <div class="player-info">
+        <span class="player-name" id="my-name">Me</span>
+        <span class="player-score">Score: <span id="my-score">0</span></span>
+        <div id="combo-stat" style="color: var(--accent); font-weight: 600; margin-top: 5px;">
+            <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
         </div>
+    </div>
+    <div class="round-info">
+        <span class="round-text">ROUND <span id="round-display">1</span></span>
+        <span class="round-status" id="round-status">Connecting...</span>
+    </div>
+    <div class="player-info right">
+        <span class="player-name" id="opp-name">Opponent</span>
+        <span class="player-score">Score: <span id="opp-score">0</span></span>
+    </div>
+</div>
 
         <div id="typing-viewport">
             <div id="word-container"></div>
