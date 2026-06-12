@@ -6,10 +6,13 @@
     <title>MeDoType | Mobile</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
             --bg: #111216;
             --card-bg: #1c1d24;
+            --key-bg: #2b2d38;
+            --key-active: #5c6bc0;
             --accent: #5c6bc0;
             --text-bright: #f5f6f8;
             --text-faded: #656874;
@@ -23,73 +26,113 @@
             font-family: var(--font); 
             margin: 0; 
             display: flex; 
-            align-items: center; 
-            justify-content: center; 
+            flex-direction: column;
             height: 100dvh; 
             overflow: hidden;
             -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* Prevents pull-to-refresh and zooming */
         }
 
         #app { 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             width: 100%; 
-            max-width: 420px; /* Snug fit for vertical mobile profiles */
-            text-align: center; 
-            padding: 1rem; 
+            max-width: 500px;
+            margin: 0 auto;
             box-sizing: border-box;
             position: relative;
         }
 
-        /* Top Navigation */
         .top-nav {
             display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1rem;
-            padding: 0 10px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(28, 29, 36, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .nav-group {
+            display: flex;
+            gap: 12px;
         }
 
         .nav-btn {
+            background: var(--card-bg);
             color: var(--text-faded);
-            text-decoration: none;
-            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 6px;
+            cursor: pointer;
             transition: 0.2s ease;
+            font-family: var(--font);
         }
 
-        .nav-btn:hover {
-            color: var(--accent);
+        .nav-btn:active { transform: scale(0.95); }
+        .nav-btn.primary { color: var(--accent); border-color: rgba(92, 107, 192, 0.3); }
+        .nav-btn.gold { color: #ffd700; border-color: rgba(255, 215, 0, 0.3); }
+
+        .mode-settings-wrapper { 
+            width: 100%; 
+            padding: 0.75rem 0; 
+            background: var(--bg);
         }
         
-        /* Mobile Mode Navigation */
-        .mode-settings-container { display: flex; justify-content: center; margin-bottom: 1.5rem; }
-        .mode-group { display: flex; background: var(--card-bg); padding: 4px; border-radius: 12px; gap: 2px; }
-        .mode-item { padding: 8px 12px; font-size: 0.8rem; font-weight: 600; color: var(--text-faded); cursor: pointer; border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; gap: 4px; }
-        .mode-item.active { color: var(--accent); background: rgba(255, 255, 255, 0.03); }
-        .mode-item.blitz-active { color: #ff4500; text-shadow: 0 0 10px rgba(255, 69, 0, 0.3); }
+        .mode-scroll-container {
+            display: flex; 
+            overflow-x: auto; 
+            padding: 0 1rem;
+            gap: 6px;
+            scrollbar-width: none; /* Firefox */
+        }
         
-        /* Stats Dashboard */
-        .header-stats { display: flex; justify-content: center; align-items: center; gap: 20px; width: 100%; margin-bottom: 1.5rem; height: 2rem; }
-        .stat-box { display: flex; align-items: center; gap: 6px; font-size: 1.05rem; font-weight: 500; color: var(--text-faded); min-width: 65px; justify-content: center; font-variant-numeric: tabular-nums; }
-        .stat-box i { color: var(--accent); font-size: 0.95rem; }
+        .mode-scroll-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+        .mode-item { 
+            padding: 8px 14px; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            color: var(--text-faded); 
+            background: var(--card-bg);
+            border-radius: 10px; 
+            white-space: nowrap;
+            transition: all 0.2s ease; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+        }
+        
+        .mode-item.active { color: var(--text-bright); background: var(--accent); }
+        .mode-item.blitz-active { color: #fff; background: #ff4500; box-shadow: 0 0 10px rgba(255, 69, 0, 0.4); }
+
+        .typing-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 1.5rem;
+        }
+
+        .header-stats { display: flex; justify-content: center; align-items: center; gap: 20px; width: 100%; margin-bottom: 1.5rem; }
+        .stat-box { display: flex; align-items: center; gap: 6px; font-size: 1.1rem; font-weight: 600; color: var(--text-faded); min-width: 65px; justify-content: center; font-variant-numeric: tabular-nums; }
+        .stat-box i { color: var(--accent); font-size: 1rem; }
         #combo-stat { transition: transform 0.1s; }
         #combo-stat.broken { color: var(--error); transform: translateX(-5px); }
 
-        /* Left-Aligned, Fixed-Height Multi-line Viewport */
         #typing-viewport { 
-            height: 80px; /* Strictly keeps 2 lines visible */
+            height: 90px; 
             overflow: hidden; 
             position: relative; 
             margin-bottom: 1rem; 
-            background: rgba(255,255,255,0.01);
-            border-radius: 12px;
-            padding: 10px;
-            border: 1px dashed rgba(255,255,255,0.06);
-            box-sizing: border-box;
         }
         
-        /* Left-aligned layout stops words from jumping horizontally on wrap */
         #word-container { 
             display: flex; 
             flex-wrap: wrap; 
@@ -102,7 +145,7 @@
         }
         
         .word { 
-            font-size: 1.25rem; /* Downscaled perfectly for 360px vertical screens */
+            font-size: 1.4rem; 
             font-weight: 400; 
             color: var(--text-faded); 
             letter-spacing: -0.01em; 
@@ -115,82 +158,201 @@
         .letter.correct { color: var(--text-bright); }
         .letter.incorrect { color: var(--error); border-bottom: 2px solid var(--error); }
         
-        /* Smooth Mobile Caret */
         .letter.active-char::before { content: ''; position: absolute; left: -1px; top: 15%; height: 70%; width: 2px; background-color: var(--accent); animation: blink 1s infinite; }
         .word.active-end::after { content: ''; position: absolute; right: -5px; top: 15%; height: 70%; width: 2px; background-color: var(--accent); animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        
-        #tap-prompt { font-size: 0.85rem; color: var(--accent); margin-top: 0.5rem; opacity: 0.8; font-weight: 500; }
 
-        /* Safe Hidden Proxy Input for Mobile Layouts */
-        #mobile-input-proxy { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            opacity: 0; 
-            pointer-events: none; 
-            width: 100%; 
-            height: 100%; 
-            z-index: -1; 
+        #custom-keyboard {
+            width: 100%;
+            padding: 8px 6px 20px 6px; /* Extra bottom padding for home bar */
+            background: #15161b;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.2);
+            z-index: 5;
         }
 
-        /* Results Modal Overlay */
-        #results-screen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 2rem; border-radius: 20px; width: 85%; max-width: 320px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 10; flex-direction: column; align-items: center; box-sizing: border-box; }
+        .kb-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .kb-key {
+            flex: 1;
+            max-width: 38px;
+            height: 48px;
+            background: var(--key-bg);
+            color: var(--text-bright);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 500;
+            user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+            transition: transform 0.05s, background 0.05s;
+        }
+
+        .kb-key:active, .kb-key.pressed {
+            background: var(--key-active);
+            transform: translateY(2px);
+            box-shadow: 0 0 0 rgba(0,0,0,0);
+        }
+
+        .kb-key.action { max-width: none; padding: 0 15px; font-size: 1rem; width: auto; flex: 1.5; background: #373a48; }
+        .kb-key.space { flex: 4; max-width: 200px; height: 44px; }
+
+        #results-screen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 2rem; border-radius: 20px; width: 85%; max-width: 320px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.8); z-index: 10; flex-direction: column; align-items: center; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05); }
         .stat-val { font-size: 3.2rem; font-weight: 600; color: var(--accent); margin: 0; }
         .stat-label { color: var(--text-faded); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; margin: 4px 0; }
-        #pb-tag { color: #ffd700; font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: none; text-transform: uppercase; }
-        
-        #restart-btn { margin-top: 1.5rem; background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 10px; font-family: var(--font); font-weight: 600; cursor: pointer; width: 100%; -webkit-appearance: none; }
+        #restart-btn { margin-top: 1.5rem; background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 10px; font-family: var(--font); font-weight: 600; cursor: pointer; width: 100%; }
+
+        #toast-container {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            color: var(--text-bright);
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .toast i { color: var(--accent); }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body>
 
-    <input type="text" id="mobile-input-proxy" autocomplete="off" autocapitalize="none" spellcheck="false">
-
     <div id="app">
-        <!-- New Leaderboard Navigation -->
         <div class="top-nav">
-            <a href="leaderboard.html" class="nav-btn">
-                <i class="fa-solid fa-trophy"></i> Leaderboard
-            </a>
-        </div>
-
-        <div class="mode-settings-container">
-            <div class="mode-group" id="mode-nav"></div>
-        </div>
-        
-        <div class="header-stats">
-            <div id="mode-stat-container" class="stat-box">
-                <i id="mode-icon" class="fa-solid fa-clock"></i> <span id="stat-val">--</span>
+            <div class="nav-group">
+                <button class="nav-btn primary" onclick="location.href='../pages/login.html'">
+                    <i class="fa-solid fa-user"></i> Login
+                </button>
             </div>
-            <div id="live-wpm-container" class="stat-box">
-                <i class="fa-solid fa-bolt"></i> <span id="wpm-val">0</span>
-            </div>
-            <div id="combo-stat" class="stat-box">
-                <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
+            <div class="nav-group">
+                <button class="nav-btn gold" onclick="showToast('Shop is coming soon to mobile!')">
+                    <i class="fa-solid fa-store"></i> Shop
+                </button>
+                <button class="nav-btn" onclick="location.href='leaderboard.html'">
+                    <i class="fa-solid fa-trophy"></i>
+                </button>
             </div>
         </div>
 
-        <div id="typing-viewport">
-            <div id="word-container"></div>
+        <div class="mode-settings-wrapper">
+            <div class="mode-scroll-container" id="mode-nav">
+                <!-- Injected via JS -->
+            </div>
         </div>
         
-        <div id="tap-prompt"><i class="fa-solid fa-keyboard"></i> Tap the box above to start typing</div>
+        <div class="typing-section">
+            <div class="header-stats">
+                <div id="mode-stat-container" class="stat-box">
+                    <i id="mode-icon" class="fa-solid fa-clock"></i> <span id="stat-val">--</span>
+                </div>
+                <div id="live-wpm-container" class="stat-box">
+                    <i class="fa-solid fa-bolt"></i> <span id="wpm-val">0</span>
+                </div>
+                <div id="combo-stat" class="stat-box">
+                    <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
+                </div>
+            </div>
+
+            <div id="typing-viewport">
+                <div id="word-container"></div>
+            </div>
+        </div>
+
+        <div id="custom-keyboard">
+            <div class="kb-row">
+                <div class="kb-key" data-key="q">q</div>
+                <div class="kb-key" data-key="w">w</div>
+                <div class="kb-key" data-key="e">e</div>
+                <div class="kb-key" data-key="r">r</div>
+                <div class="kb-key" data-key="t">t</div>
+                <div class="kb-key" data-key="y">y</div>
+                <div class="kb-key" data-key="u">u</div>
+                <div class="kb-key" data-key="i">i</div>
+                <div class="kb-key" data-key="o">o</div>
+                <div class="kb-key" data-key="p">p</div>
+            </div>
+            <div class="kb-row" style="padding: 0 4%;">
+                <div class="kb-key" data-key="a">a</div>
+                <div class="kb-key" data-key="s">s</div>
+                <div class="kb-key" data-key="d">d</div>
+                <div class="kb-key" data-key="f">f</div>
+                <div class="kb-key" data-key="g">g</div>
+                <div class="kb-key" data-key="h">h</div>
+                <div class="kb-key" data-key="j">j</div>
+                <div class="kb-key" data-key="k">k</div>
+                <div class="kb-key" data-key="l">l</div>
+            </div>
+            <div class="kb-row">
+                <div class="kb-key action" data-key="Restart"><i class="fa-solid fa-rotate-right"></i></div>
+                <div class="kb-key" data-key="z">z</div>
+                <div class="kb-key" data-key="x">x</div>
+                <div class="kb-key" data-key="c">c</div>
+                <div class="kb-key" data-key="v">v</div>
+                <div class="kb-key" data-key="b">b</div>
+                <div class="kb-key" data-key="n">n</div>
+                <div class="kb-key" data-key="m">m</div>
+                <div class="kb-key action" data-key="Backspace"><i class="fa-solid fa-delete-left"></i></div>
+            </div>
+            <div class="kb-row">
+                <div class="kb-key space" data-key=" "></div>
+            </div>
+        </div>
 
         <div id="results-screen">
             <p class="stat-label">Words Per Minute</p>
             <h1 class="stat-val" id="wpm-display">0</h1>
             <p class="stat-label" id="acc-display">Acc: 0%</p>
-            <div id="pb-tag"><i class="fa-solid fa-crown"></i> New Personal Best!</div>
             <button id="restart-btn" onclick="resetGame()">Try Again</button>
         </div>
+
+        <div id="toast-container"></div>
     </div>
 
     <script>
+        // Extensive mode list matching desktop capabilities
         const availableModes = [
-            { id: "time15", type: "time", label: "15s", value: 15, renderCount: 40 },
-            { id: "time30", type: "time", label: "30s", value: 30, renderCount: 65 },
-            { id: "words25", type: "words", label: "25w", value: 25, renderCount: 25 },
+            { id: "time15", type: "time", label: "Time 15s", value: 15, renderCount: 40 },
+            { id: "time30", type: "time", label: "Time 30s", value: 30, renderCount: 65 },
+            { id: "time60", type: "time", label: "Time 60s", value: 60, renderCount: 120 },
+            { id: "words10", type: "words", label: "Words 10", value: 10, renderCount: 10 },
+            { id: "words25", type: "words", label: "Words 25", value: 25, renderCount: 25 },
+            { id: "words50", type: "words", label: "Words 50", value: 50, renderCount: 50 },
             { id: "blitz", type: "time", label: "Blitz", value: 20, renderCount: 50 }
         ];
 
@@ -205,7 +367,6 @@
         let timerInterval = null;
         let correctChars = 0;
         let totalKeystrokes = 0;
-        let keyPressTimestamps = [];
         let currentCombo = 0;
 
         const container = document.getElementById('word-container');
@@ -215,29 +376,24 @@
         const comboVal = document.getElementById('combo-val');
         const modeIcon = document.getElementById('mode-icon');
         const results = document.getElementById('results-screen');
-        const inputProxy = document.getElementById('mobile-input-proxy');
-        const viewport = document.getElementById('typing-viewport');
-        const tapPrompt = document.getElementById('tap-prompt');
-
-        // Capture window clicks inside the typing zone to force open keyboard
-        viewport.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if(results.style.display !== 'flex') {
-                inputProxy.focus();
-                tapPrompt.style.opacity = '0.3';
-            }
-        });
-
-        document.addEventListener('click', () => {
-            if(results.style.display !== 'flex' && isStarted === false) {
-                tapPrompt.style.opacity = '1';
-            }
-        });
 
         function initApp() {
             buildNav();
             selectMode(availableModes[0]);
-            setupMobileInputEngine();
+            setupVirtualKeyboard();
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${message}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
         }
 
         function buildNav() {
@@ -250,7 +406,8 @@
                 let iconClass = mode.type === 'time' ? 'fa-clock' : 'fa-font';
                 if (mode.id === 'blitz') iconClass = 'fa-fire';
                 div.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${mode.label}`;
-                div.onclick = (e) => { e.stopPropagation(); selectMode(mode); };
+                
+                div.addEventListener('click', () => selectMode(mode));
                 nav.appendChild(div);
             });
         }
@@ -261,6 +418,7 @@
             const activeEl = document.getElementById(`mode-${mode.id}`);
             if (activeEl) {
                 activeEl.classList.add(mode.id === 'blitz' ? 'blitz-active' : 'active');
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
             resetGame();
         }
@@ -303,17 +461,12 @@
             correctChars = 0;
             totalKeystrokes = 0;
             startTime = null;
-            keyPressTimestamps = [];
             currentCombo = 0;
             comboVal.innerText = "0";
             wpmVal.innerText = "0";
 
             container.style.top = "0px";
             results.style.display = 'none';
-            tapPrompt.style.opacity = '1';
-            
-            // "abc" baseline guarantees input mutations work everywhere
-            inputProxy.value = "abc"; 
 
             if (activeModeConfig.type === 'time') {
                 modeIcon.className = 'fa-solid fa-clock';
@@ -333,66 +486,72 @@
             updateCaret();
         }
 
-        function updateLiveStats() {
-            if (!startTime) return;
-            const elapsedMs = Date.now() - startTime;
-            const durationMinutes = elapsedMs / 60000;
-            const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
-            wpmVal.innerText = currentWpm;
-
-            if (activeModeConfig.type === 'time') {
-                let left = Math.ceil(activeModeConfig.value - (elapsedMs / 1000));
-                if (left <= 0) {
-                    left = 0;
-                    finish();
-                }
-                statVal.innerText = left;
-            }
-        }
-
-        // Mutation tracking system logic built specifically for mobile engines
-        function setupMobileInputEngine() {
-            const baseline = "abc";
-            inputProxy.value = baseline;
+        function setupVirtualKeyboard() {
+            const keys = document.querySelectorAll('.kb-key');
             
-            inputProxy.addEventListener('input', () => {
-                if (results.style.display === 'flex' || !activeModeConfig) return;
+            keys.forEach(key => {
+                // Use pointer events for immediate touch response without delays
+                key.addEventListener('pointerdown', (e) => {
+                    e.preventDefault(); // Prevent double-tap zooming
+                    key.classList.add('pressed');
+                    handleKeyPress(key.getAttribute('data-key'));
+                });
+
+                key.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    key.classList.remove('pressed');
+                });
                 
-                const curVal = inputProxy.value;
-                
-                // If text length drops below baseline, a deletion action occurred
-                if (curVal.length < baseline.length) {
-                    processBackspace();
-                } 
-                // Buffer added text strings
-                else if (curVal.length > baseline.length) {
-                    const insertedText = curVal.substring(baseline.length);
-                    
-                    if (insertedText === " ") {
-                        processSpace();
-                    } else {
-                        // Flushes multi-key updates (like swift typing/predictive selections)
-                        for (let i = 0; i < insertedText.length; i++) {
-                            processAlphaCharacter(insertedText.charAt(i));
-                        }
-                    }
-                }
-                
-                inputProxy.value = baseline; // Instantly lock baseline state
-                updateCaret();
+                key.addEventListener('pointerleave', (e) => {
+                    key.classList.remove('pressed');
+                });
             });
         }
 
-        function startSystemClock() {
-            isStarted = true;
-            startTime = Date.now();
-            timerInterval = setInterval(updateLiveStats, 1000);
-            tapPrompt.style.opacity = '0.1';
+        // Support for physical keyboards connected to the mobile device
+        window.addEventListener('keydown', (e) => {
+            if (results.style.display === 'flex' || e.ctrlKey || e.metaKey || e.altKey) return;
+            
+            let keyTarget = e.key.toLowerCase();
+            if(e.key === " ") keyTarget = " ";
+            if(e.key === "Backspace") keyTarget = "Backspace";
+
+            // Visual feedback on virtual keyboard
+            const virtualKey = document.querySelector(`.kb-key[data-key="${keyTarget}"]`);
+            if(virtualKey) {
+                virtualKey.classList.add('pressed');
+                setTimeout(() => virtualKey.classList.remove('pressed'), 100);
+            }
+
+            handleKeyPress(e.key === " " ? " " : e.key);
+        });
+
+        function handleKeyPress(key) {
+            if (results.style.display === 'flex') return;
+
+            if (key === 'Restart') {
+                resetGame();
+                return;
+            }
+
+            if (!isStarted && key.length === 1) {
+                isStarted = true;
+                startTime = Date.now();
+                timerInterval = setInterval(updateLiveStats, 1000);
+            }
+
+            if (key === 'Backspace') {
+                processBackspace();
+            } else if (key === ' ') {
+                processSpace();
+            } else if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+                processAlphaCharacter(key.toLowerCase());
+            }
+
+            updateCaret();
         }
 
         function processAlphaCharacter(char) {
-            if (!isStarted) startSystemClock();
-
             const words = container.querySelectorAll('.word');
             const currentWord = words[activeWordIdx];
             if (!currentWord) return;
@@ -400,9 +559,8 @@
 
             if (activeCharIdx < letters.length) {
                 totalKeystrokes++;
-                keyPressTimestamps.push(Date.now());
                 
-                if (char === letters[activeCharIdx].innerText) {
+                if (char === letters[activeCharIdx].innerText.toLowerCase()) {
                     letters[activeCharIdx].classList.add('correct');
                     correctChars++;
                     updateCombo(false);
@@ -412,6 +570,7 @@
                 }
                 activeCharIdx++;
 
+                // Check finish condition for Words mode precisely when last letter is typed
                 if (activeModeConfig.type === 'words' && activeWordIdx === activeModeConfig.value - 1 && activeCharIdx === letters.length) {
                     finish();
                 }
@@ -458,7 +617,6 @@
 
         function handleScroll(activeWord) {
             const offset = activeWord.offsetTop;
-            // Snaps line transitions up dynamically based on line-height variations
             if (offset > 25) {
                 container.style.top = `-${offset - 5}px`;
             } else {
@@ -466,48 +624,41 @@
             }
         }
 
+        function updateLiveStats() {
+            if (!startTime) return;
+            const elapsedMs = Date.now() - startTime;
+            const durationMinutes = elapsedMs / 60000;
+            const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+            wpmVal.innerText = currentWpm;
+
+            if (activeModeConfig.type === 'time') {
+                let left = Math.ceil(activeModeConfig.value - (elapsedMs / 1000));
+                if (left <= 0) {
+                    left = 0;
+                    finish();
+                }
+                statVal.innerText = left;
+            }
+        }
+
         function finish() {
             clearInterval(timerInterval);
-            inputProxy.blur();
 
             const durationMinutes = (Date.now() - startTime) / 60000;
             const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
             const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
-            let isBot = false;
-            if (keyPressTimestamps.length > 10) {
-                let intervals = [];
-                for (let i = 1; i < keyPressTimestamps.length; i++) {
-                    intervals.push(keyPressTimestamps[i] - keyPressTimestamps[i - 1]);
-                }
-                let avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
-                if (Math.sqrt(variance) < 4 || wpm > 280) isBot = true;
-            }
-
-            let isNewPB = false;
-            if (!isBot && wpm >= 10 && acc >= 50) {
-                const storageKey = `medotype_pb_${activeModeConfig.id}`;
-                const localPB = localStorage.getItem(storageKey) || 0;
-                if (wpm > parseInt(localPB)) {
-                    localStorage.setItem(storageKey, wpm);
-                    isNewPB = true;
-                }
-            }
-
             document.getElementById('wpm-display').innerText = wpm;
             document.getElementById('acc-display').innerText = `Acc: ${acc}%`;
-            document.getElementById('pb-tag').style.display = isNewPB ? 'block' : 'none';
+            
+            // Bring up the overlay
             results.style.display = 'flex';
         }
 
-        window.addEventListener('keydown', (e) => {
-            if (results.style.display !== 'flex' && document.activeElement !== inputProxy) {
-                inputProxy.focus();
-            }
-        });
+        // Disable context menus entirely on mobile to prevent accidental selection popups while typing fast
+        document.addEventListener('contextmenu', event => event.preventDefault());
 
         initApp();
     </script>
 </body>
-</html>
+                                                                         </html>
