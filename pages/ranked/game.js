@@ -150,7 +150,14 @@ async function syncGame() {
 
 async function removeFromQueue() {
     if (!myId) return;
+    console.log("[CLEANUP] Removing user from queue and matches...");
+    
     await _supabase.from('queue').delete().eq('user_id', myId);
+    
+
+    if (matchId) {
+        await _supabase.from('matches').delete().eq('id', matchId); 
+    }
 }
 
 function handlePlayerJoined({ payload }) {
