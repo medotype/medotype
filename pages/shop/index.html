@@ -73,7 +73,7 @@
             background: var(--card-bg);
             padding: 24px 30px;
             border-radius: 20px;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             box-sizing: border-box;
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
@@ -128,12 +128,35 @@
             margin-top: 2px;
         }
 
+        /* --- Section Dividers --- */
+        .section-title {
+            width: 100%;
+            text-align: left;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 10px;
+        }
+
+        .section-title i {
+            color: var(--accent);
+        }
+
+        /* --- Grids & Cards --- */
         .shop-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
             width: 100%;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
         .shop-card {
@@ -157,7 +180,7 @@
         }
 
         .shop-card.locked {
-            opacity: 0.35;
+            opacity: 0.5;
         }
 
         .avatar-container {
@@ -186,11 +209,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--error);
+            color: #ef4444;
             font-size: 1.3rem;
         }
 
@@ -307,143 +330,165 @@
             </div>
         </div>
 
+        <h2 class="section-title"><i class="fa-solid fa-box-open"></i> Your Inventory</h2>
+        <div class="shop-grid" id="inventory-grid-container"></div>
+
+        <h2 class="section-title"><i class="fa-solid fa-store"></i> Shop / Locked Rewards</h2>
         <div class="shop-grid" id="shop-grid-container"></div>
     </div>
 
     <div id="toast">Avatar updated successfully!</div>
 
-   <script>
-      const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
-        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
-        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+<script>
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+    let myId = null;
+    let myElo = 0;
+    let equippedAvatarId = "0";
 
+    const shopCatalog = [
+        { id: "0", name: "Default", requiredElo: 0, src: "../../data/images/0.png", category: "Avatars" },
+        { id: "50", name: "Melt", requiredElo: 50, src: "../../data/images/50.png", category: "Avatars" },
+        { id: "125", name: "SOS", requiredElo: 125, src: "../../data/images/125.png", category: "Avatars" },
+        { id: "175", name: "Innocent", requiredElo: 175, src: "../../data/images/175.png", category: "Avatars" },
+        { id: "225", name: "Chad", requiredElo: 225, src: "../../data/images/225.png", category: "Avatars" },
+        { id: "300", name: "Demon", requiredElo: 300, src: "../../data/images/300.png", category: "Avatars" },
+        { id: "400", name: "Angel", requiredElo: 400, src: "../../data/images/400.png", category: "Avatars" }
+    ];
 
-let myId = null;
-let myElo = 0;
-let equippedAvatarId = "0";
+    async function initShop() {
+        console.log("[SHOP] Fetching user verification data...");
+        const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+        
+        if (sessionErr || !session) {
+            console.error("[SHOP] Session validation failed:", sessionErr);
+            return window.location.href = '/pages/home.html';
+        }
+        
+        myId = session.user.id;
 
-const shopCatalog = [
-    { id: "0", name: "Default", requiredElo: 0, src: "../../data/images/0.png", category: "Avatars" },
-    { id: "50", name: "Melt", requiredElo: 50, src: "../../data/images/50.png", category: "Avatars" },
-    { id: "125", name: "SOS", requiredElo: 125, src: "../../data/images/125.png", category: "Avatars" },
-    { id: "175", name: "Innocent", requiredElo: 175, src: "../../data/images/175.png", category: "Avatars" },
-    { id: "225", name: "Chad", requiredElo: 225, src: "../../data/images/225.png", category: "Avatars" },
-    { id: "300", name: "Demon", requiredElo: 300, src: "../../data/images/300.png", category: "Avatars" },
-    { id: "400", name: "Angel", requiredElo: 400, src: "../../data/images/400.png", category: "Avatars" }
-];
+        const { data: profile, error: profileErr } = await _supabase
+            .from('profiles')
+            .select('coins, avatar_id') 
+            .eq('id', myId)
+            .maybeSingle();
 
-async function initShop() {
-    console.log("[SHOP] Fetching user verification data...");
-    const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
-    
-    if (sessionErr || !session) {
-        console.error("[SHOP] Session validation failed:", sessionErr);
-        return window.location.href = '/pages/home.html';
+        if (profileErr) {
+            console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
+        }
+
+        myElo = profile?.coins || 0;
+        equippedAvatarId = profile?.avatar_id || "0"; 
+
+        document.getElementById('user-elo').innerText = myElo;
+        
+        renderShop();
     }
-    
-    myId = session.user.id;
 
-    const { data: profile, error: profileErr } = await _supabase
-        .from('profiles')
-        .select('coins, avatar_id') 
-        .eq('id', myId)
-        .maybeSingle();
+    function renderShop() {
+        const inventoryContainer = document.getElementById('inventory-grid-container');
+        const shopContainer = document.getElementById('shop-grid-container');
+        
+        inventoryContainer.innerHTML = "";
+        shopContainer.innerHTML = "";
 
-    if (profileErr) {
-        console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
-    }
+        // Separate items based on unlock status
+        const unlockedItems = shopCatalog.filter(item => myElo >= item.requiredElo);
+        const lockedItems = shopCatalog.filter(item => myElo < item.requiredElo);
 
-    myElo = profile?.coins || 0;
-    equippedAvatarId = profile?.avatar_id || "0"; 
-
-    document.getElementById('user-elo').innerText = myElo;
-    
-    renderShop();
-}
-
-function renderShop() {
-    const container = document.getElementById('shop-grid-container');
-    container.innerHTML = "";
-
-    // Grouping items by category dynamically from the catalog above
-    const categories = [...new Set(shopCatalog.map(item => item.category))];
-
-    categories.forEach(category => {
-        // Create a category section header
-        const header = document.createElement('h2');
-        header.className = 'category-header';
-        header.style.cssText = "width: 100%; grid-column: 1 / -1; margin-top: 1.5rem; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 1.1rem; letter-spacing: 0.05em;";
-        header.innerText = category;
-        container.appendChild(header);
-
-        // Filter and display items belonging to this category
-        const itemsInCategory = shopCatalog.filter(item => item.category === category);
-
-        itemsInCategory.forEach(item => {
-            const isUnlocked = myElo >= item.requiredElo;
-            const isEquipped = equippedAvatarId === item.id;
-            
-            let actionBtnHtml = "";
-            if (isEquipped) {
-                actionBtnHtml = `<button class="btn-action equipped" disabled>Equipped</button>`;
-            } else if (isUnlocked) {
-                actionBtnHtml = `<button class="btn-action" onclick="equipItem('${item.id}')">Equip</button>`;
-            } else {
-                actionBtnHtml = `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Locked</button>`;
+        // Helper function to render items within a specific container
+        function populateGrid(items, container, isInventorySection) {
+            if (items.length === 0) {
+                const emptyMsg = document.createElement('p');
+                emptyMsg.style.cssText = "color: var(--text-faded); grid-column: 1 / -1; font-style: italic; margin: 1rem 0; text-align: left; width: 100%;";
+                emptyMsg.innerText = isInventorySection ? "No items unlocked yet." : "You've unlocked every reward!";
+                container.appendChild(emptyMsg);
+                return;
             }
 
-            const card = document.createElement('div');
-            card.className = `shop-card ${!isUnlocked ? 'locked' : ''}`;
-            card.innerHTML = `
-                <div class="avatar-container">
-                    <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/pfps/default.png';">
-                    ${!isUnlocked ? '<div class="lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
-                </div>
-                <h3 class="item-name">${item.name}</h3>
-                <div class="item-price ${isUnlocked ? 'unlocked-text' : ''}">
-                    ${isUnlocked 
-                        ? '<i class="fa-solid fa-circle-check"></i> Unlocked' 
-                        : `<i class="fa-solid fa-bolt"></i> Req: ${item.requiredElo} ELO`
+            const categories = [...new Set(items.map(item => item.category))];
+
+            categories.forEach(category => {
+                const header = document.createElement('h2');
+                header.className = 'category-header';
+                header.style.cssText = "width: 100%; grid-column: 1 / -1; margin-top: 0.5rem; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;";
+                header.innerText = category;
+                container.appendChild(header);
+
+                const itemsInCategory = items.filter(item => item.category === category);
+
+                itemsInCategory.forEach(item => {
+                    const isEquipped = equippedAvatarId === item.id;
+                    let actionBtnHtml = "";
+
+                    if (isInventorySection) {
+                        if (isEquipped) {
+                            actionBtnHtml = `<button class="btn-action equipped" disabled>Equipped</button>`;
+                        } else {
+                            actionBtnHtml = `<button class="btn-action" onclick="equipItem('${item.id}')">Equip</button>`;
+                        }
+                    } else {
+                        actionBtnHtml = `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Locked</button>`;
                     }
-                </div>
-                ${actionBtnHtml}
-            `;
-            container.appendChild(card);
-        });
-    });
-}
 
-async function equipItem(itemId) {
-    equippedAvatarId = itemId;
+                    const card = document.createElement('div');
+                    card.className = `shop-card ${!isInventorySection ? 'locked' : ''}`;
+                    card.innerHTML = `
+                        <div class="avatar-container">
+                            <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/pfps/default.png';">
+                            ${!isInventorySection ? '<div class="lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
+                        </div>
+                        <h3 class="item-name">${item.name}</h3>
+                        <div class="item-price ${isInventorySection ? 'unlocked-text' : ''}">
+                            ${isInventorySection 
+                                ? '<i class="fa-solid fa-circle-check"></i> Unlocked' 
+                                : `<i class="fa-solid fa-bolt"></i> Req: ${item.requiredElo} ELO`
+                            }
+                        </div>
+                        ${actionBtnHtml}
+                    `;
+                    container.appendChild(card);
+                });
+            });
+        }
 
-    const { error } = await _supabase
-        .from('profiles')
-        .update({ avatar_id: itemId })
-        .eq('id', myId);
-
-    if (error) {
-        console.error("[SHOP] Error equipping item:", error);
-        showToast("Failed to equip asset.");
-        return;
+        // Render both fields independently
+        populateGrid(unlockedItems, inventoryContainer, true);
+        populateGrid(lockedItems, shopContainer, false);
     }
 
-    showToast("Avatar successfully updated!");
-    renderShop(); 
-}
+    async function equipItem(itemId) {
+        equippedAvatarId = itemId;
 
-let toastTimeout;
-function showToast(message) {
-    const toast = document.getElementById('toast');
-    toast.innerText = message;
-    toast.classList.add('show');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
+        const { error } = await _supabase
+            .from('profiles')
+            .update({ avatar_id: itemId })
+            .eq('id', myId);
 
-initShop();
+        if (error) {
+            console.error("[SHOP] Error equipping item:", error);
+            showToast("Failed to equip asset.");
+            return;
+        }
+
+        showToast("Avatar successfully updated!");
+        renderShop(); 
+    }
+
+    let toastTimeout;
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    initShop();
 </script>
 </body>
 </html>
