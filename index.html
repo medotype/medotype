@@ -73,6 +73,11 @@
             margin-bottom: 1.5rem;
         }
 
+        /* Prevents an empty pill outline from rendering if left blank */
+        .brand-badge:empty {
+            display: none;
+        }
+
         .brand-badge i {
             font-size: 0.7rem;
             animation: pulse 2s infinite;
@@ -251,8 +256,7 @@
     <div id="app">
         
         <section class="hero-section">
-            <div class="brand-badge">
-            </div>
+            <div class="brand-badge"></div>
             <h1>Type Faster. <br><span class="logo-text">MeDoType</span></h1>
             <p>A minimalist typing game that actually works.</p>
             
@@ -291,14 +295,13 @@
                 <p>Play 1v1s against your friends, or queue up into matchmaking to earn ELO.</p>
             </div>
 
-                        <div class="feature-card">
+            <div class="feature-card">
                 <div class="card-header">
                     <i class="fa-solid fa-palette"></i>
                     <h3>Profile ustomization</h3>
                 </div>
                 <p>Earn coins from playing any mode to unlock avatars and themes.</p>
             </div>
-        </section>
 
             <div class="feature-card">
                 <div class="card-header">
@@ -307,6 +310,7 @@
                 </div>
                 <p>Results show playing MeDoType can really improve typing speeds.</p>
             </div>
+        </section>
 
     </div>
 
@@ -316,28 +320,23 @@
         const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        // Instantaneous Auth Token Verification Check
         async function runAutoLoginCheck() {
             try {
                 const { data: { session }, error } = await _supabase.auth.getSession();
                 
                 if (session && !error) {
-                    // Valid identity verified -> Skip landing page immediately
                     window.location.replace('home.html');
                 } else {
-                    // Unauthenticated guest user -> Remove visual shield and display landing
                     document.getElementById('gateway-loader').classList.add('hidden');
                     document.getElementById('app').classList.add('visible');
                 }
             } catch (err) {
                 console.error("Authentication handshake failed:", err);
-                // Fail-safe initialization to keep interface accessible if backend drops
                 document.getElementById('gateway-loader').classList.add('hidden');
                 document.getElementById('app').classList.add('visible');
             }
         }
 
-        // Initialize verification flow immediately upon DOM readiness
         document.addEventListener('DOMContentLoaded', runAutoLoginCheck);
     </script>
 </body>
