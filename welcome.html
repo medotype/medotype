@@ -25,7 +25,6 @@
             overflow-x: hidden;
         }
 
-        /* Eye-catching ambient background glow behind the app layer */
         body::before {
             content: '';
             position: absolute;
@@ -221,7 +220,6 @@
             line-height: 1.6;
         }
 
-        /* Dynamic System Loading States */
         #gateway-loader {
             position: fixed;
             font-size: 1.5rem;
@@ -261,10 +259,10 @@
             <p>A minimalist typing game that actually works.</p>
             
             <div class="landing-actions">
-                <a href="home.html" class="btn-action primary">
+                <a href="pages/home.html" class="btn-action primary">
                     <i class="fa-solid fa-bolt"></i> Jump In
                 </a>
-                <a href="login.html" class="btn-action">
+                <a href="pages/login.html" class="btn-action">
                     <i class="fa-solid fa-right-to-bracket"></i> Login / Register
                 </a>
             </div>
@@ -292,13 +290,13 @@
                     <i class="fa-solid fa-users"></i>
                     <h3>Multiplayer</h3>
                 </div>
-                <p>Play 1v1s against your friends, or queue up into matchmaking to earn ELO.</p>
+                <p>Play 1v1s against your friends, or queue up into matchmaking to earn ELO. Earn coins with high performance to get profile pictures.</p>
             </div>
 
             <div class="feature-card">
                 <div class="card-header">
                     <i class="fa-solid fa-palette"></i>
-                    <h3>Profile ustomization</h3>
+                    <h3>Profile Customization</h3>
                 </div>
                 <p>Earn coins from playing any mode to unlock avatars and themes.</p>
             </div>
@@ -315,7 +313,6 @@
     </div>
 
     <script>
-        // Synchronized Database Configuration Layer
         const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
