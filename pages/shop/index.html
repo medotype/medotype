@@ -153,7 +153,7 @@
         /* --- Compact Grids & Cards --- */
         .shop-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Switched to 4 columns for smaller items */
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             width: 100%;
             margin-bottom: 1rem;
@@ -162,7 +162,7 @@
         .shop-card {
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 20px 16px; /* Tightened from 35px 24px */
+            padding: 20px 16px;
             border: 1px solid rgba(255, 255, 255, 0.03);
             display: flex;
             flex-direction: column;
@@ -184,8 +184,8 @@
         }
 
         .avatar-container {
-            width: 70px; /* Shrunk down from 110px */
-            height: 70px; /* Shrunk down from 110px */
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             overflow: hidden;
             background: rgba(0, 0, 0, 0.2);
@@ -218,7 +218,7 @@
         }
 
         .item-name {
-            font-size: 1.1rem; /* Reduced from 1.3rem */
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--text-bright);
             margin: 0 0 4px 0;
@@ -227,10 +227,10 @@
         }
 
         .item-price {
-            font-size: 0.8rem; /* Reduced from 0.9rem */
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-faded);
-            margin: 0 0 16px 0; /* Reduced from 24px */
+            margin: 0 0 16px 0;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -244,13 +244,13 @@
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-bright);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 10px 0; /* Reduced padding */
+            padding: 10px 0;
             border-radius: 10px;
             font-family: var(--font);
             font-weight: 800;
             cursor: pointer;
             width: 100%;
-            font-size: 0.85rem; /* Reduced from 1rem */
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             transition: all 0.2s ease;
@@ -306,7 +306,7 @@
             .shop-header { flex-direction: column; text-align: center; gap: 20px; padding: 20px; }
             .shop-title-area { text-align: center; }
             .user-balance-card { text-align: center; justify-content: center; width: 100%; box-sizing: border-box; }
-            .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } /* 2 columns on mobile now since cards are smaller */
+            .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } 
         }
     </style>
 </head>
@@ -319,13 +319,13 @@
         
         <div class="shop-header">
             <div class="shop-title-area">
-                <h1 class="shop-title">Rank Rewards</h1>
-                <p class="shop-subtitle">Unlock and equip exclusive profile pictures based on your current ELO milestone</p>
+                <h1 class="shop-title">Coin Rewards</h1>
+                <p class="shop-subtitle">Unlock and equip exclusive profile pictures based on your total coin milestones</p>
             </div>
             <div class="user-balance-card">
                 <div>
                     <div class="balance-label">Your Coins</div>
-                    <div class="balance-value"><span id="user-elo">0</span> Coins</div>
+                    <div class="balance-value"><span id="user-coins">0</span> Coins</div>
                 </div>
             </div>
         </div>
@@ -345,17 +345,17 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let myId = null;
-    let myElo = 0;
+    let myCoins = 0;
     let equippedAvatarId = "0";
 
     const shopCatalog = [
-        { id: "0", name: "Default", requiredElo: 0, src: "../../data/images/0.png", category: "Avatars" },
-        { id: "50", name: "Melt", requiredElo: 50, src: "../../data/images/50.png", category: "Avatars" },
-        { id: "125", name: "SOS", requiredElo: 125, src: "../../data/images/125.png", category: "Avatars" },
-        { id: "175", name: "Innocent", requiredElo: 175, src: "../../data/images/175.png", category: "Avatars" },
-        { id: "225", name: "Chad", requiredElo: 225, src: "../../data/images/225.png", category: "Avatars" },
-        { id: "300", name: "Demon", requiredElo: 300, src: "../../data/images/300.png", category: "Avatars" },
-        { id: "400", name: "Angel", requiredElo: 400, src: "../../data/images/400.png", category: "Avatars" }
+        { id: "0", name: "Default", requiredCoins: 0, src: "../../data/images/0.png", category: "Avatars" },
+        { id: "50", name: "Melt", requiredCoins: 50, src: "../../data/images/50.png", category: "Avatars" },
+        { id: "125", name: "SOS", requiredCoins: 125, src: "../../data/images/125.png", category: "Avatars" },
+        { id: "175", name: "Innocent", requiredCoins: 175, src: "../../data/images/175.png", category: "Avatars" },
+        { id: "225", name: "Chad", requiredCoins: 225, src: "../../data/images/225.png", category: "Avatars" },
+        { id: "300", name: "Demon", requiredCoins: 300, src: "../../data/images/300.png", category: "Avatars" },
+        { id: "400", name: "Angel", requiredCoins: 400, src: "../../data/images/400.png", category: "Avatars" }
     ];
 
     async function initShop() {
@@ -379,10 +379,10 @@
             console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
         }
 
-        myElo = profile?.coins || 0;
+        myCoins = profile?.coins || 0;
         equippedAvatarId = profile?.avatar_id || "0"; 
 
-        document.getElementById('user-elo').innerText = myElo;
+        document.getElementById('user-coins').innerText = myCoins;
         
         renderShop();
     }
@@ -394,8 +394,8 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
-        const unlockedItems = shopCatalog.filter(item => myElo >= item.requiredElo);
-        const lockedItems = shopCatalog.filter(item => myElo < item.requiredElo);
+        const unlockedItems = shopCatalog.filter(item => myCoins >= item.requiredCoins);
+        const lockedItems = shopCatalog.filter(item => myCoins < item.requiredCoins);
 
         function populateGrid(items, container, isInventorySection) {
             if (items.length === 0) {
@@ -442,7 +442,7 @@
                         <div class="item-price ${isInventorySection ? 'unlocked-text' : ''}">
                             ${isInventorySection 
                                 ? '<i class="fa-solid fa-circle-check"></i> Unlocked' 
-                                : `<i class="fa-solid fa-bolt"></i> Req: ${item.requiredElo} ELO`
+                                : `<i class="fa-solid fa-coins"></i> Req: ${item.requiredCoins} Coins`
                             }
                         </div>
                         ${actionBtnHtml}
