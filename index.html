@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | Welcome</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <title>MeDoType</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="data/css/root.css">
     <script src="data/js/theme.js"></script>
@@ -18,61 +19,124 @@
             align-items: center; 
             justify-content: center; 
             min-height: 100vh; 
-            padding: 2rem 1rem;
+            padding: 3rem 1rem;
             box-sizing: border-box;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Eye-catching ambient background glow behind the app layer */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, rgba(167, 139, 250, 0.02) 70%, transparent 100%);
+            z-index: 0;
+            pointer-events: none;
         }
         
+        /* Starts hidden to prevent unauthenticated layout flash during the Supabase check */
         #app { 
             width: 100%; 
             max-width: 850px; 
             text-align: center; 
             position: relative; 
-            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
-        /* Hero Layout matching the clean typography rules */
+        #app.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Branded Header Badge */
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .brand-badge i {
+            font-size: 0.7rem;
+            animation: pulse 2s infinite;
+        }
+
+        /* Hero Layout & Branded Typography */
         .hero-section {
-            margin-bottom: 3.5rem;
+            margin-bottom: 4rem;
         }
 
         .hero-section h1 {
-            font-size: 3.25rem;
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            margin: 0 0 1rem 0;
+            font-size: 3.75rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 0 0 1.25rem 0;
             color: var(--text-bright);
+            line-height: 1.1;
         }
 
-        .hero-section h1 span {
+        /* Monospace caret indicator inside logo text */
+        .logo-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .logo-text::after {
+            content: '_';
+            font-family: monospace;
             color: var(--accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            -webkit-text-fill-color: var(--accent);
         }
 
         .hero-section p {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             color: var(--text-faded);
-            max-width: 600px;
-            margin: 0 auto 2.5rem auto;
+            max-width: 620px;
+            margin: 0 auto 2.75rem auto;
             font-weight: 400;
+            line-height: 1.6;
         }
 
-        /* Nav Group Styling for Landing Buttons */
+        /* Action Nav Buttons Layout */
         .landing-actions { 
             display: inline-flex; 
             background: var(--card-bg); 
             padding: 6px; 
-            border-radius: 12px; 
-            gap: 5px; 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            border-radius: 14px; 
+            gap: 6px; 
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
         }
 
         .btn-action { 
-            padding: 10px 24px; 
+            padding: 12px 28px; 
             font-size: 0.9rem; 
             font-weight: 600; 
             color: var(--text-faded); 
             cursor: pointer; 
-            border-radius: 8px; 
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            border-radius: 10px; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
             display: flex; 
             align-items: center; 
             gap: 8px; 
@@ -84,97 +148,121 @@
         }
 
         .btn-action.primary { 
-            color: var(--accent); 
-            background: rgba(255, 255, 255, 0.03); 
+            color: var(--text-bright); 
+            background: var(--accent); 
         }
 
         .btn-action.primary:hover {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--accent);
+            opacity: 0.9;
+            color: var(--text-bright);
+            transform: translateY(-1px);
         }
 
-        /* Features Display Dashboard Grid */
+        /* Features Display Grid with Refined Layouts */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+            gap: 20px;
             text-align: left;
         }
 
         .feature-card {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.75rem;
-            border: 1px solid transparent;
-            transition: transform 0.2s, border-color 0.2s;
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
         }
 
         .feature-card:hover {
-            border-color: rgba(59, 130, 246, 0.2);
-            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.25);
+            background: linear-gradient(180deg, var(--card-bg) 0%, rgba(255, 255, 255, 0.01) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
         }
 
-        /* Main skill block spans full width */
         .feature-card.highlight {
             grid-column: 1 / -1;
-            background: linear-gradient(145deg, var(--card-bg) 0%, rgba(59, 130, 246, 0.03) 100%);
-            border-left: 3px solid var(--accent);
+            background: linear-gradient(145deg, var(--card-bg) 0%, rgba(59, 130, 246, 0.04) 100%);
+            border-left: 4px solid var(--accent);
         }
 
         .card-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 0.75rem;
+            gap: 14px;
+            margin-bottom: 0.85rem;
         }
 
         .card-header i {
             color: var(--accent);
-            font-size: 1.25rem;
-            min-width: 24px;
+            font-size: 1.35rem;
+            min-width: 28px;
             text-align: center;
         }
 
         .card-header h3 {
-            font-size: 1.15rem;
-            font-weight: 500;
+            font-size: 1.25rem;
+            font-weight: 600;
             margin: 0;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
             color: var(--text-bright);
         }
 
         .feature-card p {
             color: var(--text-faded);
-            font-size: 0.95rem;
+            font-size: 0.98rem;
             margin: 0;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        @keyframes fadeIn { 
-            0% { opacity: 0; transform: translateY(10px); } 
-            100% { opacity: 1; transform: translateY(0); } 
+        /* Dynamic System Loading States */
+        #gateway-loader {
+            position: fixed;
+            font-size: 1.5rem;
+            color: var(--text-faded);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
         }
+
+        #gateway-loader.hidden {
+            display: none;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
         @media (max-width: 768px) {
-            .hero-section h1 { font-size: 2.5rem; }
+            .hero-section h1 { font-size: 2.75rem; }
             .features-grid { grid-template-columns: 1fr; }
+            .landing-actions { flex-direction: column; width: 100%; padding: 8px; }
+            .btn-action { justify-content: center; }
         }
     </style>
 </head>
 <body>
 
+    <div id="gateway-loader">
+        <i class="fa-solid fa-circle-notch fa-spin" style="color: var(--accent);"></i>
+    </div>
+
     <div id="app">
         
         <section class="hero-section">
-            <h1>Type Faster. Type <span>Better.</span></h1>
-            <p>A minimalist environment built to break your plateaus, reward consistency, and build long-term muscle memory through gamified mechanics.</p>
+            <div class="brand-badge">
+                <i class="fa-solid fa-keyboard"></i> The Next-Gen Typing Experience
+            </div>
+            <h1>Type Faster. <br>Type <span class="logo-text">MeDoType</span></h1>
+            <p>A minimalist training grounds built to break typing plateaus, reward execution accuracy, and establish pristine muscle memory mechanics natively.</p>
             
             <div class="landing-actions">
                 <a href="home.html" class="btn-action primary">
                     <i class="fa-solid fa-bolt"></i> Jump In
                 </a>
-                <a href="home.html" class="btn-action">
-                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                <a href="login.html" class="btn-action">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login / Register
                 </a>
             </div>
         </section>
@@ -185,7 +273,7 @@
                     <i class="fa-solid fa-brain"></i>
                     <h3>Real Skill Progression</h3>
                 </div>
-                <p>We leverage the neurological feedback loops that make video games engaging to build sustainable typing habits. By utilizing adaptive muscle memory targeting and explicit combo tracking, your accuracy improves automatically as you stay locked into the rhythm.</p>
+                <p>We leverage high-performance behavioral feedback loops to turn basic practice into lasting habits. By utilizing real-time mistake isolation and adaptive word grouping, your speed scales organically while maintaining full command over execution precision.</p>
             </div>
 
             <div class="feature-card">
@@ -193,7 +281,7 @@
                     <i class="fa-solid fa-clock"></i>
                     <h3>Fluid Practice Engine</h3>
                 </div>
-                <p>Engage with clean time-attacks, structural word counts, or endless variations. Receive real-time WPM reporting paired with robust anti-cheat analytics natively.</p>
+                <p>Isolate your performance across time-attack bursts, fixed text criteria, or limitless layouts. Backed natively by cryptographic anti-cheat rhythm validation.</p>
             </div>
 
             <div class="feature-card">
@@ -201,27 +289,57 @@
                     <i class="fa-solid fa-fire"></i>
                     <h3>1v1 Competitive Arena</h3>
                 </div>
-                <p>Accept instant incoming matches dynamically via database channels. Race directly against players in high-stakes execution matches where typos cost momentum.</p>
+                <p>Connect immediately into low-latency database channels. Enter direct live matches against real opponents where a single misplay can cost the round.</p>
             </div>
 
             <div class="feature-card">
                 <div class="card-header">
                     <i class="fa-solid fa-users"></i>
-                    <h3>Social Systems</h3>
+                    <h3>Global Network Structures</h3>
                 </div>
-                <p>Monitor profiles seamlessly, follow your friends, challenge rivals instantly, and compete directly for dominance across uniform global leaderboards.</p>
+                <p>Follow top executioners, review historical profiles, send cross-platform challenge signals, and stake your rank across global leaderboards.</p>
             </div>
 
             <div class="feature-card">
                 <div class="card-header">
                     <i class="fa-solid fa-palette"></i>
-                    <h3>Profile Customization</h3>
+                    <h3>Vanity Marketplace</h3>
                 </div>
-                <p>Acquire programmatic game currency payouts directly based on precision benchmarks. Access unique sound profiles, alternate interfaces, and structural vanity items.</p>
+                <p>Earn programmatic ecosystem currency dynamically by clearing strict precision tiers. Unlock sound variants, aesthetic skin modules, and historical badges.</p>
             </div>
         </section>
 
     </div>
 
+    <script>
+        // Synchronized Database Configuration Layer
+        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        // Instantaneous Auth Token Verification Check
+        async function runAutoLoginCheck() {
+            try {
+                const { data: { session }, error } = await _supabase.auth.getSession();
+                
+                if (session && !error) {
+                    // Valid identity verified -> Skip landing page immediately
+                    window.location.replace('home.html');
+                } else {
+                    // Unauthenticated guest user -> Remove visual shield and display landing
+                    document.getElementById('gateway-loader').classList.add('hidden');
+                    document.getElementById('app').classList.add('visible');
+                }
+            } catch (err) {
+                console.error("Authentication handshake failed:", err);
+                // Fail-safe initialization to keep interface accessible if backend drops
+                document.getElementById('gateway-loader').classList.add('hidden');
+                document.getElementById('app').classList.add('visible');
+            }
+        }
+
+        // Initialize verification flow immediately upon DOM readiness
+        document.addEventListener('DOMContentLoaded', runAutoLoginCheck);
+    </script>
 </body>
 </html>
