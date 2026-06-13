@@ -150,19 +150,19 @@
             color: var(--accent);
         }
 
-        /* --- Grids & Cards --- */
+        /* --- Compact Grids & Cards --- */
         .shop-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            grid-template-columns: repeat(4, 1fr); /* Switched to 4 columns for smaller items */
+            gap: 16px;
             width: 100%;
             margin-bottom: 1rem;
         }
 
         .shop-card {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 35px 24px;
+            border-radius: 16px;
+            padding: 20px 16px; /* Tightened from 35px 24px */
             border: 1px solid rgba(255, 255, 255, 0.03);
             display: flex;
             flex-direction: column;
@@ -184,13 +184,13 @@
         }
 
         .avatar-container {
-            width: 110px;
-            height: 110px;
+            width: 70px; /* Shrunk down from 110px */
+            height: 70px; /* Shrunk down from 110px */
             border-radius: 50%;
             overflow: hidden;
             background: rgba(0, 0, 0, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -214,23 +214,23 @@
             align-items: center;
             justify-content: center;
             color: #ef4444;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
         }
 
         .item-name {
-            font-size: 1.3rem;
+            font-size: 1.1rem; /* Reduced from 1.3rem */
             font-weight: 800;
             color: var(--text-bright);
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
             text-transform: uppercase;
             letter-spacing: 0.02em;
         }
 
         .item-price {
-            font-size: 0.9rem;
+            font-size: 0.8rem; /* Reduced from 0.9rem */
             font-weight: 600;
             color: var(--text-faded);
-            margin: 0 0 24px 0;
+            margin: 0 0 16px 0; /* Reduced from 24px */
             display: flex;
             align-items: center;
             gap: 6px;
@@ -244,13 +244,13 @@
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-bright);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 12px 0;
-            border-radius: 12px;
+            padding: 10px 0; /* Reduced padding */
+            border-radius: 10px;
             font-family: var(--font);
             font-weight: 800;
             cursor: pointer;
             width: 100%;
-            font-size: 1rem;
+            font-size: 0.85rem; /* Reduced from 1rem */
             text-transform: uppercase;
             letter-spacing: 0.05em;
             transition: all 0.2s ease;
@@ -299,14 +299,14 @@
 
         /* --- Responsive Viewports --- */
         @media (max-width: 900px) { 
-            .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } 
+            .shop-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; } 
         }
 
         @media (max-width: 600px) { 
             .shop-header { flex-direction: column; text-align: center; gap: 20px; padding: 20px; }
             .shop-title-area { text-align: center; }
             .user-balance-card { text-align: center; justify-content: center; width: 100%; box-sizing: border-box; }
-            .shop-grid { grid-template-columns: 1fr; max-width: 340px; gap: 16px; } 
+            .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } /* 2 columns on mobile now since cards are smaller */
         }
     </style>
 </head>
@@ -394,15 +394,13 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
-        // Separate items based on unlock status
         const unlockedItems = shopCatalog.filter(item => myElo >= item.requiredElo);
         const lockedItems = shopCatalog.filter(item => myElo < item.requiredElo);
 
-        // Helper function to render items within a specific container
         function populateGrid(items, container, isInventorySection) {
             if (items.length === 0) {
                 const emptyMsg = document.createElement('p');
-                emptyMsg.style.cssText = "color: var(--text-faded); grid-column: 1 / -1; font-style: italic; margin: 1rem 0; text-align: left; width: 100%;";
+                emptyMsg.style.cssText = "color: var(--text-faded); grid-column: 1 / -1; font-style: italic; margin: 1rem 0; text-align: left; width: 100%; font-size: 0.9rem;";
                 emptyMsg.innerText = isInventorySection ? "No items unlocked yet." : "You've unlocked every reward!";
                 container.appendChild(emptyMsg);
                 return;
@@ -413,7 +411,7 @@
             categories.forEach(category => {
                 const header = document.createElement('h2');
                 header.className = 'category-header';
-                header.style.cssText = "width: 100%; grid-column: 1 / -1; margin-top: 0.5rem; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;";
+                header.style.cssText = "width: 100%; grid-column: 1 / -1; margin-top: 0.5rem; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em;";
                 header.innerText = category;
                 container.appendChild(header);
 
@@ -454,7 +452,6 @@
             });
         }
 
-        // Render both fields independently
         populateGrid(unlockedItems, inventoryContainer, true);
         populateGrid(lockedItems, shopContainer, false);
     }
