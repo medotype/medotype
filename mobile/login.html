@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Account</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+    <style>
+
+        body {
+            background-color: (--bg);
+            color: var(--text-bright);
+            font-family: var(--font);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text-bright);
+            -webkit-box-shadow: 0 0 0px 1000px var(--bg) inset;
+            transition: background-color 5000s ease-in-out 0s;
+            font-family: var(--font);
+        }
+
+        .auth-container {
+            background: var(--card-bg);
+            padding: 2rem 2.5rem;
+            border-radius: 20px;
+            width: 95%;
+            max-width: 950px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .brand-side {
+            flex: 0 0 240px;
+            text-align: left;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding-right: 2rem;
+        }
+
+        #title, #subtitle {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .brand-side h2 { margin: 0; font-size: 1.8rem; letter-spacing: -0.03em; font-weight: 600; }
+        .brand-side p { color: var(--text-faded); font-size: 0.9rem; margin: 0.5rem 0 1.5rem; line-height: 1.4; }
+
+        .form-side {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            align-items: flex-end;
+            min-height: 80px;
+        }
+
+        /* The Slide Effect */
+        .input-wrap {
+            flex: 1;
+            min-width: 0; /* Allows shrinking below content size */
+            text-align: left;
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            visibility: visible;
+        }
+
+        .input-wrap.hidden {
+            flex: 0;
+            padding: 0;
+            margin: 0;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            visibility: hidden;
+            /* Keeps the layout from snapping */
+        }
+
+        label { 
+            display: block; 
+            font-size: 0.65rem; 
+            color: var(--text-faded); 
+            margin-bottom: 0.5rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px;
+            color: white;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus { 
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            font-family: var(--font);
+            font-weight: 600;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: transform 0.2s, opacity 0.2s;
+            margin-bottom: 1px; /* Align with inputs */
+        }
+
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .toggle-btn {
+            background: transparent;
+            color: var(--accent);
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        
+        .toggle-btn:hover { text-decoration: underline; opacity: 0.8; }
+
+        #msg-container {
+            position: absolute;
+            bottom: -30px;
+            left: 2.5rem;
+        }
+
+        #msg { 
+            font-size: 0.8rem; 
+            margin: 0;
+        }
+
+        .err { color: var(--error); }
+        .success { color: #10b981; }
+
+        @media (max-width: 800px) {
+            .auth-container { flex-direction: column; text-align: center; gap: 1.5rem; padding: 2rem; }
+            .brand-side { border-right: none; padding-right: 0; flex: none; width: 100%; }
+            .form-side { flex-direction: column; width: 100%; align-items: stretch; }
+            .input-wrap.hidden { flex: none; height: 0; overflow: hidden; }
+            .btn { width: 100%; }
+        }
+        
+        /* New Overlay Styles */
+#verify-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(18, 18, 19, 0.95);
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.verify-card {
+    background: var(--card-bg);
+    padding: 3rem;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.05);
+    max-width: 400px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.verify-card i {
+    font-size: 3rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+}
+
+.verify-card h2 { margin: 0 0 1rem 0; }
+.verify-card p { color: var(--text-faded); line-height: 1.6; margin-bottom: 2rem; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+    </style>
+</head>
+<body>
+    
+
+    <div class="auth-container">
+        <div class="brand-side">
+            <h2 id="title">MeDoType</h2>
+            <p id="subtitle">Track your speed and progress.</p>
+            <button class="toggle-btn" onclick="manualToggle()" id="mode-hint">
+                Already a member? Login
+            </button>
+        </div>
+
+        <div class="form-side" style="position: relative;">
+            <div class="input-wrap">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="you@example.com">
+            </div>
+
+            <div id="username-wrap" class="input-wrap">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Typist123" minlength="3" maxlength="12">
+            </div>
+
+            <div class="input-wrap">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+
+            <button class="btn" id="main-btn" onclick="handleAuth()">Go</button>
+            
+            <div id="msg-container">
+                <p id="msg"></p>
+            </div>
+        </div>
+        
+        <div id="verify-overlay">
+    <div class="verify-card">
+        <i class="fa-solid fa-envelope-open-text"></i>
+        <h2>Verify your email</h2>
+        <p>We've sent a link to your inbox. Please click it to activate your account.</p>
+        <button class="btn" id="check-status-btn" onclick="checkVerification()">I've Verified My Email</button>
+        <p id="verify-msg" style="margin-top: 1rem; font-size: 0.8rem;"></p>
+    </div>
+    
+</div>
+    </div>
+
+    <script>
+        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        let isLogin = false; 
+        let isCooldown = false;
+
+        function setMode(loginMode) {
+            isLogin = loginMode;
+            const userWrap = document.getElementById('username-wrap');
+            const title = document.getElementById('title');
+            const subtitle = document.getElementById('subtitle');
+            const btn = document.getElementById('main-btn');
+            const hint = document.getElementById('mode-hint');
+
+            title.style.opacity = 0;
+            subtitle.style.opacity = 0;
+
+            setTimeout(() => {
+                if (isLogin) {
+                    userWrap.classList.add('hidden');
+                    title.innerText = "Welcome Back";
+                    subtitle.innerText = "Pick up where you left off.";
+                    btn.innerText = "Login";
+                    hint.innerText = "Need an account? Sign Up";
+                } else {
+                    userWrap.classList.remove('hidden');
+                    title.innerText = "MeDoType";
+                    subtitle.innerText = "Track your speed and progress.";
+                    btn.innerText = "Sign Up";
+                    hint.innerText = "Already a member? Login";
+                }
+                title.style.opacity = 1;
+                subtitle.style.opacity = 1;
+            }, 200);
+        }
+
+        function manualToggle() { setMode(!isLogin); }
+        setMode(false);
+
+let signupEmail = ""; 
+
+async function handleAuth() {
+    if (isCooldown) return;
+    
+    // Trim added to inputs to prevent spaces from bypassing length checks
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const msgEl = document.getElementById('msg');
+
+    if (!email || !password || (!isLogin && !username)) {
+        msgEl.innerText = "Fill all fields.";
+        msgEl.className = 'err';
+        return;
+    }
+
+    // --- NEW USERNAME LENGTH VALIDATION ---
+    if (!isLogin && (username.length < 3 || username.length > 12)) {
+        msgEl.innerText = "Username must be 3-12 characters.";
+        msgEl.className = 'err';
+        return;
+    }
+
+    isCooldown = true;
+    msgEl.innerText = "Loading...";
+    msgEl.className = "";
+
+    if (isLogin) {
+        // --- LOGIN FLOW ---
+        const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+        
+        if (error) {
+            msgEl.innerText = error.message;
+            msgEl.className = 'err';
+            isCooldown = false;
+        } else {
+            msgEl.innerText = 'Success!';
+            msgEl.className = 'success';
+            setTimeout(() => window.location.href = 'home.html', 1000);
+        }
+    } else {
+        // --- SIGNUP FLOW ---
+        signupEmail = email;
+        const { data, error } = await _supabase.auth.signUp({ 
+            email, 
+            password, 
+            options: { data: { username } } 
+        });
+
+        if (error) {
+            msgEl.innerText = error.message;
+            msgEl.className = 'err';
+            isCooldown = false;
+        } else {
+            // Show the verification overlay instead of redirecting
+            document.getElementById('verify-overlay').style.display = 'flex';
+        }
+    }
+}
+
+async function checkVerification() {
+    const vMsg = document.getElementById('verify-msg');
+    const btn = document.getElementById('check-status-btn');
+    
+    btn.innerText = "Checking...";
+    vMsg.innerText = "";
+
+
+    const { data, error } = await _supabase.auth.signInWithPassword({
+        email: signupEmail,
+        password: document.getElementById('password').value
+    });
+
+    if (error) {
+        if (error.message.toLowerCase().includes("confirmed") || error.message.toLowerCase().includes("verify")) {
+            vMsg.innerText = "Still waiting for verification...";
+            vMsg.className = "err";
+        } else {
+            vMsg.innerText = error.message;
+            vMsg.className = "err";
+        }
+        btn.innerText = "I've Verified My Email";
+    } else if (data.user) {
+        // If login succeeds, they are verified
+        vMsg.innerText = "Verified! Redirecting...";
+        vMsg.className = "success";
+        setTimeout(() => window.location.href = 'index.html', 1500);
+    }
+}
+    </script>
+</body>
+</html>
