@@ -22,13 +22,12 @@
     <link rel="stylesheet" href="data/css/index.css">
     <link rel="stylesheet" href="data/css/root.css">
     <script src="/data/js/theme.js"></script>
-    <link rel="icon" type="image/x-icon" href="favicon.ico?v=1">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
 
     <script src="/cdnjs-assets/ajax/libs/supabase/2.39.8/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.5.0/dist/index.global.js"></script>
 
     <style>
-        /* NEW: Discord Badge styling */
         .discord-badge {
             background-color: #5865F2;
             color: white;
@@ -49,8 +48,8 @@
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: var(--card-bg);
-            border: 1px solid var(--accent);
+            background: var(--card-bg, #1e1e24);
+            border: 1px solid var(--accent, #5865F2);
             border-radius: 12px;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
             padding: 18px 22px;
@@ -70,7 +69,7 @@
         .incoming-header {
             font-size: 0.95rem;
             font-weight: 600;
-            color: var(--text-bright);
+            color: var(--text-bright, #fff);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -93,16 +92,72 @@
             transition: opacity 0.2s;
         }
 
-        .toast-btn-accept { background: var(--accent); color: white; }
-        .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded); }
+        .toast-btn-accept { background: var(--accent, #5865F2); color: white; }
+        .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded, #aaa); }
         .toast-btn:hover { opacity: 0.9; }
+
+        /* NEW: Custom Settings Modal Styles */
+        #settings-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            backdrop-filter: blur(3px);
+        }
+
+        #settings-modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .settings-modal {
+            background: var(--card-bg, #1e1e24);
+            border: 1px solid var(--accent, #5865F2);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 320px;
+            text-align: center;
+            font-family: var(--font, 'Inter', sans-serif);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+
+        #settings-modal-overlay.show .settings-modal {
+            transform: scale(1);
+        }
+
+        .settings-modal i.fa-gear {
+            font-size: 2rem;
+            color: var(--accent, #5865F2);
+            margin-bottom: 12px;
+        }
+
+        .settings-modal h3 {
+            margin: 0 0 10px 0;
+            color: var(--text-bright, #fff);
+            font-size: 1.2rem;
+        }
+
+        .settings-modal p {
+            color: var(--text-faded, #aaa);
+            font-size: 0.9rem;
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+        }
     </style>
 </head>
     
 <body>
 
     <header>
-        <div class="brand" onclick="navigateFrame('pages/home.html', this)">
+        <div class="brand" onclick="navigateFrame('/pages/home.html', this)">
             <i class="fa-solid fa-keyboard"></i>
             <span class="logo-text">MeDoType</span>
             <span class="discord-badge"><i class="fa-brands fa-discord"></i> App</span>
@@ -114,16 +169,16 @@
         </div>
         
         <nav class="nav-links">
-            <a onclick="navigateFrame('pages/home.html', this)" class="active" title="Home">
+            <a onclick="navigateFrame('/pages/home.html', this)" class="active" title="Home">
                 <i class="fa-solid fa-house"></i>
             </a>
-            <a onclick="navigateFrame('pages/leaderboard.html', this)" title="Leaderboard">
+            <a onclick="navigateFrame('/pages/leaderboard.html', this)" title="Leaderboard">
                 <i class="fa-solid fa-trophy"></i>
             </a>
-            <a onclick="navigateFrame('pages/settings.html', this)" title="Settings">
+            <a onclick="showSettingsModal()" title="Settings">
                 <i class="fa-solid fa-gear"></i>
             </a>
-            <a onclick="navigateFrame('pages/account.html', this)" title="Account">
+            <a onclick="navigateFrame('/pages/account.html', this)" title="Account">
                 <i class="fa-solid fa-circle-user"></i>
             </a>
         </nav>
@@ -153,6 +208,15 @@
         </div>
     </div>
 
+    <div id="settings-modal-overlay">
+        <div class="settings-modal">
+            <i class="fa-solid fa-gear"></i>
+            <h3>Settings Unavailable</h3>
+            <p>You can customize your profile and settings on our main website, but this feature is locked on the Discord version.</p>
+            <button class="toast-btn toast-btn-accept" style="width: 100%;" onclick="closeSettingsModal()">Got it</button>
+        </div>
+    </div>
+
     <script src="data/js/index.js"></script>
 
     <script>
@@ -175,6 +239,15 @@
 
         let shellCurrentUsername = null;
         let shellActiveRequest = null;
+
+        // NEW: Modal control functions
+        function showSettingsModal() {
+            document.getElementById('settings-modal-overlay').classList.add('show');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal-overlay').classList.remove('show');
+        }
 
         async function setupDiscordPresence() {
             try {
@@ -259,7 +332,7 @@
                 if (!error) {
                     const frame = document.getElementById('main-frame');
                     if (frame) {
-                        frame.src = `pages/ranked/1v1.html?${uniqueRoomId}`;
+                        frame.src = `/pages/ranked/1v1.html?${uniqueRoomId}`;
                     }
 
                     try {
