@@ -19,10 +19,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="data/css/index.css">
-    <link rel="stylesheet" href="data/css/root.css">
-    <script src="/data/js/theme.js"></script>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="../data/css/index.css">
+    <link rel="stylesheet" href="../data/css/root.css">
+    <script src="../data/js/theme.js"></script>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico?v=1">
 
     <script src="/cdnjs-assets/ajax/libs/supabase/2.39.8/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.5.0/dist/index.global.js"></script>
@@ -96,7 +96,6 @@
         .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded, #aaa); }
         .toast-btn:hover { opacity: 0.9; }
 
-        /* NEW: Custom Settings Modal Styles */
         #settings-modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -157,7 +156,7 @@
 <body>
 
     <header>
-        <div class="brand" onclick="navigateFrame('/pages/home.html', this)">
+        <div class="brand" onclick="navigateFrame('../pages/home.html', this)">
             <i class="fa-solid fa-keyboard"></i>
             <span class="logo-text">MeDoType</span>
             <span class="discord-badge"><i class="fa-brands fa-discord"></i> App</span>
@@ -169,16 +168,16 @@
         </div>
         
         <nav class="nav-links">
-            <a onclick="navigateFrame('/pages/home.html', this)" class="active" title="Home">
+            <a onclick="navigateFrame('../pages/home.html', this)" class="active" title="Home">
                 <i class="fa-solid fa-house"></i>
             </a>
-            <a onclick="navigateFrame('/pages/leaderboard.html', this)" title="Leaderboard">
+            <a onclick="navigateFrame('../pages/leaderboard.html', this)" title="Leaderboard">
                 <i class="fa-solid fa-trophy"></i>
             </a>
             <a onclick="showSettingsModal()" title="Settings">
                 <i class="fa-solid fa-gear"></i>
             </a>
-            <a onclick="navigateFrame('/pages/account.html', this)" title="Account">
+            <a onclick="navigateFrame('../pages/account.html', this)" title="Account">
                 <i class="fa-solid fa-circle-user"></i>
             </a>
         </nav>
@@ -217,7 +216,7 @@
         </div>
     </div>
 
-    <script src="data/js/index.js"></script>
+    <script src="../data/js/index.js"></script>
 
     <script>
         const discordSdk = new window.discord.DiscordSDK("1515605313049333820");
@@ -332,7 +331,7 @@
                 if (!error) {
                     const frame = document.getElementById('main-frame');
                     if (frame) {
-                        frame.src = `/pages/ranked/1v1.html?${uniqueRoomId}`;
+                        frame.src = `../pages/ranked/1v1.html?${uniqueRoomId}`;
                     }
 
                     try {
