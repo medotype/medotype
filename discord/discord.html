@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType</title>
+    <title>MeDoType (Discord)</title>
 
     <script>
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
@@ -15,21 +15,36 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-<link rel="stylesheet" href="/cdnjs-assets/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/cdnjs-assets/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="data/css/index.css">
     <link rel="stylesheet" href="data/css/root.css">
     <script src="/data/js/theme.js"></script>
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=1">
 
-<script src="/cdnjs-assets/ajax/libs/supabase/2.39.8/supabase.js"></script>
-    
+    <script src="/cdnjs-assets/ajax/libs/supabase/2.39.8/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.5.0/dist/index.global.js"></script>
 
     <style>
+        /* NEW: Discord Badge styling */
+        .discord-badge {
+            background-color: #5865F2;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            vertical-align: middle;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         #incoming-toast {
             position: fixed;
             bottom: 24px;
@@ -90,6 +105,7 @@
         <div class="brand" onclick="navigateFrame('pages/home.html', this)">
             <i class="fa-solid fa-keyboard"></i>
             <span class="logo-text">MeDoType</span>
+            <span class="discord-badge"><i class="fa-brands fa-discord"></i> App</span>
         </div>
 
         <div class="search-container">
@@ -160,25 +176,23 @@
         let shellCurrentUsername = null;
         let shellActiveRequest = null;
 
-        // 3. ADDED: Master authorization hook to sync activity profile
         async function setupDiscordPresence() {
             try {
                 await discordSdk.ready();
                 await discordSdk.commands.authorize({
-                    client_id: "YOUR_DISCORD_APP_CLIENT_ID_HERE",
+                    client_id: "1515605313049333820",
                     response_type: "code",
                     state: "1",
                     prompt: "none",
                     scope: ["rpc.activities.write"],
                 });
 
-                // Sets the primary baseline profile presence status
                 await discordSdk.commands.setActivity({
                     activity: {
                         details: "Chilling in Menu",
                         state: "Preparing to Race",
                         assets: {
-                            large_image: "game_logo", // Must match asset keys in developer portal
+                            large_image: "game_logo",
                             large_text: "MeDoType"
                         }
                     }
@@ -190,7 +204,6 @@
         }
 
         async function initGlobalChallengeListener() {
-            // Kick off the Discord rich presence status registration loop alongside standard listener
             await setupDiscordPresence();
 
             const { data: { session } } = await shellSupabase.auth.getSession();
@@ -234,7 +247,9 @@
             shellActiveRequest = null;
 
             if (accept) {
-                const uniqueRoomId = crypto.randomUUID();
+                const uniqueRoomId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+                    ? crypto.randomUUID() 
+                    : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
                 
                 const { error } = await shellSupabase
                     .from('1v1_queue')
