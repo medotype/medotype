@@ -23,6 +23,8 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=1">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.5.0/dist/index.global.js"></script>
 
     <style>
         #incoming-toast {
@@ -135,6 +137,20 @@
     <script src="data/js/index.js"></script>
 
     <script>
+        // 2. ADDED: Network mappings & Initialization for Discord Proxy Compatibility
+        const discordSdk = new window.discord.DiscordSDK("YOUR_DISCORD_APP_CLIENT_ID_HERE");
+
+        window.discord.patchUrlMappings([
+            {
+                prefix: '/supabase-api',
+                target: 'tzaowqeofmwfnprrfwat.supabase.co',
+            },
+            {
+                prefix: '/cdnjs-assets',
+                target: 'cdnjs.cloudflare.com'
+            }
+        ]);
+
         const SHELL_SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         const SHELL_SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const shellSupabase = supabase.createClient(SHELL_SB_URL, SHELL_SB_KEY);
@@ -142,7 +158,39 @@
         let shellCurrentUsername = null;
         let shellActiveRequest = null;
 
+        // 3. ADDED: Master authorization hook to sync activity profile
+        async function setupDiscordPresence() {
+            try {
+                await discordSdk.ready();
+                await discordSdk.commands.authorize({
+                    client_id: "YOUR_DISCORD_APP_CLIENT_ID_HERE",
+                    response_type: "code",
+                    state: "1",
+                    prompt: "none",
+                    scope: ["rpc.activities.write"],
+                });
+
+                // Sets the primary baseline profile presence status
+                await discordSdk.commands.setActivity({
+                    activity: {
+                        details: "Chilling in Menu",
+                        state: "Preparing to Race",
+                        assets: {
+                            large_image: "game_logo", // Must match asset keys in developer portal
+                            large_text: "MeDoType"
+                        }
+                    }
+                });
+                console.log("[DISCORD] Presence bridge successfully established.");
+            } catch (err) {
+                console.warn("[DISCORD] Failed setup. Running inside standard browser alternative.", err);
+            }
+        }
+
         async function initGlobalChallengeListener() {
+            // Kick off the Discord rich presence status registration loop alongside standard listener
+            await setupDiscordPresence();
+
             const { data: { session } } = await shellSupabase.auth.getSession();
             if (!session) return;
 
@@ -196,6 +244,16 @@
                     if (frame) {
                         frame.src = `pages/ranked/1v1.html?${uniqueRoomId}`;
                     }
+
+                    try {
+                        discordSdk.commands.setActivity({
+                            activity: {
+                                details: "Entering a 1v1 Ranked Match",
+                                state: `Challenged by ${req.username}`,
+                                assets: { large_image: "game_logo", large_text: "MeDoType" }
+                            }
+                        });
+                    } catch (e) {}
                 } else {
                     console.error("Failed to accept challenge", error);
                 }
