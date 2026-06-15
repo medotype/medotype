@@ -10,29 +10,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="../../data/css/root.css">
-        <link rel="stylesheet" href="game.css">
+    <link rel="stylesheet" href="game.css">
     <script src="../../data/js/theme.js"></script>
-    </head>
+</head>
 <body>
 
+    <div id="damage-overlay"></div>
+
+    <div id="action-text"></div>
+
     <div id="app">
- <div class="match-header">
-    <div class="player-info">
-        <span class="player-name" id="my-name">Me</span>
-        <span class="player-score">Score: <span id="my-score">0</span></span>
-        <div id="combo-stat" style="color: var(--accent); font-weight: 600; margin-top: 5px;">
-            <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
+        <div class="match-header">
+            <div class="player-info">
+                <span class="player-name" id="my-name">Me</span>
+                <span class="player-score">Score: <span id="my-score">0</span></span>
+                <div id="combo-stat" style="color: var(--accent); font-weight: 600; margin-top: 5px;">
+                    <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
+                </div>
+            </div>
+            
+            <div class="round-info">
+                <span class="round-text">ROUND <span id="round-display">1</span></span>
+                <span class="round-status" id="round-status">Connecting...</span>
+            </div>
+
+            <div class="player-info right">
+                <span class="player-name" id="opp-name">Opponent</span>
+                <span class="player-score">Score: <span id="opp-score">0</span></span>
+            </div>
         </div>
-    </div>
-    <div class="round-info">
-        <span class="round-text">ROUND <span id="round-display">1</span></span>
-        <span class="round-status" id="round-status">Connecting...</span>
-    </div>
-    <div class="player-info right">
-        <span class="player-name" id="opp-name">Opponent</span>
-        <span class="player-score">Score: <span id="opp-score">0</span></span>
-    </div>
-</div>
+
+        <div class="battle-track-container" id="battle-track-container" style="display: none;">
+            <div class="track my-track">
+                <div class="runner" id="my-runner">YOU</div>
+            </div>
+            <div class="track opp-track">
+                <div class="runner opp-runner" id="opp-runner">OPP</div>
+            </div>
+        </div>
 
         <div id="typing-viewport">
             <div id="word-container"></div>
@@ -61,6 +76,9 @@
             <div class="results-card">
                 <h1 class="winner-text" id="final-result">VICTORY</h1>
                 <div class="elo-change" id="elo-change-text">+25 Elo</div>
+                <div class="coin-reward" id="coin-reward-text" style="display: none; font-size: 1.2rem; font-weight: 600; color: #fbbf24; margin-bottom: 2rem;">
+                    <i class="fa-solid fa-coins"></i> +0 Coins
+                </div>
                 <button class="btn-home" onclick="window.location.href='../../../pages/home.html'">Back to Lobby</button>
             </div>
         </div>
