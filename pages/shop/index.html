@@ -13,7 +13,6 @@
     <script src="../../data/js/theme.js"></script>
     
     <style>
-        /* --- Base Layout --- */
         body { 
             background-color: var(--bg); 
             color: var(--text-bright); 
@@ -182,6 +181,35 @@
         .shop-card.locked {
             opacity: 0.5;
         }
+        
+        /* --- Badges --- */
+        .badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge.limited {
+            background: #f59e0b;
+            color: white;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+        }
+
+        .badge.seasonal {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
 
         .avatar-container {
             width: 70px;
@@ -346,16 +374,20 @@
 
     let myId = null;
     let myCoins = 0;
-    let equippedAvatarId = "0";
+    let equippedAvatarId = "default";
 
     const shopCatalog = [
-        { id: "0", name: "Default", requiredCoins: 0, src: "../../data/images/0.png", category: "Avatars" },
-        { id: "50", name: "Melt", requiredCoins: 50, src: "../../data/images/50.png", category: "Avatars" },
-        { id: "125", name: "SOS", requiredCoins: 125, src: "../../data/images/125.png", category: "Avatars" },
-        { id: "175", name: "Innocent", requiredCoins: 175, src: "../../data/images/175.png", category: "Avatars" },
-        { id: "225", name: "Chad", requiredCoins: 225, src: "../../data/images/225.png", category: "Avatars" },
-        { id: "300", name: "Demon", requiredCoins: 300, src: "../../data/images/300.png", category: "Avatars" },
-        { id: "400", name: "Angel", requiredCoins: 400, src: "../../data/images/400.png", category: "Avatars" }
+        { id: "default", name: "Default", requiredCoins: 0, src: "../../data/images/default.png", category: "Avatars" },
+        { id: "melt", name: "Melt", requiredCoins: 50, src: "../../data/images/melt.png", category: "Avatars" },
+        { id: "sos", name: "SOS", requiredCoins: 125, src: "../../data/images/sos.png", category: "Avatars" },
+        { id: "innocent", name: "Innocent", requiredCoins: 175, src: "../../data/images/innocent.png", category: "Avatars" },
+        { id: "chad", name: "Chad", requiredCoins: 225, src: "../../data/images/chad.png", category: "Avatars" },
+        { id: "hacker", name: "Hacker", requiredCoins: 300, src: "../../data/images/hacker.png", category: "Avatars" },
+        { id: "split", name: "Split", requiredCoins: 450, src: "../../data/images/split.png", category: "Avatars" },
+        { id: "prison", name: "Prison", requiredCoins: 550, src: "../../data/images/prison.png", category: "Avatars" },
+        { id: "demon", name: "Demon", requiredCoins: 650, src: "../../data/images/demon.png", category: "Avatars" },
+        { id: "angel", name: "Angel", requiredCoins: 800, src: "../../data/images/angel.png", category: "Avatars" },
+        { id: "summer2026", name: "Summer 2026", requiredCoins: 400, src: "../../data/images/summer2026.png", category: "Avatars" }
     ];
 
     async function initShop() {
@@ -380,7 +412,7 @@
         }
 
         myCoins = profile?.coins || 0;
-        equippedAvatarId = profile?.avatar_id || "0"; 
+        equippedAvatarId = profile?.avatar_id || "default"; 
 
         document.getElementById('user-coins').innerText = myCoins;
         
@@ -420,6 +452,15 @@
                 itemsInCategory.forEach(item => {
                     const isEquipped = equippedAvatarId === item.id;
                     let actionBtnHtml = "";
+                    let badgeHtml = "";
+
+                    // Badge Check Logic
+                    const categoryLower = item.category.toLowerCase();
+                    if (categoryLower === "limited") {
+                        badgeHtml = `<div class="badge limited"><i class="fa-solid fa-star"></i> Limited</div>`;
+                    } else if (categoryLower === "seasonal") {
+                        badgeHtml = `<div class="badge seasonal"><i class="fa-solid fa-snowflake"></i> Seasonal</div>`;
+                    }
 
                     if (isInventorySection) {
                         if (isEquipped) {
@@ -434,6 +475,7 @@
                     const card = document.createElement('div');
                     card.className = `shop-card ${!isInventorySection ? 'locked' : ''}`;
                     card.innerHTML = `
+                        ${badgeHtml}
                         <div class="avatar-container">
                             <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/pfps/default.png';">
                             ${!isInventorySection ? '<div class="lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
