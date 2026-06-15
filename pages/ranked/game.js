@@ -154,7 +154,6 @@ async function removeFromQueue() {
     
     await _supabase.from('queue').delete().eq('user_id', myId);
     
-
     if (matchId) {
         await _supabase.from('matches').delete().eq('id', matchId); 
     }
@@ -302,23 +301,14 @@ function startRoundSequence() {
     }, 1000);
 }
 
-} else if (e.key.length === 1) {
-        if (activeCharIdx < letters.length) {
-            totalKeystrokes++;
-            if (e.key === letters[activeCharIdx].innerText) {
-                letters[activeCharIdx].classList.add('correct');
-                correctChars++;
-                updateCombo(false); // NEW: Increase combo
-            } else {
-                letters[activeCharIdx].classList.add('incorrect');
-                updateCombo(true); // NEW: Break combo
-            }
-            activeCharIdx++;
+// Fixed Keydown Event Listener Block
+window.addEventListener('keydown', (e) => {
+    if (gameState !== 'PLAYING') return;
 
-            if (activeWordIdx === WORDS_PER_ROUND - 1 && activeCharIdx === letters.length) {
-                finishTyping(); return;
-            }
-        }
+    // Start timer on first keypress
+    if (!isStarted) {
+        isStarted = true;
+        startTime = Date.now();
     }
 
     const words = container.querySelectorAll('.word');
@@ -340,7 +330,8 @@ function startRoundSequence() {
     } else if (e.key === ' ') {
         if (activeCharIdx > 0) {
             if (activeWordIdx + 1 >= WORDS_PER_ROUND) {
-                finishTyping(); return;
+                finishTyping(); 
+                return;
             }
             activeWordIdx++;
             activeCharIdx = 0;
@@ -352,13 +343,16 @@ function startRoundSequence() {
             if (e.key === letters[activeCharIdx].innerText) {
                 letters[activeCharIdx].classList.add('correct');
                 correctChars++;
+                updateCombo(false); // Increase combo
             } else {
                 letters[activeCharIdx].classList.add('incorrect');
+                updateCombo(true);  // Break combo
             }
             activeCharIdx++;
 
             if (activeWordIdx === WORDS_PER_ROUND - 1 && activeCharIdx === letters.length) {
-                finishTyping(); return;
+                finishTyping(); 
+                return;
             }
         }
     }
@@ -512,7 +506,6 @@ async function endMatch() {
     if (newElo !== myElo) {
         await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
     }
-
 
     const estimatedAverageWpm = Math.floor(myTotalScore / TOTAL_ROUNDS);
     
