@@ -105,14 +105,13 @@ function updateCombo(reset = false) {
         setTimeout(() => comboStat.style.color = "var(--accent)", 200);
     } else {
         currentCombo++;
-        // Trigger an attack every 15 perfect keystrokes
         if (currentCombo > 0 && currentCombo % 15 === 0) {
             matchChannel.send({
                 type: 'broadcast',
                 event: 'battle_attack',
                 payload: { id: myId }
             });
-            showActionText("ATTACK SENT!");
+            showActionText("+15 COMBO");
         }
     }
     comboVal.innerText = currentCombo;
@@ -123,12 +122,11 @@ function updateCombo(reset = false) {
     }
 }
 
-// NEW: Handle receiving an attack
 function handleBattleAttack({ payload }) {
     if (payload.id !== myId && gameState === 'PLAYING') {
         document.body.classList.add('shake-anim');
         document.getElementById('damage-overlay').classList.add('flash');
-        showActionText("UNDER ATTACK!", "var(--error)");
+        showActionText("GO QUICKER!", "var(--error)");
         
         setTimeout(() => {
             document.body.classList.remove('shake-anim');
