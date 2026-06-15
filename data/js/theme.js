@@ -1,28 +1,31 @@
 (function () {
-    function syncTheme() {
+    function applyInitialTheme() {
         const savedTheme = localStorage.getItem('user-theme') || 'default';
         const targetClass = savedTheme === 'default' ? '' : savedTheme;
 
-        if (document.body) {
-            if (document.body.className !== targetClass) {
-                document.body.className = targetClass;
-            }
-        } 
-        
-        if (document.documentElement.className !== targetClass) {
-            document.documentElement.className = targetClass;
-        }
+
+        document.documentElement.className = targetClass;
     }
 
-    syncTheme();
 
-    document.addEventListener("DOMContentLoaded", syncTheme);
+    // fixed tom fuckery
+    applyInitialTheme();
 
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'user-theme') {
-            syncTheme();
+    document.addEventListener("DOMContentLoaded", () => {
+        const savedTheme = localStorage.getItem('user-theme') || 'default';
+        if (document.body) {
+            document.body.className = savedTheme === 'default' ? '' : savedTheme;
         }
     });
 
-    setInterval(syncTheme, 100);
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'user-theme') {
+            const newTheme = e.newValue || 'default';
+            const targetClass = newTheme === 'default' ? '' : newTheme;
+            document.documentElement.className = targetClass;
+            if (document.body) {
+                document.body.className = targetClass;
+            }
+        }
+    });
 })();
