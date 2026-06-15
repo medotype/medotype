@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en)
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
         
         .container { 
             width: 100%; 
-            max-width: 900px; 
+            max-width: 920px; 
             box-sizing: border-box;
         }
 
@@ -143,6 +143,7 @@
         .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-bright); }
         .btn-save { background: #10b981; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; }
         .btn-danger { background: #ef4444; }
+        .btn-mini-scare { background: #f97316; font-size: 0.75rem; padding: 5px 10px; border-radius: 6px; }
 
         /* --- User Management Data Table --- */
         .table-card {
@@ -165,7 +166,7 @@
         td { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; }
         
         .edit-input {
-            width: 85px;
+            width: 80px;
             padding: 6px 10px;
             background: var(--bg);
             border: 1px solid rgba(255,255,255,0.08);
@@ -174,6 +175,12 @@
             font-family: var(--font);
         }
         .edit-input:focus { border-color: var(--accent); outline: none; }
+
+        .action-cell-cluster {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
 
         /* --- Pagination Controls --- */
         .pagination-row {
@@ -262,8 +269,8 @@
             </div>
             
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-danger" onclick="triggerJumpscareEvent()">
-                    <i class="fa-solid fa-ghost"></i> Jumpscare Button
+                <button class="btn btn-danger" onclick="transmitJumpscareSignal('all')">
+                    <i class="fa-solid fa-ghost"></i> Jumpscare Everyone
                 </button>
                 <button class="btn btn-secondary" onclick="loadAllUsers()">
                     <i class="fa-solid fa-users"></i> View All Users
@@ -280,7 +287,7 @@
                     <th>Username</th>
                     <th>Coins Balance</th>
                     <th>Elo Rating</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="user-tbody">
@@ -309,19 +316,20 @@
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    // Global arrays and page numbers tracking parameters
     let loadedUsersList = [];
     let currentPage = 1;
     const USERS_PER_PAGE = 10;
+    
+    // Instantiating the shared communication channel global reference
+    const communicationChannel = _supabase.channel('app-jumpscare-stream');
+    communicationChannel.subscribe();
 
-    // Check for an active session right away when loading the page
     window.onload = function() {
         if (sessionStorage.getItem('admin_session_active') === 'true') {
             displayDashboardView();
         }
     };
 
-    // Form Login Action Gate
     async function verifyDashboardAccess() {
         const inputPassword = document.getElementById('gate-pass').value;
 
@@ -330,14 +338,12 @@
             return;
         }
 
-        // Validate active database user connection
         const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
         if (sessionErr || !session) {
             showToastMessage("No active user login found. Please sign in first.", true);
             return;
         }
 
-        // Check if user is set to true in the profiles database
         const { data: profile, error: profileErr } = await _supabase
             .from('profiles')
             .select('is_admin')
@@ -349,7 +355,6 @@
             return;
         }
 
-        // Save session information to avoid password prompt on refresh
         sessionStorage.setItem('admin_session_active', 'true');
         displayDashboardView();
     }
@@ -360,7 +365,6 @@
         showToastMessage("Dashboard session opened.");
     }
 
-    // Main Single Profile Lookup (.ilike handles case-insensitivity natively)
     async function searchForUser() {
         const usernameInput = document.getElementById('search-input').value.trim();
         if (!usernameInput) {
@@ -385,7 +389,6 @@
         processAndDisplayPageData();
     }
 
-    // Main Bulk Directory Search Stream
     async function loadAllUsers() {
         setTableLoadingState("Loading all user data...");
 
@@ -403,7 +406,6 @@
         processAndDisplayPageData();
     }
 
-    // Handles calculations, metrics, sorting, and user page splitting
     function processAndDisplayPageData() {
         const tbody = document.getElementById('user-tbody');
         if (loadedUsersList.length === 0) {
@@ -413,7 +415,6 @@
             return;
         }
 
-        // Compute Metric Boxes Values
         let totalCoins = 0;
         let totalEloSum = 0;
         loadedUsersList.forEach(u => {
@@ -423,7 +424,6 @@
         const averageElo = Math.round(totalEloSum / loadedUsersList.length);
         updateDashboardMetrics(loadedUsersList.length, totalCoins, averageElo);
 
-        // Sorting Actions
         const selectedSort = document.getElementById('sort-filter').value;
         let listToSort = [...loadedUsersList];
 
@@ -435,7 +435,6 @@
             listToSort.sort((a, b) => (b.elo || 0) - (a.elo || 0));
         }
 
-        // Pagination Limits Math
         const totalPages = Math.ceil(listToSort.length / USERS_PER_PAGE);
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -446,22 +445,28 @@
 
         updatePaginationControls(currentPage, totalPages);
 
-        // Build User Table Grid UI
         tbody.innerHTML = '';
         activePageItems.forEach(user => {
             const tr = document.createElement('tr');
+            // Safe string styling escape sequence definition handling string variables securely
+            const cleanNameEscaped = (user.username || 'Unregistered').replace(/'/g, "\\'");
+            
             tr.innerHTML = `
                 <td style="font-size: 0.8rem; color: var(--text-faded); font-family: monospace;">${user.id.substring(0, 8)}...</td>
                 <td><strong>${user.username || 'Unregistered'}</strong></td>
                 <td><input type="number" class="edit-input" id="coins-${user.id}" value="${user.coins || 0}"></td>
                 <td><input type="number" class="edit-input" id="elo-${user.id}" value="${user.elo || 0}"></td>
-                <td><button class="btn btn-save" onclick="saveUserRowEdits('${user.id}')">Save</button></td>
+                <td>
+                    <div class="action-cell-cluster">
+                        <button class="btn btn-save" onclick="saveUserRowEdits('${user.id}')">Save</button>
+                        <button class="btn btn-mini-scare" onclick="transmitJumpscareSignal('${cleanNameEscaped}')"><i class="fa-solid fa-ghost"></i> Scare</button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Save Row Event Handler
     async function saveUserRowEdits(userId) {
         const newCoinValue = parseInt(document.getElementById(`coins-${userId}`).value) || 0;
         const newEloValue = parseInt(document.getElementById(`elo-${userId}`).value) || 0;
@@ -474,7 +479,6 @@
         if (error) {
             showToastMessage("Error: Saved changes rejected by database permissions.", true);
         } else {
-            // Update item in local state array so view stays synched
             const localIndex = loadedUsersList.findIndex(u => u.id === userId);
             if (localIndex !== -1) {
                 loadedUsersList[localIndex].coins = newCoinValue;
@@ -485,14 +489,21 @@
         }
     }
 
-    // Jumpscare Handler Function Placeholder
-    function triggerJumpscareEvent() {
-        console.log("Jumpscare button clicked! Ready for custom development injection.");
-        // Add your custom jumpscare sound or animation logic script right here!
-        alert("👻 Jumpscare Button Pressed! (Placeholder script triggered)");
+    // Broadcast Signal Transmitter Task Routine
+    function transmitJumpscareSignal(targetUsername) {
+        communicationChannel.send({
+            type: 'broadcast',
+            event: 'execute-scare',
+            payload: { targetUsername: targetUsername }
+        });
+
+        if (targetUsername === 'all') {
+            showToastMessage("Global jumpscare command sent to everyone online.");
+        } else {
+            showToastMessage(`Jumpscare command sent to target user: "${targetUsername}".`);
+        }
     }
 
-    // Pagination Click Utility
     function changeActivePage(step) {
         currentPage += step;
         processAndDisplayPageData();
