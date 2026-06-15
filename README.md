@@ -14,9 +14,12 @@ Simplistic typing game.
 - Themes
 - User searching
 - Shop
+- Avatars
+- Currency
+- Secure admin panel
+- Decent anti cheat
 
 
 ## To do
 - Levels
 - Keyboard sounds
-- Profile pictures
