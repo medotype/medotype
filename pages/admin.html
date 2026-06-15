@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | Admin Panel</title>
+    <title>MeDoType | Admin</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -31,22 +31,51 @@
             box-sizing: border-box;
         }
 
-        /* --- Guard States --- */
-        .state-card {
+        /* --- Security Lock Gate Screen --- */
+        .gate-card {
             background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
             border-radius: 20px;
-            padding: 50px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
             text-align: center;
-            color: var(--text-faded);
-            font-style: italic;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            margin-top: 10vh;
         }
-        .state-card i {
+        .gate-card i.lock-icon {
             font-size: 3rem;
-            color: var(--error);
-            margin-bottom: 1rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
         }
+        .gate-card h2 { margin: 0 0 10px 0; font-weight: 800; text-transform: uppercase; }
+        .gate-card p { color: var(--text-faded); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        
+        .gate-input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .gate-input-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-faded);
+            margin-bottom: 8px;
+        }
+        .gate-input-group input {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: white;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+        }
+        .gate-input-group input:focus { border-color: var(--accent); outline: none; }
 
         /* --- Header Section --- */
         .admin-header {
@@ -59,37 +88,50 @@
             margin-bottom: 2rem;
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
-
-        .header-title h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: -0.02em;
-        }
+        .header-title h1 { margin: 0; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; }
         .header-title h1 i { color: var(--accent); margin-right: 10px; }
         .header-title p { margin: 5px 0 0; color: var(--text-faded); font-size: 0.9rem; }
 
-        /* --- Controls & Search --- */
-        .search-bar {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 1.5rem;
-            width: 100%;
-        }
-        .search-bar input {
-            flex: 1;
-            padding: 12px 16px;
+        /* --- Extended Control Filters --- */
+        .filter-panel {
             background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+        .search-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .search-row input {
+            flex: 1;
+            padding: 14px 16px;
+            background: var(--bg);
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 10px;
             color: white;
             font-family: var(--font);
-            font-size: 0.9rem;
-            outline: none;
+            font-size: 0.95rem;
         }
-        .search-bar input:focus { border-color: var(--accent); }
-        
+        .search-row input:focus { border-color: var(--accent); outline: none; }
+
+        .filter-options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 12px;
+        }
+        .filter-select {
+            padding: 10px 14px;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            color: var(--text-bright);
+            font-family: var(--font);
+            cursor: pointer;
+        }
+
         .btn {
             padding: 12px 24px;
             border-radius: 10px;
@@ -100,10 +142,15 @@
             color: white;
             cursor: pointer;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-bright); }
+        .btn-save { background: #10b981; font-size: 0.85rem; padding: 8px 14px; border-radius: 6px; }
 
-        /* --- Table Management Layout --- */
+        /* --- Workspace Table Grid --- */
         .table-card {
             background: var(--card-bg);
             border-radius: 20px;
@@ -121,27 +168,19 @@
             letter-spacing: 0.08em;
             border-bottom: 2px solid var(--bg);
         }
-        td {
-            padding: 16px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.02);
-            font-size: 0.95rem;
-        }
+        td { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; }
         
-        /* --- Edit Mode Fields --- */
         .edit-input {
-            width: 80px;
-            padding: 6px 10px;
+            width: 90px;
+            padding: 8px 12px;
             background: var(--bg);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 6px;
             color: white;
             font-family: var(--font);
             font-weight: 600;
         }
-        .edit-input:focus { border-color: var(--accent); }
-
-        .btn-save { background: #10b981; font-size: 0.8rem; padding: 8px 14px; }
-        .btn-back { background: rgba(255,255,255,0.05); color: var(--text-bright); }
+        .edit-input:focus { border-color: var(--accent); outline: none; }
 
         #toast {
             position: fixed;
@@ -157,169 +196,246 @@
             transform: translateY(150px);
             opacity: 0;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999;
         }
         #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.err { border-left-color: var(--error); }
     </style>
 </head>
 <body>
 
+<div class="gate-card" id="gate-view">
+    <i class="fa-solid fa-shield-halved lock-icon"></i>
+    <h2>Password Check</h2>
+    <p>Provide password</p>
+    
+    <div class="gate-input-group">
+        <label for="gate-pass">Password</label>
+        <input type="password" id="gate-pass" placeholder="••••••••">
+    </div>
+    
+    <button class="btn" style="width: 100%; justify-content: center;" onclick="verifyGatePasscode()">
+        Unlock Console <i class="fa-solid fa-key"></i>
+    </button>
+</div>
+
 <div class="container" id="admin-view" style="display: none;">
     <div class="admin-header">
         <div class="header-title">
-            <h1><i class="fa-solid fa-sliders"></i> Admin Terminal</h1>
-            <p>Manage user economy balances and ranked dynamic ratings</p>
+            <h1><i class="fa-solid fa-circle-nodes"></i> Admin Dashboard</h1>
+            <p>Yay ur admin :DDD</p>
         </div>
-        <button class="btn btn-back" onclick="window.location.href='home.html'">Exit Panel</button>
+        <button class="btn btn-secondary" onclick="window.location.href='home.html'">Exit</button>
     </div>
 
-    <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Search parameters by username...">
-        <button class="btn" onclick="loadUserDirectory()">Filter</button>
+    <div class="filter-panel">
+        <div class="search-row">
+            <input type="text" id="search-input" placeholder="Enter target username (case-insensitive search)...">
+            <button class="btn" onclick="executeTargetedLookup()">
+                <i class="fa-solid fa-magnifying-glass"></i> Search User
+            </button>
+        </div>
+        
+        <div class="filter-options-row">
+            <div>
+                <label style="color: var(--text-faded); font-size: 0.85rem; margin-right: 8px;">Order By:</label>
+                <select id="sort-filter" class="filter-select" onchange="applyFiltersAndSortAndRefresh()">
+                    <option value="username">Username (A-Z)</option>
+                    <option value="coins_desc">High Wealth (Coins)</option>
+                    <option value="elo_desc">Top Rank (Elo Rating)</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="fetchAllDirectoryRecords()">
+                <i class="fa-solid fa-list-ul"></i> Populate Full Directory List
+            </button>
+        </div>
     </div>
 
     <div class="table-card">
         <table>
             <thead>
                 <tr>
-                    <th>User ID</th>
-                    <th>Username</th>
-                    <th>Coins</th>
+                    <th>Record ID</th>
+                    <th>User Identity</th>
+                    <th>Coin Currency Balance</th>
                     <th>Elo Rating</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="directory-tbody">
-                </tbody>
+                <tr>
+                    <td colspan="5" style="text-align:center; color: var(--text-faded)">
+                        Awaiting criteria selection or full list payload request...
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
 </div>
 
-<div class="container" id="guard-view">
-    <div class="state-card" id="guard-message">
-        <i class="fa-solid fa-spinner fa-spin" style="color: var(--accent)"></i>
-        <p>Validating credentials and verifying administrative scope...</p>
-    </div>
-</div>
-
-<div id="toast">Database record updated successfully!</div>
+<div id="toast">Update synchronized with server nodes.</div>
 
 <script>
-    // Project Credentials Mirroring Game Architecture
     const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    async function checkAdminAuthorization() {
-        const guardMsg = document.getElementById('guard-message');
+    let standardLoadedProfilesList = [];
+
+    // Local Passcode Verification Route
+    async function verifyGatePasscode() {
+        const passwordInput = document.getElementById('gate-pass').value;
+
+        if (passwordInput !== 'admin53') {
+            triggerAlert("Local validation failed: Invalid passcode string structure.", true);
+            return;
+        }
+
+        // Passcode succeeded -> Next checkpoint: Verify real Supabase session
+        const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
         
-        try {
-            const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
-            
-            if (sessionErr || !session) {
-                renderGuardError("Authorization token absent. Please log into an active session.");
-                return;
-            }
-
-            // Reference checks against the user metadata flags injected during setup
-            const { data: profile, error: profileErr } = await _supabase
-                .from('profiles')
-                .select('is_admin')
-                .eq('id', session.user.id)
-                .maybeSingle();
-
-            if (profileErr || !profile || !profile.is_admin) {
-                renderGuardError("Access Revoked. Insufficient security privileges detected.");
-                return;
-            }
-
-            // Provision interface access upon clearance
-            document.getElementById('guard-view').style.display = 'none';
-            document.getElementById('admin-view').style.display = 'block';
-            loadUserDirectory();
-
-        } catch (err) {
-            renderGuardError("Critical failure during security context validation.");
+        if (sessionErr || !session) {
+            triggerAlert("Auth Denied: Active server account session not found.", true);
+            return;
         }
+
+        // Final Checkpoint: Read explicit DB column permissions
+        const { data: profile, error: profileErr } = await _supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (profileErr || !profile || !profile.is_admin) {
+            triggerAlert("Security Failure: Account lacks backend permission flags.", true);
+            return;
+        }
+
+        // Everything validates successfully
+        document.getElementById('gate-view').style.display = 'none';
+        document.getElementById('admin-view').style.display = 'block';
+        triggerAlert("Console Access Cleared. Active admin token bound.");
     }
 
-    function renderGuardError(str) {
-        const guardMsg = document.getElementById('guard-message');
-        guardMsg.innerHTML = `
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <p>${str}</p>
-            <button class="btn" style="margin-top:15px" onclick="window.location.href='login.html'">Return to Login</button>
-        `;
+    // Default View Task: Case-Insensitive Targeted Single User Search
+    async function executeTargetedLookup() {
+        const usernameVal = document.getElementById('search-input').value.trim();
+        if (!usernameVal) {
+            triggerAlert("Please input a search query value first.", true);
+            return;
+        }
+
+        renderTableStatus("Scanning directory indices...");
+
+        // .ilike() provides native case-insensitive string parsing in Postgres SQL pools
+        const { data: records, error } = await _supabase
+            .from('profiles')
+            .select('id, username, coins, elo')
+            .ilike('username', usernameVal);
+
+        if (error) {
+            renderTableStatus("Failed to resolve user tables.");
+            return;
+        }
+
+        standardLoadedProfilesList = records;
+        applyFiltersAndSortAndRefresh(false);
     }
 
-    async function loadUserDirectory() {
+    // Global Command View: Download Entire User Data Base Array
+    async function fetchAllDirectoryRecords() {
+        renderTableStatus("Streaming database record arrays...");
+
+        const { data: records, error } = await _supabase
+            .from('profiles')
+            .select('id, username, coins, elo');
+
+        if (error) {
+            renderTableStatus("Bulk streaming request rejected by RLS engine maps.");
+            return;
+        }
+
+        standardLoadedProfilesList = records;
+        applyFiltersAndSortAndRefresh(false);
+    }
+
+    // Advanced Data Filtering Engine Logic
+    function applyFiltersAndSortAndRefresh(reRenderOnly = true) {
         const tbody = document.getElementById('directory-tbody');
-        const searchTerm = document.getElementById('search-input').value.trim();
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-faded)">Querying server tables...</td></tr>`;
-
-        try {
-            let query = _supabase.from('profiles').select('id, username, coins, elo');
-
-            if (searchTerm) {
-                query = query.ilike('username', `%${searchTerm}%`);
-            }
-
-            // Order matching configuration standard
-            const { data: users, error } = await query.order('username', { ascending: true }).limit(100);
-
-            if (error) throw error;
-
-            tbody.innerHTML = '';
-            if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-faded)">No user parameters matched query filters.</td></tr>`;
-                return;
-            }
-
-            users.forEach(user => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-size: 0.75rem; color: var(--text-faded); font-family: monospace;">${user.id.substring(0,8)}...</td>
-                    <td><strong>${user.username || 'Unregistered'}</strong></td>
-                    <td><input type="number" class="edit-input" id="coins-${user.id}" value="${user.coins || 0}"></td>
-                    <td><input type="number" class="edit-input" id="elo-${user.id}" value="${user.elo || 0}"></td>
-                    <td><button class="btn btn-save" onclick="commitRecordEdits('${user.id}')">Save Changes</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-        } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--error)">Failed to synchronize interface directory with remote node tables.</td></tr>`;
+        if (standardLoadedProfilesList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-faded)">No active rows matching workspace parameters.</td></tr>`;
+            return;
         }
+
+        const sortingCriteria = document.getElementById('sort-filter').value;
+        
+        // Handle sorting arrays locally without slamming extra database usage queries
+        let handledList = [...standardLoadedProfilesList];
+
+        if (sortingCriteria === 'username') {
+            handledList.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+        } else if (sortingCriteria === 'coins_desc') {
+            handledList.sort((a, b) => (b.coins || 0) - (a.coins || 0));
+        } else if (sortingCriteria === 'elo_desc') {
+            handledList.sort((a, b) => (b.elo || 0) - (a.elo || 0));
+        }
+
+        // Paint components cleanly onto table cells
+        tbody.innerHTML = '';
+        handledList.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-size: 0.75rem; color: var(--text-faded); font-family: monospace;">${user.id.substring(0,8)}...</td>
+                <td><strong>${user.username || 'Anonymous User'}</strong></td>
+                <td><input type="number" class="edit-input" id="coins-${user.id}" value="${user.coins || 0}"></td>
+                <td><input type="number" class="edit-input" id="elo-${user.id}" value="${user.elo || 0}"></td>
+                <td><button class="btn btn-save" onclick="commitTargetDataUpdate('${user.id}')"><i class="fa-solid fa-cloud-arrow-up"></i> Sync</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    async function commitRecordEdits(targetUid) {
+    async function commitTargetDataUpdate(targetUid) {
         const coinVal = parseInt(document.getElementById(`coins-${targetUid}`).value) || 0;
         const eloVal = parseInt(document.getElementById(`elo-${targetUid}`).value) || 0;
 
         const { error } = await _supabase
             .from('profiles')
-            .update({ 
-                coins: coinVal, 
-                elo: eloVal 
-            })
+            .update({ coins: coinVal, elo: eloVal })
             .eq('id', targetUid);
 
         if (error) {
-            console.error("Mutation rejected by database engine rules:", error);
-            triggerAlert("Sync rejected: Verify schema constraints or target row configurations.");
+            console.error("Mutation policy exception details:", error);
+            triggerAlert("Sync Error: Modification privilege rejected by server rules.", true);
         } else {
-            triggerAlert("Record successfully synchronized across database structures!");
+            // Update our local tracking element state smoothly
+            const matchingIndex = standardLoadedProfilesList.findIndex(u => u.id === targetUid);
+            if(matchingIndex !== -1) {
+                standardLoadedProfilesList[matchingIndex].coins = coinVal;
+                standardLoadedProfilesList[matchingIndex].elo = eloVal;
+            }
+            triggerAlert("Record successfully synchronized across database nodes!");
         }
     }
 
-    function triggerAlert(msg) {
-        const toast = document.getElementById('toast');
-        toast.innerText = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+    function renderTableStatus(text) {
+        document.getElementById('directory-tbody').innerHTML = `
+            <tr><td colspan="5" style="text-align:center; color: var(--text-faded)"><i class="fa-solid fa-circle-notch fa-spin"></i> ${text}</td></tr>
+        `;
     }
 
-    // Initialize execution security guard loop on page entry
-    window.onload = checkAdminAuthorization;
+    function triggerAlert(msg, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        if (isError) {
+            toast.classList.add('err');
+        } else {
+            toast.classList.remove('err');
+        }
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
 </script>
 </body>
 </html>
