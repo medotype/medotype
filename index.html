@@ -104,6 +104,9 @@
             <a onclick="navigateFrame('pages/settings.html', this)" title="Settings">
                 <i class="fa-solid fa-gear"></i>
             </a>
+            <a id="nav-admin" onclick="navigateFrame('pages/admin.html', this)" title="Admin" style="display: none;">
+                <i class="fa-solid fa-user-gear"></i>
+            </a>
             <a onclick="navigateFrame('pages/account.html', this)" title="Account">
                 <i class="fa-solid fa-circle-user"></i>
             </a>
@@ -148,27 +151,38 @@
             const { data: { session } } = await shellSupabase.auth.getSession();
             if (!session) return;
 
+            // Updated query parameters to include 'is_admin' status validation
             const { data: profile } = await shellSupabase
                 .from('profiles')
-                .select('username')
+                .select('username, is_admin')
                 .eq('id', session.user.id)
                 .single();
 
-            if (profile && profile.username) {
-                shellCurrentUsername = profile.username;
-                
-                shellSupabase.channel('global_incoming_challenges')
-                    .on('postgres_changes', {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: '1v1_queue',
-                        filter: `target_username=eq.${shellCurrentUsername}`
-                    }, payload => {
-                        if (payload.new.status === 'pending') {
-                            showGlobalChallengeToast(payload.new);
-                        }
-                    })
-                    .subscribe();
+            if (profile) {
+                // If the user profile states admin permission is active, display the navigation item
+                if (profile.is_admin === true) {
+                    const adminNavButton = document.getElementById('nav-admin');
+                    if (adminNavButton) {
+                        adminNavButton.style.display = ''; // Removes display:none to use CSS formatting
+                    }
+                }
+
+                if (profile.username) {
+                    shellCurrentUsername = profile.username;
+                    
+                    shellSupabase.channel('global_incoming_challenges')
+                        .on('postgres_changes', {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: '1v1_queue',
+                            filter: `target_username=eq.${shellCurrentUsername}`
+                        }, payload => {
+                            if (payload.new.status === 'pending') {
+                                showGlobalChallengeToast(payload.new);
+                            }
+                        })
+                        .subscribe();
+                }
             }
         }
 
@@ -186,7 +200,6 @@
             shellActiveRequest = null;
 
             if (accept) {
-                // Ensure browser compatibility for standard web
                 const uniqueRoomId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
                     ? crypto.randomUUID() 
                     : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
