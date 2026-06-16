@@ -132,265 +132,279 @@
         </div>
     </div>
 
-    <script>
-        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
-        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
-        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+<script>
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        let availableModes = [];
-        let activeModeConfig = null;
-        let wordsList = [];
+    let availableModes = [];
+    let activeModeConfig = null;
+    let wordsList = [];
 
-        let isStarted = false;
-        let activeWordIdx = 0;
-        let activeCharIdx = 0;
-        let startTime = null;
-        let timerInterval = null;
-        let correctChars = 0;
-        let totalKeystrokes = 0;
-        
-        // Anti-Cheat & Combo Trackers
-        let keyPressTimestamps = [];
-        let currentCombo = 0;
+    let isStarted = false;
+    let isFinishing = false; // FIX: Prevents overlapping finish calls
+    let activeWordIdx = 0;
+    let activeCharIdx = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let correctChars = 0;
+    let totalKeystrokes = 0;
+    
+    // Anti-Cheat & Combo Trackers
+    let keyPressTimestamps = [];
+    let currentCombo = 0;
 
-        const container = document.getElementById('word-container');
-        const statVal = document.getElementById('stat-val');
-        const wpmVal = document.getElementById('wpm-val');
-        const comboStat = document.getElementById('combo-stat');
-        const comboVal = document.getElementById('combo-val');
-        const modeIcon = document.getElementById('mode-icon');
-        const results = document.getElementById('results-screen');
+    const container = document.getElementById('word-container');
+    const statVal = document.getElementById('stat-val');
+    const wpmVal = document.getElementById('wpm-val');
+    const comboStat = document.getElementById('combo-stat');
+    const comboVal = document.getElementById('combo-val');
+    const modeIcon = document.getElementById('mode-icon');
+    const results = document.getElementById('results-screen');
 
-        window.addEventListener('click', function(e) {
-            const select = document.getElementById('custom-select');
-            if (select && !select.contains(e.target)) select.classList.remove('open');
+    window.addEventListener('click', function(e) {
+        const select = document.getElementById('custom-select');
+        if (select && !select.contains(e.target)) select.classList.remove('open');
+    });
+
+    async function initModes() {
+        try {
+            const response = await fetch('../../data/json/modelist.json');
+            if(!response.ok) throw new Error("File not found");
+            availableModes = await response.json();
+            buildNav();
+            if (availableModes.length > 0) selectMode(availableModes[0]);
+        } catch (e) {
+            console.error(e);
+            statVal.innerText = "Err";
+        }
+    }
+
+    function buildNav() {
+        const nav = document.getElementById('mode-nav');
+        nav.innerHTML = '';
+        availableModes.forEach(mode => {
+            const div = document.createElement('div');
+            div.className = 'mode-item';
+            div.id = `mode-${mode.id}`;
+            let iconClass = mode.type === 'time' ? 'fa-clock' : 'fa-font';
+            if (mode.id === 'blitz') iconClass = 'fa-fire';
+            div.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${mode.label}`;
+            div.onclick = () => selectMode(mode);
+            nav.appendChild(div);
+        });
+    }
+
+    async function selectMode(mode) {
+        // FIX: Stop any active timers immediately before async fetch operations
+        clearInterval(timerInterval);
+        isStarted = false;
+
+        activeModeConfig = mode;
+        document.querySelectorAll('.mode-item').forEach(el => el.classList.remove('active', 'blitz-active'));
+        const activeEl = document.getElementById(`mode-${mode.id}`);
+        if (activeEl) {
+            activeEl.classList.add(mode.id === 'blitz' ? 'blitz-active' : 'active');
+        }
+
+        try {
+            let rawPath = mode.wordpool || '/data/json/wordlistcommon.json';
+            let safeUrl = rawPath.includes('data/') ? '/data/' + rawPath.split('data/')[1] : 
+                          (!rawPath.startsWith('/') && !rawPath.startsWith('http') ? '/' + rawPath : rawPath);
+
+            const resp = await fetch(safeUrl);
+            if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+            wordsList = await resp.json();
+            if (Array.isArray(wordsList) && wordsList.length > 0) resetGame(); 
+            else throw new Error("Wordlist is empty");
+        } catch (err) {
+            console.error("Failed to load words:", err);
+            statVal.innerText = "Err";
+        }
+    }
+
+    function updateCaret() {
+        document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
+            el.classList.remove('active-char', 'active-end', 'active');
         });
 
-        async function initModes() {
-            try {
-                const response = await fetch('../../data/json/modelist.json');
-                if(!response.ok) throw new Error("File not found");
-                availableModes = await response.json();
-                buildNav();
-                if (availableModes.length > 0) selectMode(availableModes[0]);
-            } catch (e) {
-                console.error(e);
-                statVal.innerText = "Err";
-            }
+        const words = container.querySelectorAll('.word');
+        const currentWord = words[activeWordIdx];
+        if (!currentWord) return;
+
+        currentWord.classList.add('active');
+        const letters = currentWord.querySelectorAll('.letter');
+
+        if (activeCharIdx < letters.length) {
+            letters[activeCharIdx].classList.add('active-char');
+        } else {
+            currentWord.classList.add('active-end');
         }
+    }
 
-        function buildNav() {
-            const nav = document.getElementById('mode-nav');
-            nav.innerHTML = '';
-            availableModes.forEach(mode => {
-                const div = document.createElement('div');
-                div.className = 'mode-item';
-                div.id = `mode-${mode.id}`;
-                let iconClass = mode.type === 'time' ? 'fa-clock' : 'fa-font';
-                if (mode.id === 'blitz') iconClass = 'fa-fire';
-                div.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${mode.label}`;
-                div.onclick = () => selectMode(mode);
-                nav.appendChild(div);
-            });
-        }
-
-        async function selectMode(mode) {
-            activeModeConfig = mode;
-            document.querySelectorAll('.mode-item').forEach(el => el.classList.remove('active', 'blitz-active'));
-            const activeEl = document.getElementById(`mode-${mode.id}`);
-            if (activeEl) {
-                activeEl.classList.add(mode.id === 'blitz' ? 'blitz-active' : 'active');
-            }
-
-            try {
-                let rawPath = mode.wordpool || '/data/json/wordlistcommon.json';
-                let safeUrl = rawPath.includes('data/') ? '/data/' + rawPath.split('data/')[1] : 
-                              (!rawPath.startsWith('/') && !rawPath.startsWith('http') ? '/' + rawPath : rawPath);
-
-                const resp = await fetch(safeUrl);
-                if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
-                wordsList = await resp.json();
-                if (Array.isArray(wordsList) && wordsList.length > 0) resetGame(); 
-                else throw new Error("Wordlist is empty");
-            } catch (err) {
-                console.error("Failed to load words:", err);
-                statVal.innerText = "Err";
-            }
-        }
-
-        function updateCaret() {
-            document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
-                el.classList.remove('active-char', 'active-end', 'active');
-            });
-
-            const words = container.querySelectorAll('.word');
-            const currentWord = words[activeWordIdx];
-            if (!currentWord) return;
-
-            currentWord.classList.add('active');
-            const letters = currentWord.querySelectorAll('.letter');
-
-            if (activeCharIdx < letters.length) {
-                letters[activeCharIdx].classList.add('active-char');
-            } else {
-                currentWord.classList.add('active-end');
-            }
-        }
-
-        function updateCombo(reset = false) {
-            if (reset) {
-                currentCombo = 0;
-                comboStat.classList.add('broken');
-                setTimeout(() => comboStat.classList.remove('broken'), 200);
-            } else {
-                currentCombo++;
-            }
-            comboVal.innerText = currentCombo;
-            
-            if (currentCombo > 0 && currentCombo % 10 === 0) {
-                comboStat.style.transform = "scale(1.2)";
-                setTimeout(() => comboStat.style.transform = "scale(1)", 150);
-            }
-        }
-
-        function resetGame() {
-            clearInterval(timerInterval);
-            isStarted = false;
-            activeWordIdx = 0;
-            activeCharIdx = 0;
-            correctChars = 0;
-            totalKeystrokes = 0;
-            startTime = null;
-            
-            keyPressTimestamps = [];
+    function updateCombo(reset = false) {
+        if (reset) {
             currentCombo = 0;
-            comboVal.innerText = "0";
-            wpmVal.innerText = "0";
+            comboStat.classList.add('broken');
+            setTimeout(() => comboStat.classList.remove('broken'), 200);
+        } else {
+            currentCombo++;
+        }
+        comboVal.innerText = currentCombo;
+        
+        if (currentCombo > 0 && currentCombo % 10 === 0) {
+            comboStat.style.transform = "scale(1.2)";
+            setTimeout(() => comboStat.style.transform = "scale(1)", 150);
+        }
+    }
 
-            container.style.top = "0px";
-            results.style.display = 'none';
-            container.classList.remove('hidden');
-            
-            if (activeModeConfig.type === 'time') {
-                modeIcon.className = 'fa-solid fa-clock';
-                statVal.innerText = activeModeConfig.value;
-            } else {
-                modeIcon.className = 'fa-solid fa-font';
-                statVal.innerText = `0 / ${activeModeConfig.value}`;
-            }
+    function resetGame() {
+        clearInterval(timerInterval);
+        isStarted = false;
+        isFinishing = false; // FIX: Reset state flag
+        activeWordIdx = 0;
+        activeCharIdx = 0;
+        correctChars = 0;
+        totalKeystrokes = 0;
+        startTime = null;
+        
+        keyPressTimestamps = [];
+        currentCombo = 0;
+        comboVal.innerText = "0";
+        wpmVal.innerText = "0";
 
-            if (!wordsList || wordsList.length === 0) return;
-
-            const count = activeModeConfig.renderCount || 50;
-            const shuffled = [...wordsList].sort(() => Math.random() - 0.5).slice(0, count);
-            
-            container.innerHTML = shuffled.map((w) => `
-                <span class="word">
-                    ${w.split('').map(c => `<span class="letter">${c}</span>`).join('')}
-                </span>
-            `).join('');
-
-            updateCaret();
+        container.style.top = "0px";
+        results.style.display = 'none';
+        container.classList.remove('hidden');
+        
+        if (activeModeConfig.type === 'time') {
+            modeIcon.className = 'fa-solid fa-clock';
+            statVal.innerText = activeModeConfig.value;
+        } else {
+            modeIcon.className = 'fa-solid fa-font';
+            statVal.innerText = `0 / ${activeModeConfig.value}`;
         }
 
-        function updateLiveStats() {
-            if (!startTime) return;
-            const elapsedMs = Date.now() - startTime;
-            const durationMinutes = elapsedMs / 60000;
-            const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
-            wpmVal.innerText = currentWpm;
+        if (!wordsList || wordsList.length === 0) return;
 
-            if (activeModeConfig.type === 'time') {
-                let left = Math.ceil(activeModeConfig.value - (elapsedMs / 1000));
-                if (left <= 0) {
-                    left = 0;
+        const count = activeModeConfig.renderCount || 50;
+        const shuffled = [...wordsList].sort(() => Math.random() - 0.5).slice(0, count);
+        
+        container.innerHTML = shuffled.map((w) => `
+            <span class="word">
+                ${w.split('').map(c => `<span class="letter">${c}</span>`).join('')}
+            </span>
+        `).join('');
+
+        updateCaret();
+    }
+
+    function updateLiveStats() {
+        if (!startTime) return;
+        const elapsedMs = Date.now() - startTime;
+        const durationMinutes = elapsedMs / 60000;
+        const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+        wpmVal.innerText = currentWpm;
+
+        if (activeModeConfig.type === 'time') {
+            let left = Math.ceil(activeModeConfig.value - (elapsedMs / 1000));
+            if (left <= 0) {
+                left = 0;
+                finish();
+            }
+            statVal.innerText = left;
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (results.style.display === 'block' || !activeModeConfig || isFinishing) return;
+        
+        if (e.key === 'Tab') { e.preventDefault(); resetGame(); return; }
+        if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== ' ') return;
+        if (e.key === ' ') e.preventDefault();
+
+        if (!isStarted && e.key.length === 1) {
+            isStarted = true;
+            startTime = Date.now();
+            timerInterval = setInterval(updateLiveStats, 1000);
+        }
+
+        const words = container.querySelectorAll('.word');
+        const currentWord = words[activeWordIdx];
+        if (!currentWord) return;
+        const letters = currentWord.querySelectorAll('.letter');
+
+        if (e.key === 'Backspace') {
+            if (activeCharIdx > 0) {
+                activeCharIdx--;
+                letters[activeCharIdx].className = 'letter';
+            } else if (activeWordIdx > 0) {
+                activeWordIdx--;
+                const prevWord = words[activeWordIdx];
+                const prevLetters = prevWord.querySelectorAll('.letter');
+                activeCharIdx = prevLetters.length;
+                handleScroll(prevWord);
+                if (activeModeConfig.type === 'words') statVal.innerText = `${activeWordIdx} / ${activeModeConfig.value}`;
+            }
+        } else if (e.key === ' ') {
+            if (activeCharIdx > 0) {
+                if (activeModeConfig.type === 'words' && activeWordIdx + 1 >= activeModeConfig.value) {
+                    finish(); return;
+                }
+                activeWordIdx++;
+                activeCharIdx = 0;
+                
+                if (activeWordIdx < words.length) {
+                    handleScroll(words[activeWordIdx]);
+                }
+                if (activeModeConfig.type === 'words') statVal.innerText = `${activeWordIdx} / ${activeModeConfig.value}`;
+            }
+        } else if (e.key.length === 1) {
+            if (activeCharIdx < letters.length) {
+                totalKeystrokes++;
+                keyPressTimestamps.push(Date.now());
+                
+                if (e.key === letters[activeCharIdx].innerText) {
+                    letters[activeCharIdx].classList.add('correct');
+                    correctChars++;
+                    updateCombo(false);
+                } else {
+                    letters[activeCharIdx].classList.add('incorrect');
+                    updateCombo(true);
+                }
+                activeCharIdx++;
+
+                if (activeModeConfig.type === 'words' && activeWordIdx === activeModeConfig.value - 1 && activeCharIdx === letters.length) {
                     finish();
+                    return;
                 }
-                statVal.innerText = left;
             }
         }
+        
+        updateCaret();
+    });
 
-        window.addEventListener('keydown', (e) => {
-            if (results.style.display === 'block' || !activeModeConfig) return;
-            
-            if (e.key === 'Tab') { e.preventDefault(); resetGame(); return; }
-            if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== ' ') return;
-            if (e.key === ' ') e.preventDefault();
+    function handleScroll(activeWord) {
+        const offset = activeWord.offsetTop;
+        if (offset > 40) container.style.top = `-${offset}px`;
+    }
 
-            if (!isStarted && e.key.length === 1) {
-                isStarted = true;
-                startTime = Date.now();
-                timerInterval = setInterval(updateLiveStats, 1000);
-            }
+    async function finish() {
+        // FIX: Prevent double execution checks if called multiple times simultaneously
+        if (isFinishing) return;
+        isFinishing = true;
 
-            const words = container.querySelectorAll('.word');
-            const currentWord = words[activeWordIdx];
-            if (!currentWord) return;
-            const letters = currentWord.querySelectorAll('.letter');
+        clearInterval(timerInterval);
+        const durationMinutes = (Date.now() - startTime) / 60000;
+        const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+        const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
-            if (e.key === 'Backspace') {
-                if (activeCharIdx > 0) {
-                    activeCharIdx--;
-                    letters[activeCharIdx].className = 'letter';
-                } else if (activeWordIdx > 0) {
-                    activeWordIdx--;
-                    const prevWord = words[activeWordIdx];
-                    const prevLetters = prevWord.querySelectorAll('.letter');
-                    activeCharIdx = prevLetters.length;
-                    handleScroll(prevWord);
-                    if (activeModeConfig.type === 'words') statVal.innerText = `${activeWordIdx} / ${activeModeConfig.value}`;
-                }
-            } else if (e.key === ' ') {
-                if (activeCharIdx > 0) {
-                    if (activeModeConfig.type === 'words' && activeWordIdx + 1 >= activeModeConfig.value) {
-                        finish(); return;
-                    }
-                    activeWordIdx++;
-                    activeCharIdx = 0;
-                    
-                    if (activeWordIdx < words.length) {
-                        handleScroll(words[activeWordIdx]);
-                    }
-                    if (activeModeConfig.type === 'words') statVal.innerText = `${activeWordIdx} / ${activeModeConfig.value}`;
-                }
-            } else if (e.key.length === 1) {
-                if (activeCharIdx < letters.length) {
-                    totalKeystrokes++;
-                    keyPressTimestamps.push(Date.now());
-                    
-                    if (e.key === letters[activeCharIdx].innerText) {
-                        letters[activeCharIdx].classList.add('correct');
-                        correctChars++;
-                        updateCombo(false);
-                    } else {
-                        letters[activeCharIdx].classList.add('incorrect');
-                        updateCombo(true);
-                    }
-                    activeCharIdx++;
+        let saved = false;
+        let earnedCoins = 0; 
 
-                    if (activeModeConfig.type === 'words' && activeWordIdx === activeModeConfig.value - 1 && activeCharIdx === letters.length) {
-                        finish();
-                        return;
-                    }
-                }
-            }
-            
-            updateCaret();
-        });
-
-        function handleScroll(activeWord) {
-            const offset = activeWord.offsetTop;
-            if (offset > 40) container.style.top = `-${offset}px`;
-        }
-
-        async function finish() {
-            clearInterval(timerInterval);
-            const durationMinutes = (Date.now() - startTime) / 60000;
-            const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
-            const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
-
-            let saved = false;
-            let earnedCoins = 0; 
+        // FIX: Wrap database requests inside a try...catch block so that network/Supabase errors 
+        // do not block the window location redirect.
+        try {
             const { data: { session } } = await _supabase.auth.getSession();
 
             let isBot = false;
@@ -437,11 +451,15 @@
                     earnedCoins = coinData; 
                 }
             }
-
-            window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}`;
+        } catch (dbError) {
+            console.error("Database tracking failed, moving to fallback redirect:", dbError);
         }
 
-        initModes();
-    </script>
+        // This redirect is now guaranteed to fire, even if Supabase goes completely offline.
+        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}`;
+    }
+
+    initModes();
+</script>
 </body>
 </html>
