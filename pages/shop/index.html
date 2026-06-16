@@ -342,8 +342,8 @@
         
         <div class="shop-header">
             <div class="shop-title-area">
-                <h1 class="shop-title">Coin Marketplace</h1>
-                <p class="shop-subtitle">Spend your coins to permanently unlock and equip elite cosmetic avatars</p>
+                <h1 class="shop-title">Rotational Shop</h1>
+                <p class="shop-subtitle">Buy current live assets securely powered by dynamic relational database tables</p>
             </div>
             <div class="user-balance-card">
                 <div>
@@ -356,14 +356,13 @@
         <h2 class="section-title"><i class="fa-solid fa-box-open"></i> Your Unlocked Inventory</h2>
         <div class="shop-grid" id="inventory-grid-container"></div>
 
-        <h2 class="section-title"><i class="fa-solid fa-store"></i> Available Store Items</h2>
+        <h2 class="section-title"><i class="fa-solid fa-store"></i> Active Store Items In Stock</h2>
         <div class="shop-grid" id="shop-grid-container"></div>
     </div>
 
-    <div id="toast">Item processed successfully!</div>
+    <div id="toast">Connecting...</div>
 
 <script>
-    // Replace placeholders with your configuration settings if needed
     const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
@@ -371,21 +370,10 @@
     let myId = null;
     let myCoins = 0;
     let equippedAvatarId = "default";
-    let unlockedAvatars = ["default"]; // Default baseline inventory container
-
-    const shopCatalog = [
-        { id: "default", name: "Default", price: 0, src: "../../data/images/default.png", category: "Avatars" },
-        { id: "melt", name: "Melt", price: 50, src: "../../data/images/melt.png", category: "Avatars" },
-        { id: "sos", name: "SOS", price: 125, src: "../../data/images/sos.png", category: "Avatars" },
-        { id: "innocent", name: "Innocent", price: 175, src: "../../data/images/innocent.png", category: "Avatars" },
-        { id: "chad", name: "Chad", price: 225, src: "../../data/images/chad.png", category: "Avatars" },
-        { id: "hacker", name: "Hacker", price: 300, src: "../../data/images/hacker.png", category: "Avatars" },
-        { id: "split", name: "Split", price: 450, src: "../../data/images/split.png", category: "Avatars" },
-        { id: "prison", name: "Prison", price: 550, src: "../../data/images/prison.png", category: "Avatars" },
-        { id: "demon", name: "Demon", price: 650, src: "../../data/images/demon.png", category: "Avatars" },
-        { id: "angel", name: "Angel", price: 800, src: "../../data/images/angel.png", category: "Avatars" },
-        { id: "summer2026", name: "Summer 2026", price: 400, src: "../../data/images/summer2026.png", category: "Seasonal" }
-    ];
+    let unlockedAvatars = ["default"]; 
+    
+    let masterCatalog = []; // Populated completely from 'items' table
+    let activeStockIds = []; // Array of string IDs populated from 'instock' table
 
     async function initShop() {
         const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
@@ -395,7 +383,29 @@
         }
         
         myId = session.user.id;
+        
+        // 1. Fetch data from both relational tables
+        await loadShopDataFromDB();
+        
+        // 2. Fetch profile metrics
         await fetchUserData();
+    }
+
+    async function loadShopDataFromDB() {
+        // Parallel fetch the full item directory data and the short active in-stock filter array
+        const [itemsResult, stockResult] = await Promise.all([
+            _supabase.from('items').select('*').order('price', { ascending: true }),
+            _supabase.from('instock').select('item_id')
+        ]);
+
+        if (itemsResult.error || stockResult.error) {
+            console.error("[SHOP] Relational download failure:", itemsResult.error, stockResult.error);
+            showToast("Failed to cross-reference stock matrix.");
+            return;
+        }
+
+        masterCatalog = itemsResult.data || [];
+        activeStockIds = (stockResult.data || "").map(row => row.item_id);
     }
 
     async function fetchUserData() {
@@ -406,7 +416,7 @@
             .maybeSingle();
 
         if (profileErr) {
-            console.warn("[SHOP] Error loading profile data:", profileErr);
+            console.warn("[SHOP] Error compiling inventory data arrays:", profileErr);
         }
 
         myCoins = profile?.coins || 0;
@@ -425,13 +435,17 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
-        // Separate items contextually based on ownership
-        const ownedItems = shopCatalog.filter(item => unlockedAvatars.includes(item.id));
-        const unownedItems = shopCatalog.filter(item => !unlockedAvatars.includes(item.id));
+        // 1. Inventory displays everything they own, even if it is currently rotated out of store stock
+        const ownedItems = masterCatalog.filter(item => unlockedAvatars.includes(item.id));
+        
+        // 2. Marketplace ONLY displays items explicitly on sale in the 'instock' table AND not owned yet
+        const displayStorefrontItems = masterCatalog.filter(item => 
+            activeStockIds.includes(item.id) && !unlockedAvatars.includes(item.id)
+        );
 
-        // Populating Unlocked Inventory Grid
+        // Build Inventory UI Block
         if (ownedItems.length === 0) {
-            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); italic; font-size: 0.9rem;">No items owned.</p>`;
+            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No items owned.</p>`;
         } else {
             ownedItems.forEach(item => {
                 const isEquipped = equippedAvatarId === item.id;
@@ -444,14 +458,14 @@
             });
         }
 
-        // Populating Marketplace Shop Grid
-        if (unownedItems.length === 0) {
-            shopContainer.innerHTML = `<p style="color: var(--text-faded); italic; font-size: 0.9rem;">You have purchased all available shop products!</p>`;
+        // Build Marketplace Storefront UI Block
+        if (displayStorefrontItems.length === 0) {
+            shopContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No products are currently featured in stock.</p>`;
         } else {
-            unownedItems.forEach(item => {
+            displayStorefrontItems.forEach(item => {
                 const canAfford = myCoins >= item.price;
                 const actionBtnHtml = canAfford
-                    ? `<button class="btn-action buy-btn" onclick="buyItem('${item.id}', ${item.price})">Buy Asset</button>`
+                    ? `<button class="btn-action buy-btn" onclick="buyItem('${item.id}')">Buy Asset</button>`
                     : `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Insufficient Balance</button>`;
 
                 const card = createCardMarkup(item, `<i class="fa-solid fa-coins"></i> Cost: ${item.price} Coins`, actionBtnHtml, false);
@@ -485,23 +499,22 @@
         return card;
     }
 
-    async function buyItem(itemId, itemPrice) {
-        console.log(`[SHOP] Contacting engine to acquire asset: ${itemId}...`);
+    async function buyItem(itemId) {
+        console.log(`[SHOP] Checking catalog context array to purchase: ${itemId}...`);
         
-        // Call our database RPC securely
         const { data, error } = await _supabase.rpc('buy_avatar', {
-            avatar_id_to_buy: itemId,
-            item_cost: parseInt(itemPrice)
+            avatar_id_to_buy: itemId
         });
 
         if (error) {
-            console.error("[SHOP] Order error caught:", error.message);
-            showToast(error.message || "Purchase operation dropped.");
+            console.error("[SHOP] Checkout process failed:", error.message);
+            showToast(error.message || "Transaction terminated.");
             return;
         }
 
-        showToast(`Successfully bought ${itemId}!`);
-        await fetchUserData(); // Refresh balances and state lists seamlessly
+        showToast(`Successfully purchased allocation!`);
+        await loadShopDataFromDB(); // Refresh stock variables state arrays
+        await fetchUserData();      // Refresh profile balance displays
     }
 
     async function equipItem(itemId) {
@@ -513,8 +526,8 @@
             .eq('id', myId);
 
         if (error) {
-            console.error("[SHOP] Configuration failure:", error);
-            showToast("Failed to mount asset.");
+            console.error("[SHOP] Configuration structure failure:", error);
+            showToast("Failed to lock config parameters.");
             return;
         }
 
