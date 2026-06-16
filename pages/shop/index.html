@@ -171,15 +171,11 @@
             box-sizing: border-box;
         }
 
-        .shop-card:not(.locked):hover {
+        .shop-card:hover {
             transform: translateY(-4px);
             border-color: var(--accent);
             background: rgba(255, 255, 255, 0.02);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .shop-card.locked {
-            opacity: 0.5;
         }
         
         /* --- Badges --- */
@@ -231,20 +227,6 @@
             object-fit: cover;
         }
 
-        .lock-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ef4444;
-            font-size: 1.1rem;
-        }
-
         .item-name {
             font-size: 1.1rem;
             font-weight: 800;
@@ -293,6 +275,7 @@
 
         .btn-action:disabled {
             cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .btn-action.equipped {
@@ -300,6 +283,18 @@
             color: white !important;
             border-color: #10b981 !important;
             opacity: 1 !important;
+        }
+
+        .btn-action.buy-btn {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.3);
+            color: #c084fc;
+        }
+
+        .btn-action.buy-btn:hover:not(:disabled) {
+            background: #a855f7;
+            color: white;
+            border-color: #a855f7;
         }
 
         #toast {
@@ -347,27 +342,28 @@
         
         <div class="shop-header">
             <div class="shop-title-area">
-                <h1 class="shop-title">Coin Rewards</h1>
-                <p class="shop-subtitle">Unlock and equip exclusive profile pictures based on your total coin milestones</p>
+                <h1 class="shop-title">Coin Marketplace</h1>
+                <p class="shop-subtitle">Spend your coins to permanently unlock and equip elite cosmetic avatars</p>
             </div>
             <div class="user-balance-card">
                 <div>
-                    <div class="balance-label">Your Coins</div>
+                    <div class="balance-label">Your Balance</div>
                     <div class="balance-value"><span id="user-coins">0</span> Coins</div>
                 </div>
             </div>
         </div>
 
-        <h2 class="section-title"><i class="fa-solid fa-box-open"></i> Your Inventory</h2>
+        <h2 class="section-title"><i class="fa-solid fa-box-open"></i> Your Unlocked Inventory</h2>
         <div class="shop-grid" id="inventory-grid-container"></div>
 
-        <h2 class="section-title"><i class="fa-solid fa-store"></i> Shop / Locked Rewards</h2>
+        <h2 class="section-title"><i class="fa-solid fa-store"></i> Available Store Items</h2>
         <div class="shop-grid" id="shop-grid-container"></div>
     </div>
 
-    <div id="toast">Avatar updated successfully!</div>
+    <div id="toast">Item processed successfully!</div>
 
 <script>
+    // Replace placeholders with your configuration settings if needed
     const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
@@ -375,44 +371,47 @@
     let myId = null;
     let myCoins = 0;
     let equippedAvatarId = "default";
+    let unlockedAvatars = ["default"]; // Default baseline inventory container
 
     const shopCatalog = [
-        { id: "default", name: "Default", requiredCoins: 0, src: "../../data/images/default.png", category: "Avatars" },
-        { id: "melt", name: "Melt", requiredCoins: 50, src: "../../data/images/melt.png", category: "Avatars" },
-        { id: "sos", name: "SOS", requiredCoins: 125, src: "../../data/images/sos.png", category: "Avatars" },
-        { id: "innocent", name: "Innocent", requiredCoins: 175, src: "../../data/images/innocent.png", category: "Avatars" },
-        { id: "chad", name: "Chad", requiredCoins: 225, src: "../../data/images/chad.png", category: "Avatars" },
-        { id: "hacker", name: "Hacker", requiredCoins: 300, src: "../../data/images/hacker.png", category: "Avatars" },
-        { id: "split", name: "Split", requiredCoins: 450, src: "../../data/images/split.png", category: "Avatars" },
-        { id: "prison", name: "Prison", requiredCoins: 550, src: "../../data/images/prison.png", category: "Avatars" },
-        { id: "demon", name: "Demon", requiredCoins: 650, src: "../../data/images/demon.png", category: "Avatars" },
-        { id: "angel", name: "Angel", requiredCoins: 800, src: "../../data/images/angel.png", category: "Avatars" },
-        { id: "summer2026", name: "Summer 2026", requiredCoins: 400, src: "../../data/images/summer2026.png", category: "Seasonal" }
+        { id: "default", name: "Default", price: 0, src: "../../data/images/default.png", category: "Avatars" },
+        { id: "melt", name: "Melt", price: 50, src: "../../data/images/melt.png", category: "Avatars" },
+        { id: "sos", name: "SOS", price: 125, src: "../../data/images/sos.png", category: "Avatars" },
+        { id: "innocent", name: "Innocent", price: 175, src: "../../data/images/innocent.png", category: "Avatars" },
+        { id: "chad", name: "Chad", price: 225, src: "../../data/images/chad.png", category: "Avatars" },
+        { id: "hacker", name: "Hacker", price: 300, src: "../../data/images/hacker.png", category: "Avatars" },
+        { id: "split", name: "Split", price: 450, src: "../../data/images/split.png", category: "Avatars" },
+        { id: "prison", name: "Prison", price: 550, src: "../../data/images/prison.png", category: "Avatars" },
+        { id: "demon", name: "Demon", price: 650, src: "../../data/images/demon.png", category: "Avatars" },
+        { id: "angel", name: "Angel", price: 800, src: "../../data/images/angel.png", category: "Avatars" },
+        { id: "summer2026", name: "Summer 2026", price: 400, src: "../../data/images/summer2026.png", category: "Seasonal" }
     ];
 
     async function initShop() {
-        console.log("[SHOP] Fetching user verification data...");
         const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
         
         if (sessionErr || !session) {
-            console.error("[SHOP] Session validation failed:", sessionErr);
             return window.location.href = '/pages/home.html';
         }
         
         myId = session.user.id;
+        await fetchUserData();
+    }
 
+    async function fetchUserData() {
         const { data: profile, error: profileErr } = await _supabase
             .from('profiles')
-            .select('coins, avatar_id') 
+            .select('coins, avatar_id, unlocked_avatars') 
             .eq('id', myId)
             .maybeSingle();
 
         if (profileErr) {
-            console.warn("[SHOP] Error loading profile data, using defaults:", profileErr);
+            console.warn("[SHOP] Error loading profile data:", profileErr);
         }
 
         myCoins = profile?.coins || 0;
         equippedAvatarId = profile?.avatar_id || "default"; 
+        unlockedAvatars = profile?.unlocked_avatars || ["default"];
 
         document.getElementById('user-coins').innerText = myCoins;
         
@@ -426,76 +425,83 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
-        const unlockedItems = shopCatalog.filter(item => myCoins >= item.requiredCoins);
-        const lockedItems = shopCatalog.filter(item => myCoins < item.requiredCoins);
+        // Separate items contextually based on ownership
+        const ownedItems = shopCatalog.filter(item => unlockedAvatars.includes(item.id));
+        const unownedItems = shopCatalog.filter(item => !unlockedAvatars.includes(item.id));
 
-        function populateGrid(items, container, isInventorySection) {
-            if (items.length === 0) {
-                const emptyMsg = document.createElement('p');
-                emptyMsg.style.cssText = "color: var(--text-faded); grid-column: 1 / -1; font-style: italic; margin: 1rem 0; text-align: left; width: 100%; font-size: 0.9rem;";
-                emptyMsg.innerText = isInventorySection ? "No items unlocked yet." : "You've unlocked every reward!";
-                container.appendChild(emptyMsg);
-                return;
-            }
+        // Populating Unlocked Inventory Grid
+        if (ownedItems.length === 0) {
+            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); italic; font-size: 0.9rem;">No items owned.</p>`;
+        } else {
+            ownedItems.forEach(item => {
+                const isEquipped = equippedAvatarId === item.id;
+                const actionBtnHtml = isEquipped 
+                    ? `<button class="btn-action equipped" disabled>Equipped</button>` 
+                    : `<button class="btn-action" onclick="equipItem('${item.id}')">Equip Avatar</button>`;
 
-            const categories = [...new Set(items.map(item => item.category))];
-
-            categories.forEach(category => {
-                const header = document.createElement('h2');
-                header.className = 'category-header';
-                header.style.cssText = "width: 100%; grid-column: 1 / -1; margin-top: 0.5rem; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em;";
-                header.innerText = category;
-                container.appendChild(header);
-
-                const itemsInCategory = items.filter(item => item.category === category);
-
-                itemsInCategory.forEach(item => {
-                    const isEquipped = equippedAvatarId === item.id;
-                    let actionBtnHtml = "";
-                    let badgeHtml = "";
-
-                    // Badge Check Logic
-                    const categoryLower = item.category.toLowerCase();
-                    if (categoryLower === "limited") {
-                        badgeHtml = `<div class="badge limited"><i class="fa-solid fa-star"></i> Limited</div>`;
-                    } else if (categoryLower === "seasonal") {
-                        badgeHtml = `<div class="badge seasonal"><i class="fa-solid fa-leaf"></i> Seasonal</div>`;
-                    }
-
-                    if (isInventorySection) {
-                        if (isEquipped) {
-                            actionBtnHtml = `<button class="btn-action equipped" disabled>Equipped</button>`;
-                        } else {
-                            actionBtnHtml = `<button class="btn-action" onclick="equipItem('${item.id}')">Equip</button>`;
-                        }
-                    } else {
-                        actionBtnHtml = `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Locked</button>`;
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = `shop-card ${!isInventorySection ? 'locked' : ''}`;
-                    card.innerHTML = `
-                        ${badgeHtml}
-                        <div class="avatar-container">
-                            <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/pfps/default.png';">
-                            ${!isInventorySection ? '<div class="lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
-                        </div>
-                        <h3 class="item-name">${item.name}</h3>
-                        <div class="item-price ${isInventorySection ? 'unlocked-text' : ''}">
-                            ${isInventorySection 
-                                ? '<i class="fa-solid fa-circle-check"></i> Unlocked' 
-                                : `<i class="fa-solid fa-coins"></i> Req: ${item.requiredCoins} Coins`
-                            }
-                        </div>
-                        ${actionBtnHtml}
-                    `;
-                    container.appendChild(card);
-                });
+                const card = createCardMarkup(item, `<i class="fa-solid fa-circle-check"></i> Unlocked`, actionBtnHtml, true);
+                inventoryContainer.appendChild(card);
             });
         }
 
-        populateGrid(unlockedItems, inventoryContainer, true);
-        populateGrid(lockedItems, shopContainer, false);
+        // Populating Marketplace Shop Grid
+        if (unownedItems.length === 0) {
+            shopContainer.innerHTML = `<p style="color: var(--text-faded); italic; font-size: 0.9rem;">You have purchased all available shop products!</p>`;
+        } else {
+            unownedItems.forEach(item => {
+                const canAfford = myCoins >= item.price;
+                const actionBtnHtml = canAfford
+                    ? `<button class="btn-action buy-btn" onclick="buyItem('${item.id}', ${item.price})">Buy Asset</button>`
+                    : `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Insufficient Balance</button>`;
+
+                const card = createCardMarkup(item, `<i class="fa-solid fa-coins"></i> Cost: ${item.price} Coins`, actionBtnHtml, false);
+                shopContainer.appendChild(card);
+            });
+        }
+    }
+
+    function createCardMarkup(item, priceLabel, buttonHtml, isUnlocked) {
+        let badgeHtml = "";
+        const categoryLower = item.category.toLowerCase();
+        if (categoryLower === "limited") {
+            badgeHtml = `<div class="badge limited"><i class="fa-solid fa-star"></i> Limited</div>`;
+        } else if (categoryLower === "seasonal") {
+            badgeHtml = `<div class="badge seasonal"><i class="fa-solid fa-leaf"></i> Seasonal</div>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `shop-card`;
+        card.innerHTML = `
+            ${badgeHtml}
+            <div class="avatar-container">
+                <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/default.png';">
+            </div>
+            <h3 class="item-name">${item.name}</h3>
+            <div class="item-price ${isUnlocked ? 'unlocked-text' : ''}">
+                ${priceLabel}
+            </div>
+            ${buttonHtml}
+        `;
+        return card;
+    }
+
+    async function buyItem(itemId, itemPrice) {
+        console.log(`[SHOP] Contacting engine to acquire asset: ${itemId}...`);
+        
+        // Call our database RPC securely
+        const { data, error } = await _supabase.rpc('buy_avatar', {
+            avatar_id_to_buy: itemId,
+            item_cost: parseInt(itemPrice)
+        });
+
+        if (error) {
+            console.error("[SHOP] Order error caught:", error.message);
+            showToast(error.message || "Purchase operation dropped.");
+            return;
+        }
+
+        showToast(`Successfully bought ${itemId}!`);
+        await fetchUserData(); // Refresh balances and state lists seamlessly
     }
 
     async function equipItem(itemId) {
@@ -507,13 +513,13 @@
             .eq('id', myId);
 
         if (error) {
-            console.error("[SHOP] Error equipping item:", error);
-            showToast("Failed to equip asset.");
+            console.error("[SHOP] Configuration failure:", error);
+            showToast("Failed to mount asset.");
             return;
         }
 
-        showToast("Avatar successfully updated!");
-        renderShop(); 
+        showToast("Profile avatar updated!");
+        await fetchUserData(); 
     }
 
     let toastTimeout;
