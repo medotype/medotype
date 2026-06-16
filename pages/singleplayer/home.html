@@ -386,7 +386,7 @@
             if (offset > 40) container.style.top = `-${offset}px`;
         }
 
-        async function finish() {
+async function finish() {
             clearInterval(timerInterval);
             const durationMinutes = (Date.now() - startTime) / 60000;
             const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
@@ -427,17 +427,19 @@
                 
                 if (!scoreError) saved = true;
 
+                // Pass the game_mode parameter to the updated DB function
                 const { data: coinData, error: coinError } = await _supabase
-                    .rpc('reward_coins_for_game', { wpm_score: wpm, acc_score: acc });
+                    .rpc('reward_coins_for_game', { 
+                        wpm_score: wpm, 
+                        acc_score: acc,
+                        game_mode: activeModeConfig.id 
+                    });
                 
                 if (coinError) {
                     console.error("Failed to reward coins:", coinError);
                 } else {
-                    if (activeModeConfig.id.toLowerCase() === 'single') {
-                        earnedCoins = Math.floor(coinData / 3);
-                    } else {
-                        earnedCoins = coinData; 
-                    }
+
+                    earnedCoins = coinData; 
                 }
             }
 
