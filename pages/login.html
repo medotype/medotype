@@ -280,13 +280,23 @@
         </div>
     </div>
 
-    <script>
+<script>
         const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
         let isLogin = false; 
         let isCooldown = false;
+
+        // Auto-detect login if the popup finishes while this iframe is still open
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') {
+                const msgEl = document.getElementById('msg');
+                msgEl.innerText = 'Success!';
+                msgEl.className = 'success';
+                setTimeout(() => window.location.href = 'home.html', 1000);
+            }
+        });
 
         function setMode(loginMode) {
             isLogin = loginMode;
@@ -354,10 +364,6 @@
                     msgEl.innerText = error.message;
                     msgEl.className = 'err';
                     isCooldown = false;
-                } else {
-                    msgEl.innerText = 'Success!';
-                    msgEl.className = 'success';
-                    setTimeout(() => window.location.href = 'home.html', 1000);
                 }
             } else {
                 signupEmail = email;
@@ -377,25 +383,37 @@
             }
         }
 
-        // --- NEW DISCORD OAUTH FLOW ---
         async function handleDiscordLogin() {
             const msgEl = document.getElementById('msg');
-            msgEl.innerText = "Connecting to Discord...";
+            msgEl.innerText = "Opening Discord...";
             msgEl.className = "";
 
-            // Dynamically gets the directory path and points to home.html on redirect
             const targetRedirect = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/home.html';
 
+            // this is some bullshit i prob could have did this better
             const { data, error } = await _supabase.auth.signInWithOAuth({
                 provider: 'discord',
                 options: {
-                    redirectTo: targetRedirect
+                    redirectTo: targetRedirect,
+                    skipBrowserRedirect: true 
                 }
             });
 
             if (error) {
                 msgEl.innerText = error.message;
                 msgEl.className = 'err';
+                return;
+            }
+
+            if (data?.url) {
+                const popup = window.open(data.url, 'Discord Login', 'width=580,height=700,scrollbars=yes,resizable=yes');
+                
+                if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                    msgEl.innerText = "Popup blocked! Please allow popups.";
+                    msgEl.className = 'err';
+                } else {
+                    msgEl.innerText = "Complete login in the popout window.";
+                }
             }
         }
 
@@ -420,10 +438,6 @@
                     vMsg.className = "err";
                 }
                 btn.innerText = "I've Verified My Email";
-            } else if (data.user) {
-                vMsg.innerText = "Verified! Redirecting...";
-                vMsg.className = "success";
-                setTimeout(() => window.location.href = 'home.html', 1500);
             }
         }
     </script>
