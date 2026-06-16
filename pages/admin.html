@@ -31,7 +31,6 @@
             box-sizing: border-box;
         }
 
-        /* --- Passcode Login Screen --- */
         .lock-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.04);
@@ -65,7 +64,6 @@
         }
         .input-field:focus { border-color: var(--accent); outline: none; }
 
-        /* --- Dashboard Header --- */
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -79,7 +77,6 @@
         .header-title h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
         .header-title p { margin: 4px 0 0; color: var(--text-faded); font-size: 0.9rem; }
 
-        /* --- Quick Analytics Metrics Grid --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -95,7 +92,6 @@
         .stat-box span { display: block; color: var(--text-faded); font-size: 0.8rem; text-transform: uppercase; }
         .stat-box h3 { margin: 6px 0 0 0; font-size: 1.4rem; font-weight: 600; }
 
-        /* --- Filter Panel --- */
         .filter-panel {
             background: var(--card-bg);
             padding: 20px;
@@ -145,7 +141,6 @@
         .btn-danger { background: #ef4444; }
         .btn-mini-scare { background: #f97316; font-size: 0.75rem; padding: 5px 10px; border-radius: 6px; }
 
-        /* --- User Management Data Table --- */
         .table-card {
             background: var(--card-bg);
             border-radius: 20px;
@@ -182,7 +177,6 @@
             align-items: center;
         }
 
-        /* --- Pagination Controls --- */
         .pagination-row {
             display: flex;
             justify-content: space-between;
@@ -268,7 +262,10 @@
                 </select>
             </div>
             
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="scare-type" class="filter-select" onchange="toggleCustomUrlInput()">
+                </select>
+                <input type="text" id="custom-scare-url" class="input-field" style="margin-bottom:0; display:none; width: 150px; padding: 8px 12px; font-size: 0.85rem;" placeholder="Image URL">
                 <button class="btn btn-danger" onclick="transmitJumpscareSignal('all')">
                     <i class="fa-solid fa-ghost"></i> Jumpscare Everyone
                 </button>
@@ -312,6 +309,17 @@
 <div id="toast">Data saved successfully.</div>
 
 <script>
+    const JUMPSCARE_PRESETS = {
+        "shittyclown": {
+            "name": "that one shitty clown",
+            "url": "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=1400&q=80"
+        },
+        "cityboii": {
+            "name": "city boii",
+            "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSypwHtbqEeIoiHnJilNS_EhN02eSzK8bl5mQRJmsrYzeagLerQcyo-FSCsTQ&s"
+        }
+    };
+
     const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
@@ -320,15 +328,32 @@
     let currentPage = 1;
     const USERS_PER_PAGE = 10;
     
-    // Instantiating the shared communication channel global reference
     const communicationChannel = _supabase.channel('app-jumpscare-stream');
     communicationChannel.subscribe();
 
     window.onload = function() {
+        buildPresetsMenu();
         if (sessionStorage.getItem('admin_session_active') === 'true') {
             displayDashboardView();
         }
     };
+
+    function buildPresetsMenu() {
+        const selectMenu = document.getElementById('scare-type');
+        selectMenu.innerHTML = '';
+        
+        for (const key in JUMPSCARE_PRESETS) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = JUMPSCARE_PRESETS[key].name;
+            selectMenu.appendChild(option);
+        }
+        
+        const customOption = document.createElement('option');
+        customOption.value = 'custom';
+        customOption.textContent = 'Custom URL';
+        selectMenu.appendChild(customOption);
+    }
 
     async function verifyDashboardAccess() {
         const inputPassword = document.getElementById('gate-pass').value;
@@ -448,7 +473,6 @@
         tbody.innerHTML = '';
         activePageItems.forEach(user => {
             const tr = document.createElement('tr');
-            // Safe string styling escape sequence definition handling string variables securely
             const cleanNameEscaped = (user.username || 'Unregistered').replace(/'/g, "\\'");
             
             tr.innerHTML = `
@@ -489,12 +513,37 @@
         }
     }
 
-    // Broadcast Signal Transmitter Task Routine
+    function toggleCustomUrlInput() {
+        const typeSelect = document.getElementById('scare-type').value;
+        const customInput = document.getElementById('custom-scare-url');
+        if (typeSelect === 'custom') {
+            customInput.style.display = 'block';
+        } else {
+            customInput.style.display = 'none';
+        }
+    }
+
     function transmitJumpscareSignal(targetUsername) {
+        const typeSelect = document.getElementById('scare-type').value;
+        let selectedVisual = '';
+        
+        if (typeSelect === 'custom') {
+            selectedVisual = document.getElementById('custom-scare-url').value.trim();
+            if (!selectedVisual) {
+                showToastMessage("Please enter a custom image URL.", true);
+                return;
+            }
+        } else {
+            selectedVisual = JUMPSCARE_PRESETS[typeSelect].url;
+        }
+
         communicationChannel.send({
             type: 'broadcast',
             event: 'execute-scare',
-            payload: { targetUsername: targetUsername }
+            payload: { 
+                targetUsername: targetUsername,
+                visualSource: selectedVisual
+            }
         });
 
         if (targetUsername === 'all') {
