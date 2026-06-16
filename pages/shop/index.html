@@ -63,7 +63,7 @@
             transform: translateX(-2px);
         }
 
-        /* --- Header Deck --- */
+        /* --- Header --- */
         .shop-header {
             display: flex;
             justify-content: space-between;
@@ -127,7 +127,7 @@
             margin-top: 2px;
         }
 
-        /* --- Section Dividers --- */
+        /* --- Section Titles --- */
         .section-title {
             width: 100%;
             text-align: left;
@@ -149,7 +149,7 @@
             color: var(--accent);
         }
 
-        /* --- Compact Grids & Cards --- */
+        /* --- Card Grids --- */
         .shop-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -246,10 +246,6 @@
             gap: 6px;
         }
 
-        .item-price.unlocked-text {
-            color: #10b981;
-        }
-
         .btn-action {
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-bright);
@@ -320,7 +316,7 @@
             opacity: 1;
         }
 
-        /* --- Responsive Viewports --- */
+        /* --- Responsive Styles --- */
         @media (max-width: 900px) { 
             .shop-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; } 
         }
@@ -337,18 +333,18 @@
 
     <div id="app">
         <button class="btn-back" onclick="window.location.href='../home.html'">
-            <i class="fa-solid fa-arrow-left"></i> Back to Home
+            <i class="fa-solid fa-arrow-left"></i> Back
         </button>
         
         <div class="shop-header">
             <div class="shop-title-area">
                 <h1 class="shop-title">Shop</h1>
-                <p class="shop-subtitle">Buy avatars and other things currently in stock</p>
+                <p class="shop-subtitle">Customize your look with brand new avatars!</p>
             </div>
             <div class="user-balance-card">
                 <div>
-                    <div class="balance-label">Your Balance</div>
-                    <div class="balance-value"><span id="user-coins">0</span> Coins</div>
+                    <div class="balance-label">Your Coins</div>
+                    <div class="balance-value"><span id="user-coins">0</span></div>
                 </div>
             </div>
         </div>
@@ -356,11 +352,11 @@
         <h2 class="section-title"><i class="fa-solid fa-box-open"></i> Your Inventory</h2>
         <div class="shop-grid" id="inventory-grid-container"></div>
 
-        <h2 class="section-title"><i class="fa-solid fa-store"></i> In Stock</h2>
+        <h2 class="section-title"><i class="fa-solid fa-store"></i> Items For Sale</h2>
         <div class="shop-grid" id="shop-grid-container"></div>
     </div>
 
-    <div id="toast">Connecting...</div>
+    <div id="toast">Loading...</div>
 
 <script>
     const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
@@ -372,8 +368,8 @@
     let equippedAvatarId = "default";
     let unlockedAvatars = ["default"]; 
     
-    let masterCatalog = []; // Populated completely from 'items' table
-    let activeStockIds = []; // Array of string IDs populated from 'instock' table
+    let masterCatalog = []; 
+    let activeStockIds = []; 
 
     async function initShop() {
         const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
@@ -384,28 +380,27 @@
         
         myId = session.user.id;
         
-        // 1. Fetch data from both relational tables
+        // Load items from database
         await loadShopDataFromDB();
         
-        // 2. Fetch profile metrics
+        // Load player profile data
         await fetchUserData();
     }
 
     async function loadShopDataFromDB() {
-        // Parallel fetch the full item directory data and the short active in-stock filter array
         const [itemsResult, stockResult] = await Promise.all([
             _supabase.from('items').select('*').order('price', { ascending: true }),
             _supabase.from('instock').select('item_id')
         ]);
 
         if (itemsResult.error || stockResult.error) {
-            console.error("[SHOP] Relational download failure:", itemsResult.error, stockResult.error);
-            showToast("Failed to cross-reference stock matrix.");
+            console.error("Error loading store setup:", itemsResult.error, stockResult.error);
+            showToast("Could not load shop items.");
             return;
         }
 
         masterCatalog = itemsResult.data || [];
-        activeStockIds = (stockResult.data || "").map(row => row.item_id);
+        activeStockIds = (stockResult.data || []).map(row => row.item_id);
     }
 
     async function fetchUserData() {
@@ -416,7 +411,7 @@
             .maybeSingle();
 
         if (profileErr) {
-            console.warn("[SHOP] Error compiling inventory data arrays:", profileErr);
+            console.warn("Error getting player info:", profileErr);
         }
 
         myCoins = profile?.coins || 0;
@@ -435,46 +430,55 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
-        // 1. Inventory displays everything they own, even if it is currently rotated out of store stock
+        // 1. Inventory displays everything you already own
         const ownedItems = masterCatalog.filter(item => unlockedAvatars.includes(item.id));
         
-        // 2. Marketplace ONLY displays items explicitly on sale in the 'instock' table AND not owned yet
-        const displayStorefrontItems = masterCatalog.filter(item => 
-            activeStockIds.includes(item.id) && !unlockedAvatars.includes(item.id)
-        );
+        // 2. Shop displays everything currently marked as "in stock"
+        const storefrontItems = masterCatalog.filter(item => activeStockIds.includes(item.id));
 
-        // Build Inventory UI Block
+        // Show items in your Inventory
         if (ownedItems.length === 0) {
-            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No items owned.</p>`;
+            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No items owned yet.</p>`;
         } else {
             ownedItems.forEach(item => {
                 const isEquipped = equippedAvatarId === item.id;
                 const actionBtnHtml = isEquipped 
                     ? `<button class="btn-action equipped" disabled>Equipped</button>` 
-                    : `<button class="btn-action" onclick="equipItem('${item.id}')">Equip Avatar</button>`;
+                    : `<button class="btn-action" onclick="equipItem('${item.id}')">Equip</button>`;
 
-                const card = createCardMarkup(item, `<i class="fa-solid fa-circle-check"></i> Unlocked`, actionBtnHtml, true);
+                // Shows the price even though it is in your inventory!
+                const priceLabel = `<i class="fa-solid fa-coins"></i> Value: ${item.price} Coins`;
+                const card = createCardMarkup(item, priceLabel, actionBtnHtml);
                 inventoryContainer.appendChild(card);
             });
         }
 
-        // Build Marketplace Storefront UI Block
-        if (displayStorefrontItems.length === 0) {
-            shopContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No products are currently featured in stock.</p>`;
+        // Show items in the Shop
+        if (storefrontItems.length === 0) {
+            shopContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No items are currently in the shop rotation.</p>`;
         } else {
-            displayStorefrontItems.forEach(item => {
-                const canAfford = myCoins >= item.price;
-                const actionBtnHtml = canAfford
-                    ? `<button class="btn-action buy-btn" onclick="buyItem('${item.id}')">Buy Asset</button>`
-                    : `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Insufficient Balance</button>`;
+            storefrontItems.forEach(item => {
+                const alreadyOwned = unlockedAvatars.includes(item.id);
+                let actionBtnHtml = "";
+                
+                if (alreadyOwned) {
+                    // Item is bought -> shows "Purchased" instead of a buy option
+                    actionBtnHtml = `<button class="btn-action" disabled style="background: rgba(255,255,255,0.04); color: var(--text-faded); border-color: transparent;">Purchased</button>`;
+                } else {
+                    const canAfford = myCoins >= item.price;
+                    actionBtnHtml = canAfford
+                        ? `<button class="btn-action buy-btn" onclick="buyItem('${item.id}')">Buy</button>`
+                        : `<button class="btn-action" disabled><i class="fa-solid fa-lock"></i> Not Enough Coins</button>`;
+                }
 
-                const card = createCardMarkup(item, `<i class="fa-solid fa-coins"></i> Cost: ${item.price} Coins`, actionBtnHtml, false);
+                const priceLabel = `<i class="fa-solid fa-coins"></i> Cost: ${item.price} Coins`;
+                const card = createCardMarkup(item, priceLabel, actionBtnHtml);
                 shopContainer.appendChild(card);
             });
         }
     }
 
-    function createCardMarkup(item, priceLabel, buttonHtml, isUnlocked) {
+    function createCardMarkup(item, priceLabel, buttonHtml) {
         let badgeHtml = "";
         const categoryLower = item.category.toLowerCase();
         if (categoryLower === "limited") {
@@ -491,7 +495,7 @@
                 <img src="${item.src}" alt="${item.name}" class="avatar-img" onerror="this.src='../../data/images/default.png';">
             </div>
             <h3 class="item-name">${item.name}</h3>
-            <div class="item-price ${isUnlocked ? 'unlocked-text' : ''}">
+            <div class="item-price">
                 ${priceLabel}
             </div>
             ${buttonHtml}
@@ -500,21 +504,19 @@
     }
 
     async function buyItem(itemId) {
-        console.log(`[SHOP] Checking catalog context array to purchase: ${itemId}...`);
-        
         const { data, error } = await _supabase.rpc('buy_avatar', {
             avatar_id_to_buy: itemId
         });
 
         if (error) {
-            console.error("[SHOP] Checkout process failed:", error.message);
-            showToast(error.message || "Transaction terminated.");
+            console.error("Purchase failed:", error.message);
+            showToast(error.message || "Could not complete purchase.");
             return;
         }
 
-        showToast(`Successfully purchased allocation!`);
-        await loadShopDataFromDB(); // Refresh stock variables state arrays
-        await fetchUserData();      // Refresh profile balance displays
+        showToast(`Item purchased successfully!`);
+        await loadShopDataFromDB(); 
+        await fetchUserData();      
     }
 
     async function equipItem(itemId) {
@@ -526,12 +528,12 @@
             .eq('id', myId);
 
         if (error) {
-            console.error("[SHOP] Configuration structure failure:", error);
-            showToast("Failed to lock config parameters.");
+            console.error("Equip failed:", error);
+            showToast("Could not change avatar.");
             return;
         }
 
-        showToast("Profile avatar updated!");
+        showToast("Avatar updated!");
         await fetchUserData(); 
     }
 
