@@ -219,7 +219,6 @@
         }
 
         function updateCaret() {
-            // Scrub all existing active states
             document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
                 el.classList.remove('active-char', 'active-end', 'active');
             });
@@ -263,7 +262,6 @@
             totalKeystrokes = 0;
             startTime = null;
             
-            // Reset trackers
             keyPressTimestamps = [];
             currentCombo = 0;
             comboVal.innerText = "0";
@@ -335,7 +333,6 @@
                     activeCharIdx--;
                     letters[activeCharIdx].className = 'letter';
                 } else if (activeWordIdx > 0) {
-                    // Repaired Backspace Logic
                     activeWordIdx--;
                     const prevWord = words[activeWordIdx];
                     const prevLetters = prevWord.querySelectorAll('.letter');
@@ -359,7 +356,7 @@
             } else if (e.key.length === 1) {
                 if (activeCharIdx < letters.length) {
                     totalKeystrokes++;
-                    keyPressTimestamps.push(Date.now()); // Record for anti-cheat
+                    keyPressTimestamps.push(Date.now());
                     
                     if (e.key === letters[activeCharIdx].innerText) {
                         letters[activeCharIdx].classList.add('correct');
@@ -367,7 +364,7 @@
                         updateCombo(false);
                     } else {
                         letters[activeCharIdx].classList.add('incorrect');
-                        updateCombo(true); // Break combo
+                        updateCombo(true);
                     }
                     activeCharIdx++;
 
@@ -393,12 +390,7 @@
             const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
             let saved = false;
-            
-            // Core check to completely mute coin delivery on these modes
-            const modeIdClean = activeModeConfig.id.toLowerCase();
-            const isNoCoinMode = (modeIdClean === 'single' || modeIdClean === 'blitz');
-            
-            let earnedCoins = isNoCoinMode ? "no coins" : 0; 
+            let earnedCoins = 0; 
             const { data: { session } } = await _supabase.auth.getSession();
 
             let isBot = false;
@@ -432,20 +424,17 @@
                 
                 if (!scoreError) saved = true;
 
-                // Only make the database RPC request if it's an allowed mode
-                if (!isNoCoinMode) {
-                    const { data: coinData, error: coinError } = await _supabase
-                        .rpc('reward_coins_for_game', { 
-                            wpm_score: wpm, 
-                            acc_score: acc,
-                            game_mode: activeModeConfig.id 
-                        });
-                    
-                    if (coinError) {
-                        console.error("Failed to reward coins:", coinError);
-                    } else {
-                        earnedCoins = coinData; 
-                    }
+                const { data: coinData, error: coinError } = await _supabase
+                    .rpc('reward_coins_for_game', { 
+                        wpm_score: wpm, 
+                        acc_score: acc,
+                        game_mode: activeModeConfig.id 
+                    });
+                
+                if (coinError) {
+                    console.error("Failed to reward coins:", coinError);
+                } else {
+                    earnedCoins = coinData; 
                 }
             }
 
