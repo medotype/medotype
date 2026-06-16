@@ -34,20 +34,19 @@
             color: var(--text-faded);
             min-width: 90px;
             justify-content: center;
-            font-variant-numeric: tabular-nums; /* Stops numbers from shifting widths */
+            font-variant-numeric: tabular-nums;
         }
         
         .stat-box i { color: var(--accent); font-size: 1.1rem; }
         
-#combo-stat { transition: transform 0.1s; }
+        #combo-stat { transition: transform 0.1s; }
         #combo-stat.broken { color: var(--error); transform: translateX(-5px); }
-        #combo-stat.broken i { color: var(--error); }
         #combo-stat.broken i { color: var(--error); }
 
         #typing-viewport { height: 90px; overflow: hidden; position: relative; margin-bottom: 2rem; }
         #word-container { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; position: relative; top: 0; transition: top 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         
-.word { 
+        .word { 
             font-size: 2rem; 
             font-weight: 400; 
             color: var(--text-faded); 
@@ -387,7 +386,7 @@
             if (offset > 40) container.style.top = `-${offset}px`;
         }
 
-async function finish() {
+        async function finish() {
             clearInterval(timerInterval);
             const durationMinutes = (Date.now() - startTime) / 60000;
             const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
@@ -434,7 +433,11 @@ async function finish() {
                 if (coinError) {
                     console.error("Failed to reward coins:", coinError);
                 } else {
-                    earnedCoins = coinData; 
+                    if (activeModeConfig.id.toLowerCase() === 'single') {
+                        earnedCoins = Math.floor(coinData / 3);
+                    } else {
+                        earnedCoins = coinData; 
+                    }
                 }
             }
 
