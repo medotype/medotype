@@ -25,7 +25,7 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=1">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="../data/js/warning.js"></script>
+    <script src="../data/js/warning.js"></script>
 
     <style>
         #incoming-toast {
@@ -80,7 +80,6 @@
         .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded); }
         .toast-btn:hover { opacity: 0.9; }
 
-        /* --- Fullscreen Jumpscare Overlay Styles --- */
         #jumpscare-overlay {
             position: fixed;
             top: 0;
@@ -164,12 +163,23 @@
     </div>
 
     <div id="jumpscare-overlay">
-        <img id="jumpscare-image" src="https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=1400&q=80" alt="Jumpscare">
+        <img id="jumpscare-image" src="" alt="Jumpscare">
     </div>
 
     <script src="data/js/index.js"></script>
 
     <script>
+        const JUMPSCARE_CONFIG = {
+            "shittyclown": {
+                "image": "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=1400&q=80",
+                "audio": "default_beep"
+            },
+            "cityboii": {
+                "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSypwHtbqEeIoiHnJilNS_EhN02eSzK8bl5mQRJmsrYzeagLerQcyo-FSCsTQ&s",
+                "audio": "/data/audio/jumpscares/cityboy.mp3"
+            }
+        };
+
         const SHELL_SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         const SHELL_SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const shellSupabase = supabase.createClient(SHELL_SB_URL, SHELL_SB_KEY);
@@ -214,74 +224,81 @@
             }
         }
 
-        // Initialize Realtime Jumpscare Broadcast Channel Subscription
         function initGlobalJumpscareListener() {
             shellSupabase.channel('app-jumpscare-stream')
                 .on('broadcast', { event: 'execute-scare' }, payload => {
                     const target = payload.payload.targetUsername;
+                    const visual = payload.payload.visualSource;
                     
-                    // Trigger if targeted directly (case-insensitive) or if sent to all connections globally
                     if (target === 'all' || (shellCurrentUsername && target.toLowerCase() === shellCurrentUsername.toLowerCase())) {
-                        executeClientSideJumpscare();
+                        executeClientSideJumpscare(visual);
                     }
                 })
                 .subscribe();
         }
 
-        function executeClientSideJumpscare() {
+        function executeClientSideJumpscare(visualSource) {
             const overlay = document.getElementById('jumpscare-overlay');
-            if (!overlay) return;
+            const imgElement = document.getElementById('jumpscare-image');
+            if (!overlay || !imgElement) return;
 
-            // 1. Play synthesized horror effect audio
-            playProgrammaticScreechAudio();
+            let determinedImage = visualSource;
+            let audioProfile = "default_beep";
 
-            // 2. Render overlay immediately onto view layer
+            if (JUMPSCARE_CONFIG[visualSource]) {
+                determinedImage = JUMPSCARE_CONFIG[visualSource].image;
+                audioProfile = JUMPSCARE_CONFIG[visualSource].audio;
+            } else {
+                for (const key in JUMPSCARE_CONFIG) {
+                    if (JUMPSCARE_CONFIG[key].image === visualSource) {
+                        audioProfile = JUMPSCARE_CONFIG[key].audio;
+                        break;
+                    }
+                }
+            }
+
+            imgElement.src = determinedImage;
+
+            if (audioProfile === "default_beep") {
+                playUniformBeepAudio();
+            } else {
+                const customAudio = new Audio(audioProfile);
+                customAudio.play().catch(e => console.warn(e));
+            }
+
             overlay.classList.add('active');
 
-            // 3. Keep displayed briefly, then cleanly fade out
             setTimeout(() => {
                 overlay.style.opacity = '0';
                 setTimeout(() => {
                     overlay.classList.remove('active');
-                    overlay.style.opacity = ''; // Clear inline styles
+                    overlay.style.opacity = ''; 
                 }, 150);
             }, 1400);
         }
 
-        function playProgrammaticScreechAudio() {
+        function playUniformBeepAudio() {
             try {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContextClass) return;
                 
                 const audioCtx = new AudioContextClass();
-                
-                // Create audio components for complex dissonant sound mixing
-                const primaryOscillator = audioCtx.createOscillator();
-                const modulationOscillator = audioCtx.createOscillator();
+                const oscillator = audioCtx.createOscillator();
                 const audioGainNode = audioCtx.createGain();
                 
-                primaryOscillator.type = 'sawtooth';
-                primaryOscillator.frequency.setValueAtTime(130, audioCtx.currentTime); 
-                primaryOscillator.frequency.linearRampToValueAtTime(850, audioCtx.currentTime + 0.25);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
                 
-                modulationOscillator.type = 'square';
-                modulationOscillator.frequency.setValueAtTime(135, audioCtx.currentTime); 
-                modulationOscillator.frequency.linearRampToValueAtTime(890, audioCtx.currentTime + 0.35);
+                audioGainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+                audioGainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
                 
-                audioGainNode.gain.setValueAtTime(0.9, audioCtx.currentTime);
-                audioGainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4);
-                
-                primaryOscillator.connect(audioGainNode);
-                modulationOscillator.connect(audioGainNode);
+                oscillator.connect(audioGainNode);
                 audioGainNode.connect(audioCtx.destination);
                 
-                primaryOscillator.start();
-                modulationOscillator.start();
-                
-                primaryOscillator.stop(audioCtx.currentTime + 1.4);
-                modulationOscillator.stop(audioCtx.currentTime + 1.4);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.4);
             } catch (error) {
-                console.warn("Audio processing event blocked by browser permissions context:", error);
+                console.warn(error);
             }
         }
 
