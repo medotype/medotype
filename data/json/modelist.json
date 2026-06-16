@@ -33,7 +33,7 @@
     },
     {
         "id": "single",
-        "label": "single",
+        "label": "Single",
         "type": "words",
         "value": 1,
         "wordpool": "../data/json/wordlistcommon.json",
