@@ -32,6 +32,14 @@
         "renderCount": 30
     },
     {
+        "id": "single",
+        "label": "single",
+        "type": "words",
+        "value": 1,
+        "wordpool": "../data/json/wordlistcommon.json",
+        "renderCount": 1
+    },
+    {
         "id": "blitz",
         "label": "Blitz",
         "type": "time",
