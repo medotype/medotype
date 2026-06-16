@@ -386,14 +386,19 @@
             if (offset > 40) container.style.top = `-${offset}px`;
         }
 
-async function finish() {
+        async function finish() {
             clearInterval(timerInterval);
             const durationMinutes = (Date.now() - startTime) / 60000;
             const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
             const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
             let saved = false;
-            let earnedCoins = 0; // Track this for the results screen
+            
+            // Core check to completely mute coin delivery on these modes
+            const modeIdClean = activeModeConfig.id.toLowerCase();
+            const isNoCoinMode = (modeIdClean === 'single' || modeIdClean === 'blitz');
+            
+            let earnedCoins = isNoCoinMode ? "no coins" : 0; 
             const { data: { session } } = await _supabase.auth.getSession();
 
             let isBot = false;
@@ -427,19 +432,20 @@ async function finish() {
                 
                 if (!scoreError) saved = true;
 
-                // Pass the game_mode parameter to the updated DB function
-                const { data: coinData, error: coinError } = await _supabase
-                    .rpc('reward_coins_for_game', { 
-                        wpm_score: wpm, 
-                        acc_score: acc,
-                        game_mode: activeModeConfig.id 
-                    });
-                
-                if (coinError) {
-                    console.error("Failed to reward coins:", coinError);
-                } else {
-
-                    earnedCoins = coinData; 
+                // Only make the database RPC request if it's an allowed mode
+                if (!isNoCoinMode) {
+                    const { data: coinData, error: coinError } = await _supabase
+                        .rpc('reward_coins_for_game', { 
+                            wpm_score: wpm, 
+                            acc_score: acc,
+                            game_mode: activeModeConfig.id 
+                        });
+                    
+                    if (coinError) {
+                        console.error("Failed to reward coins:", coinError);
+                    } else {
+                        earnedCoins = coinData; 
+                    }
                 }
             }
 
