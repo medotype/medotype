@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Admin</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="/data/css/root.css">
+    <script src="/data/js/theme.js"></script>
+    
+    <style>
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-bright); 
+            font-family: var(--font); 
+            margin: 0; 
+            padding: 40px 20px;
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            min-height: 100vh;
+        }
+        
+        .container { 
+            width: 100%; 
+            max-width: 1000px; 
+            box-sizing: border-box;
+        }
+
+        .lock-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            margin-top: 12vh;
+        }
+        .lock-card i {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        .lock-card h2 { margin: 0 0 8px 0; font-weight: 800; }
+        .lock-card p { color: var(--text-faded); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: white;
+            box-sizing: border-box;
+            font-family: var(--font);
+            font-size: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .input-field:focus { border-color: var(--accent); outline: none; }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 24px 30px;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .header-title h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
+        .header-title p { margin: 4px 0 0; color: var(--text-faded); font-size: 0.9rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+        .stat-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.02);
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+        .stat-box span { display: block; color: var(--text-faded); font-size: 0.8rem; text-transform: uppercase; }
+        .stat-box h3 { margin: 6px 0 0 0; font-size: 1.4rem; font-weight: 600; }
+
+        .panel-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+        
+        .panel-title {
+            margin-top: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            color: var(--text-bright);
+        }
+
+        .search-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        
+        .filter-options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 12px;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 6px;
+            color: var(--text-bright);
+            font-family: var(--font);
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-family: var(--font);
+            font-weight: 600;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-bright); }
+        .btn-save { background: #10b981; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; }
+        .btn-danger { background: #ef4444; }
+        .btn-mini-scare { background: #f97316; font-size: 0.75rem; padding: 5px 10px; border-radius: 6px; }
+
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 16px 20px;
+            color: var(--text-faded);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--bg);
+        }
+        td { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; }
+        
+        .edit-input {
+            width: 80px;
+            padding: 6px 10px;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            color: white;
+            font-family: var(--font);
+        }
+        .edit-input:focus { border-color: var(--accent); outline: none; }
+
+        .action-cell-cluster {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .pagination-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+        .pagination-info { color: var(--text-faded); font-size: 0.9rem; }
+        .pagination-buttons { display: flex; gap: 10px; }
+
+        /* Shop & Inventory Modals/Items */
+        .shop-items-grid {
+            display: flex; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            margin-bottom: 15px;
+        }
+        .item-checkbox-label {
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: rgba(255,255,255,0.03); 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+        .item-checkbox-label:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .item-checkbox-label img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            z-index: 9999;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal-title { margin-top: 0; margin-bottom: 16px; font-weight: 800; font-size: 1.2rem; }
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding-right: 5px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 16px;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 14px 24px;
+            border-radius: 10px;
+            background: var(--card-bg);
+            border-left: 4px solid #10b981;
+            color: var(--text-bright);
+            font-weight: 600;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+            transform: translateY(150px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10000;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.err { border-left-color: #ef4444; }
+        
+        /* Custom scrollbar for modal */
+        .modal-body::-webkit-scrollbar { width: 6px; }
+        .modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="lock-card" id="lock-view">
+    <i class="fa-solid fa-lock"></i>
+    <h2>Admin Authorization</h2>
+    <p>Please enter the dashboard password to access user accounts.</p>
+    
+    <input type="password" id="gate-pass" class="input-field" placeholder="Dashboard Password">
+    
+    <button class="btn" style="width: 100%; justify-content: center;" onclick="verifyDashboardAccess()">
+        Login to Dashboard
+    </button>
+</div>
+
+<div class="container" id="dashboard-view" style="display: none;">
+    <div class="admin-header">
+        <div class="header-title">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome back. You are authorized to manage site values.</p>
+        </div>
+        <button class="btn btn-secondary" onclick="window.location.href='home.html'">Exit Admin</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span>Users Displayed</span>
+            <h3 id="stat-count">0</h3>
+        </div>
+        <div class="stat-box">
+            <span>Total Coins</span>
+            <h3 id="stat-coins">0</h3>
+        </div>
+        <div class="stat-box">
+            <span>Avg Elo Rating</span>
+            <h3 id="stat-elo">0</h3>
+        </div>
+    </div>
+
+    <div class="panel-card" id="shop-management-panel">
+        <h2 class="panel-title"><i class="fa-solid fa-store"></i> Active Shop Stock Rotation</h2>
+        <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Select which items currently appear in the public Shop for users to buy.</p>
+        
+        <div class="shop-items-grid" id="shop-items-container">
+            <span style="color: var(--text-faded); font-size: 0.9rem;">Loading catalog...</span>
+        </div>
+        
+        <button class="btn" onclick="saveShopStock()" style="background: #a855f7; color: white;">
+            <i class="fa-solid fa-rotate"></i> Sync Storefront Stock
+        </button>
+    </div>
+
+    <div class="panel-card">
+        <div class="search-row">
+            <input type="text" id="search-input" class="input-field" style="margin-bottom:0;" placeholder="Search by username (case-insensitive)...">
+            <button class="btn" onclick="searchForUser()">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+        </div>
+        
+        <div class="filter-options-row">
+            <div>
+                <label style="color: var(--text-faded); font-size: 0.85rem; margin-right: 8px;">Sort Order:</label>
+                <select id="sort-filter" class="filter-select" onchange="processAndDisplayPageData()">
+                    <option value="username">Username (A-Z)</option>
+                    <option value="coins">Highest Balance</option>
+                    <option value="elo">Highest Elo</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="scare-type" class="filter-select" onchange="toggleCustomUrlInput()">
+                </select>
+                <input type="text" id="custom-scare-url" class="input-field" style="margin-bottom:0; display:none; width: 150px; padding: 8px 12px; font-size: 0.85rem;" placeholder="Image URL">
+                <button class="btn btn-danger" onclick="transmitJumpscareSignal('all')">
+                    <i class="fa-solid fa-ghost"></i> Jumpscare Everyone
+                </button>
+                <button class="btn btn-secondary" onclick="loadAllUsers()">
+                    <i class="fa-solid fa-users"></i> View All Users
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Coins Balance</th>
+                    <th>Elo Rating</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="user-tbody">
+                <tr>
+                    <td colspan="5" style="text-align:center; color: var(--text-faded)">
+                        Search a username or load all users to start.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-row">
+        <div class="pagination-info" id="page-indicator">Page 1 of 1</div>
+        <div class="pagination-buttons">
+            <button class="btn btn-secondary" id="btn-prev" onclick="changeActivePage(-1)">Previous</button>
+            <button class="btn btn-secondary" id="btn-next" onclick="changeActivePage(1)">Next</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay"></div>
+<div class="modal" id="inventory-modal">
+    <h3 class="modal-title" id="inv-modal-title">Manage Inventory</h3>
+    <p style="font-size: 0.8rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Check items to add them to this user's unlocked avatars.</p>
+    
+    <div class="modal-body" id="inv-modal-items">
+        </div>
+    
+    <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeInventoryModal()">Cancel</button>
+        <button class="btn btn-save" onclick="saveUserInventory()" style="font-size: 0.9rem; padding: 12px 20px;">Save Inventory</button>
+    </div>
+</div>
+
+<div id="toast">Data saved successfully.</div>
+
+<script>
+    const JUMPSCARE_PRESETS = {
+        "shittyclown": { "name": "that one shitty clown", "url": "../data/images/jumpscares/shittyclown.png" },
+        "cityboii": { "name": "city boii", "url": "../data/images/jumpscares/cityboii.png" },
+        "fart": { "name": "fart", "url": "../data/images/jumpscares/fart.png" }
+    };
+
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    // Globals
+    let loadedUsersList = [];
+    let currentPage = 1;
+    const USERS_PER_PAGE = 10;
+    
+    // Shop & Inventory Globals
+    let masterCatalog = [];
+    let activeStockIds = [];
+    let editingUserId = null;
+    
+    const communicationChannel = _supabase.channel('app-jumpscare-stream');
+    communicationChannel.subscribe();
+
+    window.onload = function() {
+        buildPresetsMenu();
+        if (sessionStorage.getItem('admin_session_active') === 'true') {
+            displayDashboardView();
+        }
+    };
+
+    function buildPresetsMenu() {
+        const selectMenu = document.getElementById('scare-type');
+        selectMenu.innerHTML = '';
+        
+        for (const key in JUMPSCARE_PRESETS) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = JUMPSCARE_PRESETS[key].name;
+            selectMenu.appendChild(option);
+        }
+        
+        const customOption = document.createElement('option');
+        customOption.value = 'custom';
+        customOption.textContent = 'Custom URL';
+        selectMenu.appendChild(customOption);
+    }
+
+    async function verifyDashboardAccess() {
+        const inputPassword = document.getElementById('gate-pass').value;
+
+        if (inputPassword !== 'admin53') {
+            showToastMessage("Incorrect password.", true);
+            return;
+        }
+
+        const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+        if (sessionErr || !session) {
+            showToastMessage("No active user login found. Please sign in first.", true);
+            return;
+        }
+
+        const { data: profile, error: profileErr } = await _supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (profileErr || !profile || !profile.is_admin) {
+            showToastMessage("Access denied. Your account is not marked as an administrator.", true);
+            return;
+        }
+
+        sessionStorage.setItem('admin_session_active', 'true');
+        displayDashboardView();
+    }
+
+    function displayDashboardView() {
+        document.getElementById('lock-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        
+        // Initialize Shop Data
+        loadShopManagementData();
+        
+        showToastMessage("Dashboard session opened.");
+    }
+
+    // ==========================================
+    // NEW: Shop Management Logic
+    // ==========================================
+    async function loadShopManagementData() {
+        // Fetch full catalog
+        const { data: items } = await _supabase.from('items').select('*').order('price', { ascending: true });
+        masterCatalog = items || [];
+        
+        // Fetch current active stock
+        const { data: stock } = await _supabase.from('instock').select('item_id');
+        activeStockIds = (stock || []).map(row => row.item_id);
+        
+        renderShopManagementPanel();
+    }
+
+    function renderShopManagementPanel() {
+        const container = document.getElementById('shop-items-container');
+        container.innerHTML = '';
+        
+        if (masterCatalog.length === 0) {
+            container.innerHTML = '<span style="color: var(--text-faded);">No items found in database.</span>';
+            return;
+        }
+
+        masterCatalog.forEach(item => {
+            const isStocked = activeStockIds.includes(item.id);
+            const fallbackSrc = "../../data/images/default.png";
+            
+            container.innerHTML += `
+                <label class="item-checkbox-label">
+                    <input type="checkbox" class="shop-stock-checkbox" value="${item.id}" ${isStocked ? 'checked' : ''}>
+                    <img src="${item.src}" onerror="this.src='${fallbackSrc}'" alt="${item.name}">
+                    <span>${item.name} <span style="color: var(--text-faded); font-size: 0.75rem;">(${item.price}c)</span></span>
+                </label>
+            `;
+        });
+    }
+
+    async function saveShopStock() {
+        const checkboxes = document.querySelectorAll('.shop-stock-checkbox:checked');
+        const newStockIds = Array.from(checkboxes).map(cb => cb.value);
+
+        // Delete all current stock using a standard "is not null" equivalent check
+        await _supabase.from('instock').delete().not('item_id', 'is', null);
+
+        // Insert new stock list
+        const insertData = newStockIds.map(id => ({ item_id: id }));
+        if (insertData.length > 0) {
+            const { error } = await _supabase.from('instock').insert(insertData);
+            if (error) {
+                console.error(error);
+                showToastMessage("Failed to update shop stock.", true);
+                return;
+            }
+        }
+        
+        activeStockIds = newStockIds;
+        showToastMessage("Storefront rotation updated successfully!");
+    }
+
+    // ==========================================
+    // NEW: User Inventory Modal Logic
+    // ==========================================
+    function openInventoryModal(userId, username) {
+        editingUserId = userId;
+        const user = loadedUsersList.find(u => u.id === userId);
+        const userInv = user.unlocked_avatars || ["default"]; // Failsafe to default
+
+        document.getElementById('inv-modal-title').innerText = `Manage Inventory: ${username}`;
+        const container = document.getElementById('inv-modal-items');
+        container.innerHTML = '';
+
+        masterCatalog.forEach(item => {
+            const ownsItem = userInv.includes(item.id);
+            const isDefault = item.id === 'default';
+            const fallbackSrc = "../../data/images/default.png";
+            
+            // Lock 'default' from being removed if your system relies on it
+            const disabledAttr = isDefault ? 'disabled checked' : (ownsItem ? 'checked' : '');
+            
+            container.innerHTML += `
+                <label class="item-checkbox-label" style="justify-content: flex-start; opacity: ${isDefault ? '0.6' : '1'}">
+                    <input type="checkbox" class="user-inv-checkbox" value="${item.id}" ${disabledAttr}>
+                    <img src="${item.src}" onerror="this.src='${fallbackSrc}'" alt="${item.name}">
+                    <div style="display:flex; flex-direction: column;">
+                        <span>${item.name} ${isDefault ? '<span style="font-size: 0.65rem; color: var(--accent);">(Base)</span>' : ''}</span>
+                        <span style="font-size: 0.7rem; color: var(--text-faded);">${item.category || 'Standard'}</span>
+                    </div>
+                </label>
+            `;
+        });
+
+        document.getElementById('inventory-modal').style.display = 'block';
+        document.getElementById('modal-overlay').style.display = 'block';
+    }
+
+    function closeInventoryModal() {
+        document.getElementById('inventory-modal').style.display = 'none';
+        document.getElementById('modal-overlay').style.display = 'none';
+        editingUserId = null;
+    }
+
+    async function saveUserInventory() {
+        if (!editingUserId) return;
+        
+        // Grab all checked items + always ensure 'default' is included
+        const checkboxes = document.querySelectorAll('.user-inv-checkbox:checked');
+        let newInv = Array.from(checkboxes).map(cb => cb.value);
+        if (!newInv.includes('default')) newInv.push('default');
+
+        const { error } = await _supabase
+            .from('profiles')
+            .update({ unlocked_avatars: newInv })
+            .eq('id', editingUserId);
+
+        if (error) {
+            console.error(error);
+            showToastMessage("Failed to update user inventory.", true);
+        } else {
+            showToastMessage("User inventory updated!");
+            const user = loadedUsersList.find(u => u.id === editingUserId);
+            if (user) user.unlocked_avatars = newInv;
+            closeInventoryModal();
+        }
+    }
+
+
+    // ==========================================
+    // Existing Dashboard & User Logic
+    // ==========================================
+    async function searchForUser() {
+        const usernameInput = document.getElementById('search-input').value.trim();
+        if (!usernameInput) {
+            showToastMessage("Please type a username to search.", true);
+            return;
+        }
+
+        setTableLoadingState("Searching database...");
+
+        // Ensure we fetch unlocked_avatars now
+        const { data: results, error } = await _supabase
+            .from('profiles')
+            .select('id, username, coins, elo, unlocked_avatars')
+            .ilike('username', `%${usernameInput}%`); // Added wildcards for better search matching
+
+        if (error) {
+            setTableLoadingState("Error searching database.");
+            return;
+        }
+
+        loadedUsersList = results;
+        currentPage = 1;
+        processAndDisplayPageData();
+    }
+
+    async function loadAllUsers() {
+        setTableLoadingState("Loading all user data...");
+
+        const { data: results, error } = await _supabase
+            .from('profiles')
+            .select('id, username, coins, elo, unlocked_avatars');
+
+        if (error) {
+            setTableLoadingState("Error loading tables from server.");
+            return;
+        }
+
+        loadedUsersList = results;
+        currentPage = 1;
+        processAndDisplayPageData();
+    }
+
+    function processAndDisplayPageData() {
+        const tbody = document.getElementById('user-tbody');
+        if (loadedUsersList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-faded)">No user entries found matching criteria.</td></tr>`;
+            updateDashboardMetrics(0, 0, 0);
+            updatePaginationControls(1, 1);
+            return;
+        }
+
+        let totalCoins = 0;
+        let totalEloSum = 0;
+        loadedUsersList.forEach(u => {
+            totalCoins += (u.coins || 0);
+            totalEloSum += (u.elo || 0);
+        });
+        const averageElo = Math.round(totalEloSum / loadedUsersList.length);
+        updateDashboardMetrics(loadedUsersList.length, totalCoins, averageElo);
+
+        const selectedSort = document.getElementById('sort-filter').value;
+        let listToSort = [...loadedUsersList];
+
+        if (selectedSort === 'username') {
+            listToSort.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+        } else if (selectedSort === 'coins') {
+            listToSort.sort((a, b) => (b.coins || 0) - (a.coins || 0));
+        } else if (selectedSort === 'elo') {
+            listToSort.sort((a, b) => (b.elo || 0) - (a.elo || 0));
+        }
+
+        const totalPages = Math.ceil(listToSort.length / USERS_PER_PAGE);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+        const endIndex = startIndex + USERS_PER_PAGE;
+        const activePageItems = listToSort.slice(startIndex, endIndex);
+
+        updatePaginationControls(currentPage, totalPages);
+
+        tbody.innerHTML = '';
+        activePageItems.forEach(user => {
+            const tr = document.createElement('tr');
+            const cleanNameEscaped = (user.username || 'Unregistered').replace(/'/g, "\\'");
+            
+            tr.innerHTML = `
+                <td style="font-size: 0.8rem; color: var(--text-faded); font-family: monospace;">${user.id.substring(0, 8)}...</td>
+                <td><strong>${user.username || 'Unregistered'}</strong></td>
+                <td><input type="number" class="edit-input" id="coins-${user.id}" value="${user.coins || 0}"></td>
+                <td><input type="number" class="edit-input" id="elo-${user.id}" value="${user.elo || 0}"></td>
+                <td>
+                    <div class="action-cell-cluster">
+                        <button class="btn btn-save" onclick="saveUserRowEdits('${user.id}')">Save</button>
+                        <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 5px 10px;" onclick="openInventoryModal('${user.id}', '${cleanNameEscaped}')"><i class="fa-solid fa-box-open"></i> Inv</button>
+                        <button class="btn btn-mini-scare" onclick="transmitJumpscareSignal('${cleanNameEscaped}')"><i class="fa-solid fa-ghost"></i> Scare</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function saveUserRowEdits(userId) {
+        const newCoinValue = parseInt(document.getElementById(`coins-${userId}`).value) || 0;
+        const newEloValue = parseInt(document.getElementById(`elo-${userId}`).value) || 0;
+
+        const { error } = await _supabase
+            .from('profiles')
+            .update({ coins: newCoinValue, elo: newEloValue })
+            .eq('id', userId);
+
+        if (error) {
+            showToastMessage("Error: Saved changes rejected by database permissions.", true);
+        } else {
+            const localIndex = loadedUsersList.findIndex(u => u.id === userId);
+            if (localIndex !== -1) {
+                loadedUsersList[localIndex].coins = newCoinValue;
+                loadedUsersList[localIndex].elo = newEloValue;
+            }
+            showToastMessage("User record saved successfully.");
+            processAndDisplayPageData();
+        }
+    }
+
+    function toggleCustomUrlInput() {
+        const typeSelect = document.getElementById('scare-type').value;
+        const customInput = document.getElementById('custom-scare-url');
+        if (typeSelect === 'custom') {
+            customInput.style.display = 'block';
+        } else {
+            customInput.style.display = 'none';
+        }
+    }
+
+    function transmitJumpscareSignal(targetUsername) {
+        const typeSelect = document.getElementById('scare-type').value;
+        let selectedVisual = '';
+        
+        if (typeSelect === 'custom') {
+            selectedVisual = document.getElementById('custom-scare-url').value.trim();
+            if (!selectedVisual) {
+                showToastMessage("Please enter a custom image URL.", true);
+                return;
+            }
+        } else {
+            selectedVisual = JUMPSCARE_PRESETS[typeSelect].url;
+        }
+
+        communicationChannel.send({
+            type: 'broadcast',
+            event: 'execute-scare',
+            payload: { 
+                targetUsername: targetUsername,
+                visualSource: selectedVisual
+            }
+        });
+
+        if (targetUsername === 'all') {
+            showToastMessage("Global jumpscare command sent to everyone online.");
+        } else {
+            showToastMessage(`Jumpscare command sent to target user: "${targetUsername}".`);
+        }
+    }
+
+    function changeActivePage(step) {
+        currentPage += step;
+        processAndDisplayPageData();
+    }
+
+    function updateDashboardMetrics(count, coins, elo) {
+        document.getElementById('stat-count').innerText = count;
+        document.getElementById('stat-coins').innerText = coins.toLocaleString();
+        document.getElementById('stat-elo').innerText = elo || 0;
+    }
+
+    function updatePaginationControls(current, total) {
+        document.getElementById('page-indicator').innerText = `Page ${current} of ${total}`;
+        document.getElementById('btn-prev').disabled = (current === 1);
+        document.getElementById('btn-next').disabled = (current === total || total === 0);
+    }
+
+    function setTableLoadingState(message) {
+        document.getElementById('user-tbody').innerHTML = `
+            <tr><td colspan="5" style="text-align:center; color: var(--text-faded)"><i class="fa-solid fa-spinner fa-spin"></i> ${message}</td></tr>
+        `;
+    }
+
+    function showToastMessage(text, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = text;
+        if (isError) {
+            toast.classList.add('err');
+        } else {
+            toast.classList.remove('err');
+        }
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+</script>
+</body>
+</html>
