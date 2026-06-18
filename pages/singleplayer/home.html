@@ -401,11 +401,10 @@
         let saved = false;
         let earnedCoins = 0; 
 
-\
         try {
             const { data: { session } } = await _supabase.auth.getSession();
             
-let isBot = false;
+            let isBot = false;
             if (keyPressTimestamps.length > 10) {
                 let intervals = [];
                 for (let i = 1; i < keyPressTimestamps.length; i++) {
@@ -416,7 +415,7 @@ let isBot = false;
                 let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
                 let stdDev = Math.sqrt(variance);
 
-                // fuckin bs
+                // Dynamically apply WPM cap based on singleplayer mode
                 const wpmCap = (activeModeConfig.id === 'single') ? 2000 : 300;
 
                 if (stdDev < 5 || wpm > wpmCap) {
@@ -456,7 +455,6 @@ let isBot = false;
             console.error("Database tracking failed, moving to fallback redirect:", dbError);
         }
 
-        // This redirect is now guaranteed to fire, even if Supabase goes completely offline.
         window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}`;
     }
 
