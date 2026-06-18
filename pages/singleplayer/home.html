@@ -390,7 +390,6 @@
     }
 
     async function finish() {
-        // FIX: Prevent double execution checks if called multiple times simultaneously
         if (isFinishing) return;
         isFinishing = true;
 
@@ -402,12 +401,11 @@
         let saved = false;
         let earnedCoins = 0; 
 
-        // FIX: Wrap database requests inside a try...catch block so that network/Supabase errors 
-        // do not block the window location redirect.
+\
         try {
             const { data: { session } } = await _supabase.auth.getSession();
-
-            let isBot = false;
+            
+let isBot = false;
             if (keyPressTimestamps.length > 10) {
                 let intervals = [];
                 for (let i = 1; i < keyPressTimestamps.length; i++) {
@@ -418,7 +416,10 @@
                 let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
                 let stdDev = Math.sqrt(variance);
 
-                if (stdDev < 5 || wpm > 300) {
+                // fuckin bs
+                const wpmCap = (activeModeConfig.id === 'single') ? 2000 : 300;
+
+                if (stdDev < 5 || wpm > wpmCap) {
                     console.warn("Anti-Cheat: Suspicious typing rhythm or speed detected.");
                     isBot = true;
                 }
