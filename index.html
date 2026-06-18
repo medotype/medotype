@@ -11,6 +11,34 @@
         }
     </script>
 
+    <script>
+
+        // theres prob a better way to do this fuck me
+    function syncNav() {
+        const frame = document.getElementById('main-frame');
+        const currentUrl = frame.contentWindow.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-links a');
+
+        const categoryMap = {
+            'home': ['home.html', 'welcome.html', 'singleplayer', 'ranked'],
+            'shop': ['shop'],
+            'leaderboard': ['leaderboard.html'],
+            'settings': ['settings.html'],
+            'admin': ['admin'],
+            'account': ['login.html', 'account.html']
+        };
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            
+            const category = link.getAttribute('data-category'); // See note below
+            if (category && categoryMap[category].some(keyword => currentUrl.includes(keyword))) {
+                link.classList.add('active');
+            }
+        });
+    }
+</script>
+
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -119,30 +147,30 @@
             <input type="text" id="global-search" placeholder="search users..." onkeypress="if(event.key === 'Enter') handleSearch()">
         </div>
         
-        <nav class="nav-links">
-            <a onclick="navigateFrame('pages/home.html', this)" class="active" title="Home">
-                <i class="fa-solid fa-house"></i>
-            </a>
-            <a onclick="navigateFrame('pages/shop', this)" title="Shop">
-                <i class="fa-solid fa-bag-shopping"></i>
-            </a>
-            <a onclick="navigateFrame('pages/leaderboard.html', this)" title="Leaderboard">
-                <i class="fa-solid fa-trophy"></i>
-            </a>
-            <a onclick="navigateFrame('pages/settings.html', this)" title="Settings">
-                <i class="fa-solid fa-gear"></i>
-            </a>
-            <a id="nav-admin" onclick="navigateFrame('pages/admin/index.html', this)" title="Admin" style="display: none;">
-                <i class="fa-solid fa-user-gear"></i>
-            </a>
-            <a onclick="navigateFrame('pages/account.html', this)" title="Account">
-                <i class="fa-solid fa-circle-user"></i>
-            </a>
-        </nav>
+<nav class="nav-links">
+    <a onclick="navigateFrame('pages/home.html', this)" data-category="home" class="active" title="Home">
+        <i class="fa-solid fa-house"></i>
+    </a>
+    <a onclick="navigateFrame('pages/shop', this)" data-category="shop" title="Shop">
+        <i class="fa-solid fa-bag-shopping"></i>
+    </a>
+    <a onclick="navigateFrame('pages/leaderboard.html', this)" data-category="leaderboard" title="Leaderboard">
+        <i class="fa-solid fa-trophy"></i>
+    </a>
+    <a onclick="navigateFrame('pages/settings.html', this)" data-category="settings" title="Settings">
+        <i class="fa-solid fa-gear"></i>
+    </a>
+    <a id="nav-admin" onclick="navigateFrame('pages/admin/index.html', this)" data-category="admin" title="Admin" style="display: none;">
+        <i class="fa-solid fa-user-gear"></i>
+    </a>
+    <a onclick="navigateFrame('pages/account.html', this)" data-category="account" title="Account">
+        <i class="fa-solid fa-circle-user"></i>
+    </a>
+</nav>
     </header>
 
     <main class="content-wrapper">
-        <iframe id="main-frame" src="pages/home.html" title="Loading..."></iframe>
+<iframe id="main-frame" src="pages/home.html" onload="syncNav()" title="Loading..."></iframe>
     </main>
 
     <footer>
