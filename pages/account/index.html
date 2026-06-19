@@ -332,7 +332,7 @@
             const { data: { session }, error } = await _supabase.auth.getSession();
 
             if (!session || error) {
-                window.location.href = 'login.html';
+                window.location.href = '../login.html';
                 return;
             }
 
@@ -465,7 +465,7 @@
 
         async function logout() {
             await _supabase.auth.signOut();
-            window.location.href = 'login.html';
+            window.location.href = '../login.html';
         }
 
         initAccount();
