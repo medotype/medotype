@@ -147,7 +147,7 @@
             background: var(--card-bg);
             padding: 1.8rem 1rem;
             border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
             text-align: center;
             transition: transform 0.2s;
         }
@@ -178,53 +178,70 @@
             margin-top: 5px;
         }
 
-        /* --- added some bs tht i will prob regret --- */
+        /* --- Inventory Viewer Grid --- */
         .inventory-container {
             background: var(--card-bg);
             border-radius: 20px;
             padding: 1.5rem;
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
             margin-bottom: 2rem;
         }
 
         .inventory-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 16px;
             margin-top: 15px;
         }
 
-        .inventory-item {
+        .inventory-card {
             background: rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
             border-radius: 14px;
-            aspect-ratio: 1;
+            padding: 12px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            text-align: center;
             position: relative;
-            padding: 8px;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .inventory-item img {
+        .inventory-card.equipped {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .inventory-avatar-container {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .inventory-avatar-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 50%;
         }
 
-        .inventory-item.equipped {
-            border-color: var(--accent);
-            background: rgba(var(--accent-rgb, 255, 255, 255), 0.05);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        .inventory-item-name {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-bright);
+            margin: 0;
+            letter-spacing: 0.02em;
         }
 
         .equipped-badge {
             position: absolute;
-            bottom: -5px;
-            background: var(--accent);
-            color: var(--bg);
+            bottom: -6px;
+            background: #10b981;
+            color: white;
             font-size: 0.6rem;
             font-weight: 800;
             padding: 2px 6px;
@@ -285,7 +302,7 @@
             <div class="profile-card">
                 <div class="profile-info">
                     <div class="avatar-container">
-                        <img id="profile-img" src="" alt="Avatar" class="avatar-img" onerror="this.src='../data/images/0.png';">
+                        <img id="profile-img" src="" alt="Avatar" class="avatar-img" onerror="this.src='../data/images/default.png';">
                         <i id="profile-fallback" class="fa-solid fa-user" style="font-size: 2rem; color: var(--text-faded);"></i>
                     </div>
                     <div class="profile-details">
@@ -331,7 +348,7 @@
             </div>
 
             <div class="inventory-container">
-                <span class="stat-label" style="margin-left: 5px;">Avatar Inventory</span>
+                <span class="stat-label" style="margin-left: 5px;"><i class="fa-solid fa-box-open" style="color: var(--accent); margin-right: 6px;"></i> Avatar Inventory</span>
                 <div class="inventory-grid" id="inventory-grid"></div>
             </div>
 
@@ -360,7 +377,15 @@
 
         let availableModes = [];
         let targetUserId = null;
-        let activeAvatarId = "0";
+
+        // Fixes image database pathways so they are mapped correctly outside the shop subfolder
+        function fixSrcPath(src) {
+            if (!src) return '../data/images/default.png';
+            if (src.startsWith('../../')) {
+                return src.substring(3); // strips '../../data/images/x.png' down to '../data/images/x.png'
+            }
+            return src;
+        }
 
         async function loadProfileFromURL() {
             const params = new URLSearchParams(window.location.search);
@@ -374,10 +399,10 @@
             }
 
             try {
-                // Fetch user data across profiles schema
+                // Fetch profiles details schema
                 const { data: profile, error: pErr } = await _supabase
                     .from('profiles')
-                    .select('id, username, updated_at, elo, coins, avatar_id, inventory')
+                    .select('id, username, updated_at, elo, coins, avatar_id, unlocked_avatars')
                     .ilike('username', username)
                     .single();
 
@@ -387,7 +412,12 @@
                 }
 
                 targetUserId = profile.id;
-                activeAvatarId = profile.avatar_id || "0";
+                const activeAvatarId = profile.avatar_id || "default";
+                const unlockedAvatars = profile.unlocked_avatars || ["default"];
+
+                // Fetch database item metadata to map explicit dynamic sources
+                const { data: items } = await _supabase.from('items').select('*');
+                const catalog = items || [];
 
                 // Setup Core Details UI
                 msg.style.display = 'none';
@@ -402,14 +432,16 @@
                 // Set Active Avatar Profile Asset
                 const imgEl = document.getElementById('profile-img');
                 const fallbackEl = document.getElementById('profile-fallback');
-                imgEl.src = `../data/images/${activeAvatarId}.png`;
+                
+                const matchedAvatar = catalog.find(item => item.id === activeAvatarId);
+                imgEl.src = matchedAvatar ? fixSrcPath(matchedAvatar.src) : '../data/images/default.png';
                 imgEl.style.display = 'block';
                 fallbackEl.style.display = 'none';
 
-                // Build Inventory
-                buildInventoryView(profile.inventory);
+                // Render visual Inventory grid structure
+                renderInventory(unlockedAvatars, activeAvatarId, catalog);
 
-                // Initialize Game Mode Dynamic Navigation
+                // Initialize Dynamic Game Mode Navigation
                 initModes();
 
             } catch (err) {
@@ -418,44 +450,44 @@
             }
         }
 
-        function buildInventoryView(inventoryData) {
+        function renderInventory(unlockedAvatars, activeAvatarId, catalog) {
             const grid = document.getElementById('inventory-grid');
             grid.innerHTML = '';
 
-            // Handle parsing variety configurations (Array, JSON string, or Empty string fallbacks)
-            let items = [];
-            if (Array.isArray(inventoryData)) {
-                items = inventoryData;
-            } else if (typeof inventoryData === 'string' && inventoryData.trim() !== '') {
-                try { items = JSON.parse(inventoryData); } catch(e) { items = inventoryData.split(','); }
-            }
+            let itemsList = Array.isArray(unlockedAvatars) ? unlockedAvatars : ["default"];
+            if (itemsList.length === 0) itemsList = ["default"];
 
-            // Ensure equipped item is strictly always visual inside the inventory grid
-            if (!items.map(String).includes(String(activeAvatarId))) {
-                items.unshift(activeAvatarId);
-            }
+            itemsList.forEach(avatarId => {
+                const itemMetadata = catalog.find(i => i.id === avatarId);
+                const isEquipped = avatarId === activeAvatarId;
 
-            items.forEach(itemId => {
-                const cleanId = String(itemId).trim();
-                if(!cleanId) return;
+                const card = document.createElement('div');
+                card.className = isEquipped ? 'inventory-card equipped' : 'inventory-card';
 
-                const itemCard = document.createElement('div');
-                itemCard.className = cleanId === String(activeAvatarId) ? 'inventory-item equipped' : 'inventory-item';
-                
+                const avatarContainer = document.createElement('div');
+                avatarContainer.className = 'inventory-avatar-container';
+
                 const img = document.createElement('img');
-                img.src = `../data/images/${cleanId}.png`;
-                img.onerror = () => { img.src = '../data/images/0.png'; };
-                
-                itemCard.appendChild(img);
+                img.className = 'inventory-avatar-img';
+                img.src = itemMetadata ? fixSrcPath(itemMetadata.src) : '../data/images/default.png';
+                img.onerror = () => { img.src = '../data/images/default.png'; };
 
-                if (cleanId === String(activeAvatarId)) {
+                avatarContainer.appendChild(img);
+                card.appendChild(avatarContainer);
+
+                const nameEl = document.createElement('p');
+                nameEl.className = 'inventory-item-name';
+                nameEl.innerText = itemMetadata ? itemMetadata.name : 'Default';
+                card.appendChild(nameEl);
+
+                if (isEquipped) {
                     const badge = document.createElement('span');
                     badge.className = 'equipped-badge';
                     badge.innerText = 'Equipped';
-                    itemCard.appendChild(badge);
+                    card.appendChild(badge);
                 }
 
-                grid.appendChild(itemCard);
+                grid.appendChild(card);
             });
         }
 
@@ -498,7 +530,7 @@
 
             if (!targetUserId) return;
 
-            // limit to last 10 rounds cus fuck u
+            // Fetch specific scores table data strictly limited to the last 10 records
             const { data, error } = await _supabase
                 .from('scores')
                 .select('*')
