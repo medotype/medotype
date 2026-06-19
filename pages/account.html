@@ -38,7 +38,6 @@
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.03);
             display: flex;
-            flex-items: center;
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -67,7 +66,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: none; /* Hidden until loaded */
+            display: none; /* Hidden until loaded successfully */
         }
 
         .profile-details h2 { margin: 0 0 0.2rem 0; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; }
@@ -84,6 +83,9 @@
             transition: all 0.2s;
             background: transparent;
             color: var(--error);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-logout:hover { 
@@ -177,7 +179,6 @@
             font-size: 1.8rem;
         }
 
-        /* Mode Selector */
         .mode-nav {
             display: inline-flex;
             background: var(--card-bg);
@@ -243,7 +244,6 @@
             margin-top: 5px;
         }
 
-        /* History Table */
         .history-container {
             background: var(--card-bg);
             border-radius: 20px;
@@ -279,7 +279,6 @@
             font-style: italic;
         }
 
-        /* Responsive */
         @media (max-width: 650px) {
             .profile-card { flex-direction: column; gap: 1.5rem; text-align: center; }
             .profile-info { flex-direction: column; text-align: center; }
@@ -294,8 +293,8 @@
         <div class="profile-card">
             <div class="profile-info">
                 <div class="avatar-container">
-                    <img id="profile-img" src="" alt="Avatar" class="avatar-img" onerror="this.src='../data/images/0.png';">
-                    <i id="profile-fallback" class="fa-solid fa-user" style="font-size: 2rem; color: var(--text-faded);"></i>
+                    <img id="profile-img" src="" alt="Avatar" class="avatar-img" onerror="this.style.display='none'; document.getElementById('profile-fallback').style.display='block';">
+                    <i id="profile-fallback" class="fa-solid fa-user" style="font-size: 2rem; color: var(--text-faded); display: block;"></i>
                 </div>
                 <div class="profile-details">
                     <h2 id="display-username">Typist</h2>
@@ -395,7 +394,7 @@
             const { data: { session }, error } = await _supabase.auth.getSession();
 
             if (!session || error) {
-                window.location.href = 'login.html'; // Redirect if not logged in
+                window.location.href = 'login.html';
                 return;
             }
 
@@ -408,7 +407,6 @@
             document.getElementById('username-input').value = username;
 
             try {
-                // Modified to explicitly pull elo along with coins and avatar_id
                 const { data: profile, error: pError } = await _supabase
                     .from('profiles')
                     .select('coins, avatar_id, elo') 
@@ -419,23 +417,27 @@
                     document.getElementById('user-elo').innerText = profile.coins ?? 0;
                     document.getElementById('user-ranked-elo').innerText = profile.elo ?? 0;
                     
-                    const avatarId = profile.avatar_id || "0";
+                    const avatarId = profile.avatar_id;
                     const imgEl = document.getElementById('profile-img');
                     const fallbackEl = document.getElementById('profile-fallback');
                     
-                    imgEl.src = `../data/images/${avatarId}.png`; 
-                    imgEl.style.display = 'block';
-                    fallbackEl.style.display = 'none';
+                    // FIXED: Checks if avatar exists and isn't "0". If it is missing or "0", goes straight to built-in FontAwesome icon safely.
+                    if (avatarId && avatarId !== "0") {
+                        imgEl.src = `../data/images/${avatarId}.png`; 
+                        imgEl.style.display = 'block';
+                        fallbackEl.style.display = 'none';
+                    } else {
+                        imgEl.style.display = 'none';
+                        fallbackEl.style.display = 'block';
+                    }
                 }
             } catch (pErr) {
                 console.error("Error pulling profile data:", pErr);
             }
 
-            // Once profile is loaded, init the modes for analytics
             initModes();
         }
 
-        // Feature: Dynamically change username across Auth Metadata and Profiles row 
         async function changeUsername() {
             const newUsername = document.getElementById('username-input').value.trim();
             const msgEl = document.getElementById('username-msg');
@@ -449,13 +451,11 @@
             }
 
             try {
-                // 1. Update metadata in Auth
                 const { error: authErr } = await _supabase.auth.updateUser({
                     data: { username: newUsername }
                 });
                 if (authErr) throw authErr;
 
-                // 2. Update column value in profiles table
                 const { error: dbErr } = await _supabase
                     .from('profiles')
                     .update({ username: newUsername })
@@ -472,7 +472,6 @@
             }
         }
 
-        // Feature: Directly logs user update to enforce a password reset
         async function resetPassword() {
             const newPassword = document.getElementById('password-input').value;
             const msgEl = document.getElementById('password-msg');
