@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Account Settings</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../data/css/root.css">
+    <script src="../data/js/theme.js"></script>
+    <style>
+        body {
+            background-color: var(--bg);
+            color: var(--text-bright);
+            font-family: var(--font);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-row h1 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+        }
+
+        .btn-secondary {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .settings-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .settings-label {
+            color: var(--text-faded);
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .settings-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--text-bright);
+            font-family: var(--font);
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-settings {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-bright);
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-settings:hover {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .status-msg {
+            font-size: 0.85rem;
+            min-height: 1.2rem;
+        }
+        .status-success { color: #10B981; }
+        .status-error { color: var(--error); }
+        .admin-tag { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
+
+        @media(max-width: 500px) {
+            .settings-row { flex-direction: column; }
+            .btn-settings { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="header-row">
+            <h1>Account Options</h1>
+            <button class="btn-secondary" onclick="window.location.href='settings.html'">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <div class="settings-card">
+            
+            <div class="settings-group">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="settings-label">Change Username</span>
+                    <span id="admin-badge" class="admin-tag" style="display: none;"><i class="fa-solid fa-shield-halved"></i> Admin Mode (Bypass Active)</span>
+                </div>
+                <div class="settings-row">
+                    <input type="text" id="username-input" class="settings-input" placeholder="New username">
+                    <button class="btn-settings" onclick="changeUsername()">Update</button>
+                </div>
+                <div id="username-msg" class="status-msg"></div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.03); margin: 0;">
+
+            <div class="settings-group">
+                <span class="settings-label">Reset Password</span>
+                <div class="settings-row">
+                    <input type="password" id="password-input" class="settings-input" placeholder="Enter new password">
+                    <button class="btn-settings" onclick="resetPassword()">Reset</button>
+                </div>
+                <div id="password-msg" class="status-msg"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        let userId = null;
+        let profileData = null; 
+
+        async function initSettings() {
+            const { data: { session }, error } = await _supabase.auth.getSession();
+
+            if (!session || error) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            userId = session.user.id;
+            const user = session.user;
+            const currentUsername = user.user_metadata.username || "Typist";
+            document.getElementById('username-input').value = currentUsername;
+
+            try {
+                // Fetch permissions and the explicit cooldown log column
+                const { data, error: pError } = await _supabase
+                    .from('profiles')
+                    .select('username, is_admin, last_username_change')
+                    .eq('id', userId)
+                    .single();
+
+                if (data && !pError) {
+                    profileData = data;
+                    if(profileData.is_admin) {
+                        document.getElementById('admin-badge').style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading account profile context:", err);
+            }
+        }
+
+        async function changeUsername() {
+            const newUsername = document.getElementById('username-input').value.trim();
+            const msgEl = document.getElementById('username-msg');
+            msgEl.className = 'status-msg';
+            msgEl.innerText = '';
+
+            if (!newUsername) {
+                msgEl.innerText = 'Username cannot be empty.';
+                msgEl.classList.add('status-error');
+                return;
+            }
+
+            // --- 7-Day Cooldown Validation Loop ---
+            if (profileData && !profileData.is_admin && profileData.last_username_change) {
+                const lastChange = new Date(profileData.last_username_change);
+                const now = new Date();
+                const cooldownPeriod = 7 * 24 * 60 * 60 * 1000; // 7 days inside milliseconds
+                const elapsed = now - lastChange;
+
+                if (elapsed < cooldownPeriod) {
+                    const remainingTime = cooldownPeriod - elapsed;
+                    const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    
+                    let timeFeedback = "";
+                    if (days > 0) {
+                        timeFeedback = `${days} day${days > 1 ? 's' : ''} and ${hours} hour${hours !== 1 ? 's' : ''}`;
+                    } else {
+                        timeFeedback = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                    }
+
+                    msgEl.innerText = `Username updates have a 7-day cooldown. Try again in ${timeFeedback}.`;
+                    msgEl.classList.add('status-error');
+                    return;
+                }
+            }
+
+            try {
+                // 1. Fire update request to Auth Engine metadata
+                const { error: authErr } = await _supabase.auth.updateUser({
+                    data: { username: newUsername }
+                });
+                if (authErr) throw authErr;
+
+                // 2. Map timestamp & string configuration to the dynamic table database profile row
+                const currentTimestamp = new Date().toISOString();
+                const { error: dbErr } = await _supabase
+                    .from('profiles')
+                    .update({ 
+                        username: newUsername,
+                        last_username_change: currentTimestamp
+                    })
+                    .eq('id', userId);
+                if (dbErr) throw dbErr;
+
+                // Update runtime context locally to prevent bypassing via immediate multi-clicks
+                if(profileData) {
+                    profileData.last_username_change = currentTimestamp;
+                    profileData.username = newUsername;
+                }
+
+                msgEl.innerText = 'Username updated successfully!';
+                msgEl.classList.add('status-success');
+            } catch (err) {
+                console.error(err);
+                msgEl.innerText = err.message || 'Error executing username migration processing pipeline.';
+                msgEl.classList.add('status-error');
+            }
+        }
+
+        async function resetPassword() {
+            const newPassword = document.getElementById('password-input').value;
+            const msgEl = document.getElementById('password-msg');
+            msgEl.className = 'status-msg';
+            msgEl.innerText = '';
+
+            if (!newPassword || newPassword.length < 6) {
+                msgEl.innerText = 'Password must be at least 6 characters long.';
+                msgEl.classList.add('status-error');
+                return;
+            }
+
+            try {
+                const { error } = await _supabase.auth.updateUser({
+                    password: newPassword
+                });
+                if (error) throw error;
+
+                msgEl.innerText = 'Password updated successfully!';
+                msgEl.classList.add('status-success');
+                document.getElementById('password-input').value = '';
+            } catch (err) {
+                console.error(err);
+                msgEl.innerText = err.message || 'Error occurred when handling remote account encryption sequence update.';
+                msgEl.classList.add('status-error');
+            }
+        }
+
+        initSettings();
+    </script>
+</body>
+</html>
