@@ -1,3 +1,26 @@
+[package]
+name = "tuffzinc/medotype"
+version = "0.1.0"
+description = "Simple and minimal typing game"
+
+[[module]]
+name = "server"
+source = "wasmer/static-web-server"
+
+[[volumes]]
+name = "public"
+path = "."
+
+[[apps]]
+name = "medotype"
+module = "server"
+
+
+[[deploy]]
+name = "medotype"
+app = "medotype"
+
+
 [[wasmer.shims.static-web-server.headers]]
 glob = "**/*.{html,css,js,json,jsonc}"
 headers = { "Cache-Control" = "no-cache, no-store, must-revalidate", "Pragma" = "no-cache", "Expires" = "0" }
