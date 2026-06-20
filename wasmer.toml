@@ -1,0 +1,3 @@
+[[wasmer.shims.static-web-server.headers]]
+glob = "**/*.{html,css,js,json,jsonc}"
+headers = { "Cache-Control" = "no-cache, must-revalidate" }
