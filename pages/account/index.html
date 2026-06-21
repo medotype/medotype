@@ -417,13 +417,12 @@
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
         let availableModes = [];
-        let userId = null;
+        let targetUserId = null; // Uses tracking definition layout from loadprofile
 
-        // Fixes image database pathways so they are mapped correctly outside the shop subfolder
         function fixSrcPath(src) {
             if (!src) return '../data/images/default.png';
             if (src.startsWith('../../')) {
-                return src.substring(3); // strips '../../data/images/x.png' down to '../data/images/x.png'
+                return src.substring(3);
             }
             return src;
         }
@@ -431,13 +430,11 @@
         async function initAccount() {
             const { data: { session }, error } = await _supabase.auth.getSession();
 
-            // Explicitly redirect to ../login.html as requested
             if (!session || error) {
                 window.location.href = '../login.html';
                 return;
             }
 
-            userId = session.user.id;
             const user = session.user;
             const username = user.user_metadata.username || "Typist";
 
@@ -445,46 +442,51 @@
             document.getElementById('display-email').innerText = user.email;
 
             try {
-                // Fetch complete profile metadata like loadprofile.html
+                // Fetch profiles details schema exactly matching loadprofile selection rules
                 const { data: profile, error: pError } = await _supabase
                     .from('profiles')
-                    .select('coins, avatar_id, elo, unlocked_avatars') 
-                    .eq('id', userId)
+                    .select('id, username, updated_at, elo, coins, avatar_id, unlocked_avatars') 
+                    .eq('id', user.id)
                     .single();
                 
-                // Fetch database item metadata to map explicit dynamic sources
+                if (pError || !profile) {
+                    console.error("Profile matching failed:", pError);
+                    return;
+                }
+
+                // Explicit tracking configuration assignment
+                targetUserId = profile.id;
+
                 const { data: items } = await _supabase.from('items').select('*');
                 const catalog = items || [];
 
-                if (profile && !pError) {
-                    document.getElementById('user-coins').innerText = profile.coins ?? 0;
-                    document.getElementById('user-ranked-elo').innerText = profile.elo ?? 0;
-                    
-                    const activeAvatarId = profile.avatar_id || "default";
-                    const unlockedAvatars = profile.unlocked_avatars || ["default"];
-                    const imgEl = document.getElementById('profile-img');
-                    const fallbackEl = document.getElementById('profile-fallback');
-                    
-                    // Use item catalog explicitly to resolve actual file path
-                    const matchedAvatar = catalog.find(item => item.id === activeAvatarId);
-                    
-                    if (matchedAvatar && matchedAvatar.src) {
-                        imgEl.src = fixSrcPath(matchedAvatar.src);
-                        imgEl.style.display = 'block';
-                        fallbackEl.style.display = 'none';
-                    } else {
-                        imgEl.style.display = 'none';
-                        fallbackEl.style.display = 'block';
-                    }
-
-                    // Render visual Inventory grid structure
-                    renderInventory(unlockedAvatars, activeAvatarId, catalog);
+                document.getElementById('user-coins').innerText = profile.coins ?? 0;
+                document.getElementById('user-ranked-elo').innerText = profile.elo ?? 0;
+                
+                const activeAvatarId = profile.avatar_id || "default";
+                const unlockedAvatars = profile.unlocked_avatars || ["default"];
+                const imgEl = document.getElementById('profile-img');
+                const fallbackEl = document.getElementById('profile-fallback');
+                
+                const matchedAvatar = catalog.find(item => item.id === activeAvatarId);
+                
+                if (matchedAvatar && matchedAvatar.src) {
+                    imgEl.src = fixSrcPath(matchedAvatar.src);
+                    imgEl.style.display = 'block';
+                    fallbackEl.style.display = 'none';
+                } else {
+                    imgEl.style.display = 'none';
+                    fallbackEl.style.display = 'block';
                 }
+
+                renderInventory(unlockedAvatars, activeAvatarId, catalog);
+
+                // Initialize Game Mode Navigation inside the resolution lifecycle block
+                initModes();
+
             } catch (pErr) {
                 console.error("Error pulling profile data:", pErr);
             }
-
-            initModes();
         }
 
         function renderInventory(unlockedAvatars, activeAvatarId, catalog) {
@@ -565,12 +567,13 @@
                 btnElement.classList.add('active');
             }
 
-            if (!userId) return;
+            if (!targetUserId) return;
 
+            // Fetch specific scores table data strictly limited to the last 10 records
             const { data, error } = await _supabase
                 .from('scores')
                 .select('*')
-                .eq('user_id', userId)
+                .eq('user_id', targetUserId)
                 .eq('mode', modeId)
                 .order('created_at', { ascending: false })
                 .limit(10); 
