@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeDoType | Account</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/data/css/root.css">
     <script src="/data/js/theme.js"></script>
@@ -178,7 +178,7 @@
 
         .stat-card {
             background: var(--card-bg);
-            padding: 2rem;
+            padding: 1.8rem 1rem;
             border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.03);
             text-align: center;
@@ -200,13 +200,13 @@
         }
 
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 800;
             color: var(--accent);
         }
 
         .stat-sub {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-faded);
             margin-top: 5px;
         }
@@ -370,12 +370,41 @@
                         <div class="stat-value" id="user-ranked-elo">--</div>
                         <div class="stat-sub">Competitive Rating</div>
                     </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Best WPM</span>
+                        <div class="stat-value" id="best-wpm">-</div>
+                        <div class="stat-sub">Highest Record</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Avg. WPM</span>
+                        <div class="stat-value" id="avg-wpm">-</div>
+                        <div class="stat-sub">Last 10 tests</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Avg. Accuracy</span>
+                        <div class="stat-value" id="avg-acc">-</div>
+                        <div class="stat-sub">Last 10 tests</div>
+                    </div>
                 </div>
 
                 <div class="inventory-container">
                     <span class="stat-label" style="margin-left: 5px;"><i class="fa-solid fa-box-open" style="color: var(--accent); margin-right: 6px;"></i> Avatar Inventory</span>
                     <div class="inventory-grid" id="inventory-grid"></div>
                 </div>
+
+                <div class="history-container">
+                    <span class="stat-label" style="margin-left: 12px; margin-bottom: 15px;">Recent History (Max 10)</span>
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>WPM</th>
+                                <th>Accuracy</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                    <div id="no-data-msg" class="no-data" style="display: none;">No tests completed in this mode yet.</div>
                 </div>
             </div>
         </div>
@@ -581,7 +610,7 @@
             document.getElementById('avg-acc').innerText = avgAcc + '%';
 
             data.forEach(score => {
-                const date = new Date(score.created_at).toLocaleDateString();
+                const date = new Date(score.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                 const row = `
                     <tr>
                         <td style="color: var(--accent); font-weight: 800;">${score.wpm}</td>
