@@ -127,26 +127,63 @@
             margin-top: 2px;
         }
 
-        /* --- Section Titles --- */
-        .section-title {
-            width: 100%;
-            text-align: left;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            font-size: 1.4rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: -0.01em;
-            color: var(--text-bright);
+        /* --- Tabs --- */
+        .tab-container {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            width: 100%;
+            gap: 12px;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 10px;
+            padding-bottom: 12px;
         }
 
-        .section-title i {
+        .tab-btn {
+            background: transparent;
+            color: var(--text-faded);
+            border: none;
+            padding: 10px 20px;
+            font-family: var(--font);
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 10px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-bright);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: var(--text-bright);
+            background: rgba(255, 255, 255, 0.08);
+            border-bottom: 3px solid var(--accent);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .tab-btn i {
+            color: inherit;
+        }
+        
+        .tab-btn.active i {
             color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+            width: 100%;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         /* --- Card Grids --- */
@@ -326,6 +363,7 @@
             .shop-title-area { text-align: center; }
             .user-balance-card { text-align: center; justify-content: center; width: 100%; box-sizing: border-box; }
             .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } 
+            .tab-container { justify-content: center; }
         }
     </style>
 </head>
@@ -349,11 +387,22 @@
             </div>
         </div>
 
-        <h2 class="section-title"><i class="fa-solid fa-box-open"></i> Your Inventory</h2>
-        <div class="shop-grid" id="inventory-grid-container"></div>
+        <div class="tab-container">
+            <button class="tab-btn active" id="btn-shop" onclick="switchTab('shop')">
+                <i class="fa-solid fa-store"></i> Shop
+            </button>
+            <button class="tab-btn" id="btn-inventory" onclick="switchTab('inventory')">
+                <i class="fa-solid fa-box-open"></i> Inventory
+            </button>
+        </div>
 
-        <h2 class="section-title"><i class="fa-solid fa-store"></i> Items For Sale</h2>
-        <div class="shop-grid" id="shop-grid-container"></div>
+        <div id="tab-shop" class="tab-content active">
+            <div class="shop-grid" id="shop-grid-container"></div>
+        </div>
+
+        <div id="tab-inventory" class="tab-content">
+            <div class="shop-grid" id="inventory-grid-container"></div>
+        </div>
     </div>
 
     <div id="toast">Loading...</div>
@@ -370,6 +419,18 @@
     
     let masterCatalog = []; 
     let activeStockIds = []; 
+
+    // Tab Switching Logic
+    function switchTab(tabId) {
+        // Hide all contents
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        // Remove active state from all buttons
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        // Show selected content & highlight button
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.getElementById(`btn-${tabId}`).classList.add('active');
+    }
 
     async function initShop() {
         const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
@@ -438,7 +499,7 @@
 
         // Show items in your Inventory
         if (ownedItems.length === 0) {
-            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No items owned yet.</p>`;
+            inventoryContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem; grid-column: 1 / -1;">No items owned yet.</p>`;
         } else {
             ownedItems.forEach(item => {
                 const isEquipped = equippedAvatarId === item.id;
@@ -455,7 +516,7 @@
 
         // Show items in the Shop
         if (storefrontItems.length === 0) {
-            shopContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem;">No items are currently in the shop rotation.</p>`;
+            shopContainer.innerHTML = `<p style="color: var(--text-faded); font-style: italic; font-size: 0.9rem; grid-column: 1 / -1;">No items are currently in the shop rotation.</p>`;
         } else {
             storefrontItems.forEach(item => {
                 const alreadyOwned = unlockedAvatars.includes(item.id);
