@@ -216,19 +216,18 @@
                 document.getElementById('acc').style.marginBottom = "2rem";
             }
 
-            // Status message selection tree
             if (isBot) {
-                statusBox.innerText = "🚨 Anti-cheat triggered. Nice try with the macros/hacks.";
+                statusBox.innerText = "nice try hacking lil bru";
                 statusBox.className = "status-msg msg-error";
                 actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Retry Legitimately</button>`;
             } else if (isCustomMode) {
                 statusBox.innerText = suddenDeathFailed 
-                    ? "💀 Mistake made! Sudden Death active rules triggered instant round termination."
-                    : "✨ Custom alternate mode complete! Fun modifiers active (Scores aren't uploaded to ranked profiles).";
+                    ? "Mistake made! Sudden Death active rules triggered instant round termination."
+                    : "Mode does not have leaderboard saving.";
                 statusBox.className = "status-msg msg-custom";
                 actionArea.innerHTML = `<button class="btn" style="background: #a855f7" onclick="location.href='home.html'">Play Again</button>`;
             } else if (!isWorthy) {
-                statusBox.innerText = "📉 Score not saved. Gotta type a little better than that to hit the leaderboards!";
+                statusBox.innerText = "Score not saved. Gotta type a little better than that to hit the leaderboards!";
                 statusBox.className = "status-msg msg-guest";
                 actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Practice More</button>`;
             } else if (isSaved) {
