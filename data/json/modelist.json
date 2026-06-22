@@ -5,7 +5,10 @@
         "type": "time",
         "value": 15,
         "wordpool": "../data/json/wordlistcommon.json",
-        "renderCount": 150
+        "renderCount": 150,
+        "icon": "fa-clock",
+        "isSaved": true,
+        "script": ""
     },
     {
         "id": "time_60",
@@ -13,7 +16,10 @@
         "type": "time",
         "value": 60,
         "wordpool": "../data/json/wordlistcommon.json",
-        "renderCount": 250
+        "renderCount": 250,
+        "icon": "fa-hourglass-half",
+        "isSaved": true,
+        "script": ""
     },
     {
         "id": "words_15",
@@ -21,7 +27,10 @@
         "type": "words",
         "value": 15,
         "wordpool": "../data/json/wordlistcommon.json",
-        "renderCount": 15
+        "renderCount": 15,
+        "icon": "fa-font",
+        "isSaved": true,
+        "script": ""
     },
     {
         "id": "words_30",
@@ -29,7 +38,10 @@
         "type": "words",
         "value": 30,
         "wordpool": "../data/json/wordlistcommon.json",
-        "renderCount": 30
+        "renderCount": 30,
+        "icon": "fa-file-lines",
+        "isSaved": true,
+        "script": ""
     },
     {
         "id": "blitz",
@@ -37,6 +49,42 @@
         "type": "time",
         "value": 5,
         "wordpool": "../data/json/wordlistcommon.json",
-        "renderCount": 100
+        "renderCount": 100,
+        "icon": "fa-bolt",
+        "isSaved": true,
+        "script": ""
+    },
+    {
+        "id": "single",
+        "label": "Single",
+        "type": "words",
+        "value": 1,
+        "wordpool": "../data/json/wordlistcommon.json",
+        "renderCount": 1,
+        "icon": "fa-bolt",
+        "isSaved": false,
+        "script": ""
+    },
+    {
+        "id": "sudden_death",
+        "label": "Sudden Death",
+        "type": "time",
+        "value": 45,
+        "wordpool": "../data/json/wordlistcommon.json",
+        "renderCount": 150,
+        "icon": "fa-skull",
+        "isSaved": false,
+        "script": "sudden_death"
+    },
+    {
+        "id": "blind_mode",
+        "label": "Blind Mode",
+        "type": "words",
+        "value": 20,
+        "wordpool": "../data/json/wordlistcommon.json",
+        "renderCount": 20,
+        "icon": "fa-eye-slash",
+        "isSaved": false,
+        "script": "blind"
     }
 ]
