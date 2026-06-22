@@ -7,8 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/data/css/root.css">
-    <script src="/data/js/theme.js"></script>
+    <link rel="stylesheet" href="../../data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
     <style>
         body {
             background-color: var(--bg);
@@ -36,12 +36,27 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        #msg { 
+            text-align: center; 
+            padding: 50px; 
+            color: var(--text-faded); 
+            font-style: italic; 
+            font-size: 1.2rem; 
+        }
+
+        #profile-view { 
+            display: none; 
+            width: 100%; 
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
         /* --- Profile Header Section --- */
         .profile-card {
             background: var(--card-bg);
             padding: 2rem;
             border-radius: 20px;
-            text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.03);
             display: flex;
             align-items: center;
@@ -127,7 +142,7 @@
             transform: translateY(-1px); 
         }
 
-        /* --- Analytics Section --- */
+        /* --- Analytics Header & Mode Selector --- */
         .analytics-header {
             display: flex;
             justify-content: space-between;
@@ -169,6 +184,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
+        /* --- Stats Layout --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -180,7 +196,7 @@
             background: var(--card-bg);
             padding: 1.8rem 1rem;
             border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
             text-align: center;
             transition: transform 0.2s;
         }
@@ -330,39 +346,40 @@
 <body>
 
     <div class="container">
-        
-        <div class="profile-card">
-            <div class="profile-info">
-                <div class="avatar-container">
-                    <img id="profile-img" src="" alt="Avatar" class="avatar-img" onerror="this.style.display='none'; document.getElementById('profile-fallback').style.display='block';">
-                    <i id="profile-fallback" class="fa-solid fa-user" style="font-size: 2rem; color: var(--text-faded); display: block;"></i>
-                </div>
-                <div class="profile-details">
-                    <h2 id="display-username">Typist</h2>
-                    <p id="display-email">Loading account...</p>
-                </div>
-            </div>
-            <div class="profile-actions">
-                <button class="btn-secondary" onclick="window.location.href='settings.html'">
-                    <i class="fa-solid fa-gear"></i> Settings
-                </button>
-                <button class="btn-logout" onclick="logout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Logout
-                </button>
-            </div>
-        </div>
+        <div id="msg">Loading profile...</div>
 
-        <div>
-            <div class="analytics-header">
-                <h1>Analytics</h1>
-                <div class="mode-nav" id="mode-nav"></div>
+        <div id="profile-view">
+            <div class="profile-card">
+                <div class="profile-info">
+                    <div class="avatar-container">
+                        <img id="profile-img" src="" alt="Avatar" class="avatar-img" onerror="this.style.display='none'; document.getElementById('profile-fallback').style.display='block';">
+                        <i id="profile-fallback" class="fa-solid fa-user" style="font-size: 2rem; color: var(--text-faded); display: block;"></i>
+                    </div>
+                    <div class="profile-details">
+                        <h2 id="p-name">Username</h2>
+                        <p id="p-joined"><i class="fa-solid fa-calendar-days" style="font-size: 0.8rem; margin-right: 5px;"></i> Loading details...</p>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn-secondary" onclick="window.location.href='settings.html'">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </button>
+                    <button class="btn-logout" onclick="logout()">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                </div>
             </div>
 
-            <div id="stats-display">
+            <div>
+                <div class="analytics-header">
+                    <h1>Analytics</h1>
+                    <div class="mode-nav" id="mode-nav"></div>
+                </div>
+
                 <div class="stats-grid">
                     <div class="stat-card">
                         <span class="stat-label">Ranked Elo</span>
-                        <div class="stat-value" id="user-ranked-elo">--</div>
+                        <div class="stat-value" id="user-elo">--</div>
                         <div class="stat-sub">Competitive Rating</div>
                     </div>
                     <div class="stat-card">
@@ -386,29 +403,28 @@
                         <div class="stat-sub">Last 10 tests</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="inventory-container">
-                    <span class="stat-label" style="margin-left: 5px;"><i class="fa-solid fa-box-open" style="color: var(--accent); margin-right: 6px;"></i> Avatar Inventory</span>
-                    <div class="inventory-grid" id="inventory-grid"></div>
-                </div>
+            <div class="inventory-container">
+                <span class="stat-label" style="margin-left: 5px;"><i class="fa-solid fa-box-open" style="color: var(--accent); margin-right: 6px;"></i> Avatar Inventory</span>
+                <div class="inventory-grid" id="inventory-grid"></div>
+            </div>
 
-                <div class="history-container">
-                    <span class="stat-label" style="margin-left: 12px; margin-bottom: 15px;">Recent History (Max 10)</span>
-                    <table id="history-table">
-                        <thead>
-                            <tr>
-                                <th>WPM</th>
-                                <th>Accuracy</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body"></tbody>
-                    </table>
-                    <div id="no-data-msg" class="no-data" style="display: none;">No tests completed in this mode yet.</div>
-                </div>
+            <div class="history-container">
+                <span class="stat-label" style="margin-left: 12px; margin-bottom: 15px;">Recent History (Max 10)</span>
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>WPM</th>
+                            <th>Accuracy</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+                <div id="no-data-msg" class="no-data" style="display: none;">No tests completed in this mode yet.</div>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -417,7 +433,7 @@
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
         let availableModes = [];
-        let targetUserId = null; // Uses tracking definition layout from loadprofile
+        let targetUserId = null;
 
         function fixSrcPath(src) {
             if (!src) return '../data/images/default.png';
@@ -427,7 +443,10 @@
             return src;
         }
 
-        async function initAccount() {
+        async function loadProfileFromSession() {
+            const view = document.getElementById('profile-view');
+            const msg = document.getElementById('msg');
+
             const { data: { session }, error } = await _supabase.auth.getSession();
 
             if (!session || error) {
@@ -436,40 +455,40 @@
             }
 
             const user = session.user;
-            const username = user.user_metadata.username || "Typist";
-
-            document.getElementById('display-username').innerText = username;
-            document.getElementById('display-email').innerText = user.email;
 
             try {
-                // Fetch profiles details schema exactly matching loadprofile selection rules
-                const { data: profile, error: pError } = await _supabase
+                // Fetch profiles details schema strictly using the logged-in user id
+                const { data: profile, error: pErr } = await _supabase
                     .from('profiles')
-                    .select('id, username, updated_at, elo, coins, avatar_id, unlocked_avatars') 
+                    .select('id, username, updated_at, elo, coins, avatar_id, unlocked_avatars')
                     .eq('id', user.id)
                     .single();
-                
-                if (pError || !profile) {
-                    console.error("Profile matching failed:", pError);
+
+                if (pErr || !profile) {
+                    msg.innerText = "Profile data could not be recovered.";
                     return;
                 }
 
-                // Explicit tracking configuration assignment
                 targetUserId = profile.id;
+                const activeAvatarId = profile.avatar_id || "default";
+                const unlockedAvatars = profile.unlocked_avatars || ["default"];
 
                 const { data: items } = await _supabase.from('items').select('*');
                 const catalog = items || [];
 
+                msg.style.display = 'none';
+                view.style.display = 'flex';
+                document.getElementById('p-name').innerText = profile.username;
+                document.getElementById('user-elo').innerText = profile.elo ?? 0;
                 document.getElementById('user-coins').innerText = profile.coins ?? 0;
-                document.getElementById('user-ranked-elo').innerText = profile.elo ?? 0;
                 
-                const activeAvatarId = profile.avatar_id || "default";
-                const unlockedAvatars = profile.unlocked_avatars || ["default"];
+                const joinDate = new Date(profile.updated_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('p-joined').innerHTML = `<i class="fa-solid fa-calendar-days" style="font-size: 0.8rem; margin-right: 5px;"></i> Member since ${joinDate}`;
+
                 const imgEl = document.getElementById('profile-img');
                 const fallbackEl = document.getElementById('profile-fallback');
                 
                 const matchedAvatar = catalog.find(item => item.id === activeAvatarId);
-                
                 if (matchedAvatar && matchedAvatar.src) {
                     imgEl.src = fixSrcPath(matchedAvatar.src);
                     imgEl.style.display = 'block';
@@ -480,12 +499,11 @@
                 }
 
                 renderInventory(unlockedAvatars, activeAvatarId, catalog);
-
-                // Initialize Game Mode Navigation inside the resolution lifecycle block
                 initModes();
 
-            } catch (pErr) {
-                console.error("Error pulling profile data:", pErr);
+            } catch (err) {
+                console.error(err);
+                msg.innerText = "Error loading profile assets.";
             }
         }
 
@@ -532,7 +550,7 @@
 
         async function initModes() {
             try {
-                const response = await fetch('../data/json/modelist.json');
+                const response = await fetch('/data/json/modelist.json');
                 if(!response.ok) throw new Error("Could not fetch modes");
                 availableModes = await response.json();
                 
@@ -543,7 +561,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                document.getElementById('no-data-msg').innerText = "Error loading game modes.";
+                document.getElementById('no-data-msg').innerText = "Error loading dynamic game modes.";
                 document.getElementById('no-data-msg').style.display = 'block';
             }
         }
@@ -569,7 +587,6 @@
 
             if (!targetUserId) return;
 
-            // Fetch specific scores table data strictly limited to the last 10 records
             const { data, error } = await _supabase
                 .from('scores')
                 .select('*')
@@ -630,7 +647,7 @@
             window.location.href = '../login.html';
         }
 
-        initAccount();
+        window.onload = loadProfileFromSession;
     </script>
 </body>
 </html>
