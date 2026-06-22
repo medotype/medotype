@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeDoType | Singleplayer</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../data/css/root.css">
     <script src="../../data/js/theme.js"></script>
@@ -13,7 +13,7 @@
         body { background-color: var(--bg); color: var(--text-bright); font-family: var(--font); margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         #app { width: 100%; max-width: 850px; text-align: center; padding: 2rem; position: relative; }
         
-        #nav { margin-bottom: 3rem; display: inline-flex; background: var(--card-bg); padding: 6px; border-radius: 12px; gap: 5px; }
+        #nav { margin-bottom: 3rem; display: inline-flex; background: var(--card-bg); padding: 6px; border-radius: 12px; gap: 5px; align-items: center; }
         
         .header-stats { 
             display: flex; 
@@ -59,6 +59,10 @@
         .letter.correct { color: var(--text-bright); }
         .letter.incorrect { color: var(--error); border-bottom: 2px solid var(--error); }
         
+        /* Alternate Mode Scripts Visual Modifications */
+        .mode-blind .letter.correct { color: transparent !important; }
+        .mode-blind .letter.incorrect { color: var(--error) !important; border-bottom: 2px solid transparent; }
+
         /* The Caret (Cursor) */
         .letter.active-char::before {
             content: ''; 
@@ -92,13 +96,32 @@
         #restart-btn:hover { opacity: 0.9; transform: translateY(-2px); }
         .hidden { visibility: hidden; opacity: 0; }
 
-        .mode-settings-container { display: flex; justify-content: center; margin-bottom: 3rem; animation: fadeIn 0.5s ease; }
-        .mode-group { display: flex; background: var(--card-bg); padding: 4px; border-radius: 10px; gap: 2px; }
-        .mode-item { padding: 8px 16px; font-size: 0.85rem; font-weight: 600; color: var(--text-faded); cursor: pointer; border-radius: 8px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; }
+        .mode-settings-container { display: flex; justify-content: center; margin-bottom: 3rem; position: relative; z-index: 50; }
+        .mode-group { display: flex; background: var(--card-bg); padding: 4px; border-radius: 10px; gap: 2px; align-items: center; }
+        .mode-item { padding: 8px 16px; font-size: 0.85rem; font-weight: 600; color: var(--text-faded); cursor: pointer; border-radius: 8px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .mode-item:hover { color: var(--text-bright); }
         .mode-item.active { color: var(--accent); background: rgba(255, 255, 255, 0.03); }
         .mode-item.blitz-active { color: #ff4500; text-shadow: 0 0 10px rgba(255, 69, 0, 0.3); }
         .mode-item i { font-size: 0.8rem; }
+
+        /* Dynamic More Layout Overlay Options */
+        .dropdown-wrapper { position: relative; display: inline-block; }
+        .dropdown-menu { 
+            display: none; 
+            position: absolute; 
+            top: 115%; 
+            right: 0; 
+            background: var(--card-bg); 
+            border-radius: 10px; 
+            padding: 6px; 
+            box-shadow: 0 12px 28px rgba(0,0,0,0.45); 
+            border: 1px solid rgba(255,255,255,0.04); 
+            flex-direction: column; 
+            gap: 2px; 
+            min-width: 145px; 
+        }
+        .dropdown-menu.show { display: flex; }
+        .dropdown-menu .mode-item { justify-content: flex-start; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -150,10 +173,9 @@
     let correctChars = 0;
     let totalKeystrokes = 0;
     
-    // Anti-Cheat & Tracking
     let keyPressTimestamps = [];
     let currentCombo = 0;
-    let wpmTimeline = []; // Tracks pace over time
+    let wpmTimeline = [];
 
     const container = document.getElementById('word-container');
     const statVal = document.getElementById('stat-val');
@@ -163,9 +185,10 @@
     const modeIcon = document.getElementById('mode-icon');
     const results = document.getElementById('results-screen');
 
-    window.addEventListener('click', function(e) {
-        const select = document.getElementById('custom-select');
-        if (select && !select.contains(e.target)) select.classList.remove('open');
+    // Close options window on blur
+    window.addEventListener('click', function() {
+        const menu = document.getElementById('overflow-menu');
+        if (menu) menu.classList.remove('show');
     });
 
     async function initModes() {
@@ -184,27 +207,81 @@
     function buildNav() {
         const nav = document.getElementById('mode-nav');
         nav.innerHTML = '';
-        availableModes.forEach(mode => {
-            const div = document.createElement('div');
-            div.className = 'mode-item';
-            div.id = `mode-${mode.id}`;
-            let iconClass = mode.type === 'time' ? 'fa-clock' : 'fa-font';
-            if (mode.id === 'blitz') iconClass = 'fa-fire';
-            div.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${mode.label}`;
-            div.onclick = () => selectMode(mode);
-            nav.appendChild(div);
-        });
+        
+        // Overflow threshold limit logic rule
+        if (availableModes.length <= 5) {
+            availableModes.forEach(mode => {
+                nav.appendChild(createModeElement(mode));
+            });
+        } else {
+            // Render first 4 inline directly
+            for(let i = 0; i < 4; i++) {
+                nav.appendChild(createModeElement(availableModes[i]));
+            }
+
+            // Create contextual ellipsis container
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dropdown-wrapper';
+
+            const moreBtn = document.createElement('div');
+            moreBtn.className = 'mode-item';
+            moreBtn.id = 'more-toggle-btn';
+            moreBtn.innerHTML = `<i class="fa-solid fa-ellipsis"></i> Mixed`;
+            moreBtn.onclick = (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('show');
+            };
+
+            const menu = document.createElement('div');
+            menu.className = 'dropdown-menu';
+            menu.id = 'overflow-menu';
+
+            // Fill overflow menu with remainder indexes
+            for(let i = 4; i < availableModes.length; i++) {
+                menu.appendChild(createModeElement(availableModes[i]));
+            }
+
+            wrapper.appendChild(moreBtn);
+            wrapper.appendChild(menu);
+            nav.appendChild(wrapper);
+        }
+    }
+
+    function createModeElement(mode) {
+        const div = document.createElement('div');
+        div.className = 'mode-item';
+        div.id = `mode-${mode.id}`;
+        
+        // Dynamically pull icon directly from JSON config values
+        let targetIcon = mode.icon || (mode.type === 'time' ? 'fa-clock' : 'fa-font');
+        div.innerHTML = `<i class="fa-solid ${targetIcon}"></i> ${mode.label}`;
+        
+        div.onclick = () => selectMode(mode);
+        return div;
     }
 
     async function selectMode(mode) {
         clearInterval(timerInterval);
         isStarted = false;
-
         activeModeConfig = mode;
+
         document.querySelectorAll('.mode-item').forEach(el => el.classList.remove('active', 'blitz-active'));
         const activeEl = document.getElementById(`mode-${mode.id}`);
+        const moreToggle = document.getElementById('more-toggle-btn');
+        
         if (activeEl) {
             activeEl.classList.add(mode.id === 'blitz' ? 'blitz-active' : 'active');
+            
+            // Highlight the dropdown expansion button parent if selected node was nested
+            if (activeEl.parentElement.classList.contains('dropdown-menu') && moreToggle) {
+                moreToggle.classList.add('active');
+            }
+        }
+
+        // Apply alternate logic structural scripts
+        container.className = ''; 
+        if (mode.script === 'blind') {
+            container.classList.add('mode-blind');
         }
 
         try {
@@ -216,7 +293,7 @@
             if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
             wordsList = await resp.json();
             if (Array.isArray(wordsList) && wordsList.length > 0) resetGame(); 
-            else throw new Error("Wordlist is empty");
+            else throw new Error("Wordlist empty");
         } catch (err) {
             console.error("Failed to load words:", err);
             statVal.innerText = "Err";
@@ -251,11 +328,6 @@
             currentCombo++;
         }
         comboVal.innerText = currentCombo;
-        
-        if (currentCombo > 0 && currentCombo % 10 === 0) {
-            comboStat.style.transform = "scale(1.2)";
-            setTimeout(() => comboStat.style.transform = "scale(1)", 150);
-        }
     }
 
     function resetGame() {
@@ -269,7 +341,7 @@
         startTime = null;
         
         keyPressTimestamps = [];
-        wpmTimeline = []; // Reset chart tracker
+        wpmTimeline = []; 
         currentCombo = 0;
         comboVal.innerText = "0";
         wpmVal.innerText = "0";
@@ -278,11 +350,12 @@
         results.style.display = 'none';
         container.classList.remove('hidden');
         
+        let targetIcon = activeModeConfig.icon || (activeModeConfig.type === 'time' ? 'fa-clock' : 'fa-font');
+        modeIcon.className = `fa-solid ${targetIcon}`;
+
         if (activeModeConfig.type === 'time') {
-            modeIcon.className = 'fa-solid fa-clock';
             statVal.innerText = activeModeConfig.value;
         } else {
-            modeIcon.className = 'fa-solid fa-font';
             statVal.innerText = `0 / ${activeModeConfig.value}`;
         }
 
@@ -307,7 +380,6 @@
         const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
         wpmVal.innerText = currentWpm;
         
-        // Log pace for charting
         wpmTimeline.push(currentWpm);
 
         if (activeModeConfig.type === 'time') {
@@ -339,6 +411,9 @@
         const letters = currentWord.querySelectorAll('.letter');
 
         if (e.key === 'Backspace') {
+            // Block structural backspaces in sudden death mode 
+            if (activeModeConfig.script === 'sudden_death') return;
+
             if (activeCharIdx > 0) {
                 activeCharIdx--;
                 letters[activeCharIdx].className = 'letter';
@@ -375,6 +450,12 @@
                 } else {
                     letters[activeCharIdx].classList.add('incorrect');
                     updateCombo(true);
+
+                    // Alternate Script Hook: Sudden Death Instant summary cutoff breakout
+                    if (activeModeConfig.script === 'sudden_death') {
+                        finish(true); 
+                        return;
+                    }
                 }
                 activeCharIdx++;
 
@@ -393,19 +474,26 @@
         if (offset > 40) container.style.top = `-${offset}px`;
     }
 
-    async function finish() {
+    async function finish(suddenDeathFailed = false) {
         if (isFinishing) return;
         isFinishing = true;
 
         clearInterval(timerInterval);
         const durationMinutes = (Date.now() - startTime) / 60000;
-        const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+        
+        // Calculate WPM cleanly even for custom failures
+        let wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
+        if (suddenDeathFailed) wpm = Math.round(correctChars / 5) || 0; // Handle immediate breakdown math edge case
+
         const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
         let saved = false;
         let earnedCoins = 0; 
         let isBot = false;
         let isWorthyScore = wpm >= 10 && acc >= 50;
+
+        // Force check alternate non-saved settings flags
+        const explicitlySaved = activeModeConfig.isSaved !== false;
 
         try {
             const { data: { session } } = await _supabase.auth.getSession();
@@ -420,15 +508,13 @@
                 let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
                 let stdDev = Math.sqrt(variance);
 
-                const wpmCap = (activeModeConfig.id === 'single') ? 2000 : 300;
-
-                if (stdDev < 5 || wpm > wpmCap) {
-                    console.warn("Anti-Cheat: Suspicious typing rhythm or speed detected.");
+                if (stdDev < 5 || wpm > 300) {
                     isBot = true;
                 }
             }
 
-            if (session && isWorthyScore && !isBot) {
+            // Only run insertion logic if the JSON profile settings allow saves
+            if (session && isWorthyScore && !isBot && explicitlySaved) {
                 const { error: scoreError } = await _supabase
                     .from('scores')
                     .insert([{ 
@@ -447,19 +533,15 @@
                         game_mode: activeModeConfig.id 
                     });
                 
-                if (coinError) {
-                    console.error("Failed to reward coins:", coinError);
-                } else {
-                    earnedCoins = coinData; 
-                }
+                if (!coinError) earnedCoins = coinData; 
             }
         } catch (dbError) {
-            console.error("Database tracking failed, moving to fallback redirect:", dbError);
+            console.error(dbError);
         }
 
         sessionStorage.setItem('wpmTimeline', JSON.stringify(wpmTimeline));
         
-        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}&bot=${isBot}&worthy=${isWorthyScore}`;
+        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}&bot=${isBot}&worthy=${isWorthyScore}&isCustomMode=${!explicitlySaved}&failed=${suddenDeathFailed}`;
     }
 
     initModes();
