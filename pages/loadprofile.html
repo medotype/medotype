@@ -491,11 +491,14 @@
             });
         }
 
-        async function initModes() {
+async function initModes() {
             try {
                 const response = await fetch('../data/json/modelist.json');
                 if(!response.ok) throw new Error("Could not fetch modes");
-                availableModes = await response.json();
+                
+                // im gonna kill myself if i edit this file one more time
+                const allModes = await response.json();
+                availableModes = allModes.filter(mode => mode.isSaved === true);
                 
                 buildNav();
                 
