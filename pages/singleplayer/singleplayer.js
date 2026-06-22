@@ -349,7 +349,7 @@
                 let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
                 let stdDev = Math.sqrt(variance);
 
-                if (stdDev < 5 || wpm > 300) {
+                if (stdDev < 5 || wpm > 500) {
                     isBot = true;
                 }
             }
