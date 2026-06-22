@@ -59,7 +59,7 @@
         "label": "Single",
         "type": "words",
         "value": 1,
-        "wordpool": "../data/json/wordlistcommon.json",
+        "wordpool": "../data/json/wordlists/wordlistsingle.json",
         "renderCount": 1,
         "icon": "fa-bolt",
         "isSaved": false,
