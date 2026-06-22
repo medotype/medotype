@@ -6,7 +6,7 @@
     <title>MeDoType | Results</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/data/css/root.css">
     <script src="../../data/js/theme.js"></script>
@@ -84,10 +84,11 @@
             gap: 8px;
         }
 
-        .status-msg { font-size: 0.8rem; margin-bottom: 1.5rem; padding: 8px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        .status-msg { font-size: 0.8rem; margin-bottom: 1.5rem; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; line-height: 1.4; }
         .msg-saved { background: rgba(16, 185, 129, 0.1); color: var(--success); }
         .msg-guest { background: rgba(100, 102, 105, 0.1); color: var(--text-faded); }
-        .msg-error { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .msg-error { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .msg-custom { background: rgba(147, 51, 234, 0.1); color: #a855f7; border: 1px solid rgba(147, 51, 234, 0.2); }
 
         .charts-panel {
             flex: 2;
@@ -138,8 +139,6 @@
         }
 
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .btn-outline { background: transparent; border: 1px solid var(--text-faded); color: var(--text-faded); margin-top: 12px; }
-        .btn-outline:hover { border-color: var(--text-bright); color: var(--text-bright); }
     </style>
 </head>
 <body>
@@ -177,7 +176,6 @@
         const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        // Standard charting layout properties
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -197,9 +195,10 @@
             const isSaved = params.get('saved') === 'true';
             const coins = parseInt(params.get('coins')) || 0;
             
-            // New logic checks
             const isBot = params.get('bot') === 'true';
             const isWorthy = params.get('worthy') !== 'false'; 
+            const isCustomMode = params.get('isCustomMode') === 'true';
+            const suddenDeathFailed = params.get('failed') === 'true';
 
             document.getElementById('wpm').innerText = wpm;
             document.getElementById('acc').innerText = `ACCURACY: ${acc}%`;
@@ -217,15 +216,21 @@
                 document.getElementById('acc').style.marginBottom = "2rem";
             }
 
-            // Custom Status Messages based on flags
+            // Status message selection tree
             if (isBot) {
                 statusBox.innerText = "🚨 Anti-cheat triggered. Nice try with the macros/hacks.";
                 statusBox.className = "status-msg msg-error";
                 actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Retry Legitimately</button>`;
+            } else if (isCustomMode) {
+                statusBox.innerText = suddenDeathFailed 
+                    ? "💀 Mistake made! Sudden Death active rules triggered instant round termination."
+                    : "✨ Custom alternate mode complete! Fun modifiers active (Scores aren't uploaded to ranked profiles).";
+                statusBox.className = "status-msg msg-custom";
+                actionArea.innerHTML = `<button class="btn" style="background: #a855f7" onclick="location.href='home.html'">Play Again</button>`;
             } else if (!isWorthy) {
                 statusBox.innerText = "📉 Score not saved. Gotta type a little better than that to hit the leaderboards!";
                 statusBox.className = "status-msg msg-guest";
-                actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Practice & Try Again</button>`;
+                actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Practice More</button>`;
             } else if (isSaved) {
                 statusBox.innerText = `✓ Score saved to your ${modeClean} profile`;
                 statusBox.className = "status-msg msg-saved";
@@ -233,28 +238,21 @@
             } else {
                 statusBox.innerText = "⚠ Score not saved. Sign up to track progress.";
                 statusBox.className = "status-msg msg-guest";
-                actionArea.innerHTML = `
-                    <button class="btn" onclick="location.href='/pages/account.html'">Login to Save</button>
-                    <button class="btn btn-outline" onclick="location.href='home.html'">Skip & Retry</button>
-                `;
+                actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Continue</button>`;
             }
 
             renderPaceChart(wpm);
-            renderHistoryChart(modeRaw, wpm);
+            renderHistoryChart(modeRaw, wpm, isCustomMode);
         }
 
         function renderPaceChart(currentWpm) {
             const ctx = document.getElementById('paceChart').getContext('2d');
             let timelineData = [];
-            
             try {
                 timelineData = JSON.parse(sessionStorage.getItem('wpmTimeline')) || [];
-            } catch(e) { console.error(e); }
+            } catch(e) {}
 
-            if(timelineData.length === 0) {
-                timelineData = [0, currentWpm];
-            }
-
+            if(timelineData.length === 0) timelineData = [0, currentWpm];
             const labels = timelineData.map((_, i) => `${i + 1}s`);
             const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6';
 
@@ -276,34 +274,37 @@
             });
         }
 
-        async function renderHistoryChart(modeRaw, currentWpm) {
+        async function renderHistoryChart(modeRaw, currentWpm, isCustomMode) {
             const ctx = document.getElementById('historyChart').getContext('2d');
             let historyData = [];
             let historyLabels = [];
 
-            try {
-                const { data: { session } } = await _supabase.auth.getSession();
-                if (session) {
-                    const { data: scores, error } = await _supabase
-                        .from('scores')
-                        .select('wpm, id')
-                        .eq('user_id', session.user.id)
-                        .eq('mode', modeRaw)
-                        .order('id', { ascending: false })
-                        .limit(10);
+            // Only fetch database metrics if it is not an alternate custom mode
+            if (!isCustomMode) {
+                try {
+                    const { data: { session } } = await _supabase.auth.getSession();
+                    if (session) {
+                        const { data: scores, error } = await _supabase
+                            .from('scores')
+                            .select('wpm, id')
+                            .eq('user_id', session.user.id)
+                            .eq('mode', modeRaw)
+                            .order('id', { ascending: false })
+                            .limit(10);
 
-                    if (!error && scores && scores.length > 0) {
-                        historyData = scores.map(s => s.wpm).reverse();
-                        historyLabels = historyData.map((_, i) => `Match ${i + 1}`);
+                        if (!error && scores && scores.length > 0) {
+                            historyData = scores.map(s => s.wpm).reverse();
+                            historyLabels = historyData.map((_, i) => `Match ${i + 1}`);
+                        }
                     }
+                } catch (err) {
+                    console.error(err);
                 }
-            } catch (err) {
-                console.error("Failed historical score compilation:", err);
             }
 
             if (historyData.length === 0) {
                 historyData = [currentWpm];
-                historyLabels = ['Current Match'];
+                historyLabels = ['Unranked Match'];
             }
 
             new Chart(ctx, {
