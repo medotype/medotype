@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeDoType | Results</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/data/css/root.css">
@@ -19,19 +20,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+            overflow-y: auto;
         }
 
-        .results-card {
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 24px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        .results-container {
+            display: flex;
+            gap: 2rem;
+            width: 100%;
+            max-width: 950px;
+            align-items: stretch;
+            flex-wrap: wrap;
             animation: fadeIn 0.4s ease-out;
         }
 
@@ -40,12 +41,40 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .results-card {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 24px;
+            flex: 1;
+            min-width: 300px;
+            max-width: 360px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .mode-tag {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            display: inline-block;
+            margin: 0 auto 1rem auto;
+            text-transform: uppercase;
+        }
+
         .stat-label { color: var(--text-faded); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.15em; margin: 0; }
         .stat-val { font-size: 5.5rem; font-weight: 600; color: var(--accent); margin: 0.2rem 0; text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
         .acc-val { color: var(--text-bright); font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 400; }
         
         .coin-reward { 
-            color: #eab308; /* Nice gold tone */
+            color: #eab308; 
             font-size: 0.8rem; 
             font-weight: 600; 
             margin-bottom: 2rem; 
@@ -53,17 +82,46 @@
             align-items: center; 
             justify-content: center; 
             gap: 8px;
-            animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
-        }
-
-        @keyframes pop {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
         }
 
         .status-msg { font-size: 0.8rem; margin-bottom: 1.5rem; padding: 8px; border-radius: 8px; width: 100%; box-sizing: border-box; }
         .msg-saved { background: rgba(16, 185, 129, 0.1); color: var(--success); }
         .msg-guest { background: rgba(100, 102, 105, 0.1); color: var(--text-faded); }
+        .msg-error { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .charts-panel {
+            flex: 2;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .chart-box {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-box h3 {
+            margin: 0 0 12px 0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-faded);
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
 
         .btn {
             background: var(--accent);
@@ -86,15 +144,32 @@
 </head>
 <body>
 
-    <div class="results-card">
-        <p class="stat-label">Words Per Minute</p>
-        <h1 class="stat-val" id="wpm">0</h1>
-        <p class="acc-val" id="acc">ACCURACY: 0%</p>
-        
-        <div id="coin-container"></div>
+    <div class="results-container">
+        <div class="results-card">
+            <div class="mode-tag" id="mode-display">Mode: --</div>
+            <p class="stat-label">Words Per Minute</p>
+            <h1 class="stat-val" id="wpm">0</h1>
+            <p class="acc-val" id="acc">ACCURACY: 0%</p>
+            
+            <div id="coin-container"></div>
+            <div id="status-container" class="status-msg">Checking status...</div>
+            <div id="action-area"></div>
+        </div>
 
-        <div id="status-container" class="status-msg">Checking status...</div>
-        <div id="action-area"></div>
+        <div class="charts-panel">
+            <div class="chart-box">
+                <h3><i class="fa-solid fa-chart-line"></i> Round Pace (WPM over time)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="paceChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-box">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Match History (Last 10 Matches)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="historyChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -102,16 +177,33 @@
         const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+        // Standard charting layout properties
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.3)', font: { family: 'Inter' } } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.3)', font: { family: 'Inter' } }, beginAtZero: true }
+            }
+        };
+
         async function initResults() {
             const params = new URLSearchParams(window.location.search);
-            const wpm = params.get('wpm') || 0;
+            const wpm = parseInt(params.get('wpm')) || 0;
             const acc = params.get('acc') || 0;
-            const mode = (params.get('mode') || 'time_15').replace('_', ' ');
+            const modeRaw = params.get('mode') || 'time_15';
+            const modeClean = modeRaw.replace('_', ' ');
             const isSaved = params.get('saved') === 'true';
             const coins = parseInt(params.get('coins')) || 0;
+            
+            // New logic checks
+            const isBot = params.get('bot') === 'true';
+            const isWorthy = params.get('worthy') !== 'false'; 
 
             document.getElementById('wpm').innerText = wpm;
             document.getElementById('acc').innerText = `ACCURACY: ${acc}%`;
+            document.getElementById('mode-display').innerText = `Mode: ${modeClean}`;
 
             const coinContainer = document.getElementById('coin-container');
             const statusBox = document.getElementById('status-container');
@@ -125,8 +217,17 @@
                 document.getElementById('acc').style.marginBottom = "2rem";
             }
 
-            if (isSaved) {
-                statusBox.innerText = `✓ Score saved to your ${mode} profile`;
+            // Custom Status Messages based on flags
+            if (isBot) {
+                statusBox.innerText = "🚨 Anti-cheat triggered. Nice try with the macros/hacks.";
+                statusBox.className = "status-msg msg-error";
+                actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Retry Legitimately</button>`;
+            } else if (!isWorthy) {
+                statusBox.innerText = "📉 Score not saved. Gotta type a little better than that to hit the leaderboards!";
+                statusBox.className = "status-msg msg-guest";
+                actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Practice & Try Again</button>`;
+            } else if (isSaved) {
+                statusBox.innerText = `✓ Score saved to your ${modeClean} profile`;
                 statusBox.className = "status-msg msg-saved";
                 actionArea.innerHTML = `<button class="btn" onclick="location.href='home.html'">Next Test</button>`;
             } else {
@@ -137,6 +238,90 @@
                     <button class="btn btn-outline" onclick="location.href='home.html'">Skip & Retry</button>
                 `;
             }
+
+            renderPaceChart(wpm);
+            renderHistoryChart(modeRaw, wpm);
+        }
+
+        function renderPaceChart(currentWpm) {
+            const ctx = document.getElementById('paceChart').getContext('2d');
+            let timelineData = [];
+            
+            try {
+                timelineData = JSON.parse(sessionStorage.getItem('wpmTimeline')) || [];
+            } catch(e) { console.error(e); }
+
+            if(timelineData.length === 0) {
+                timelineData = [0, currentWpm];
+            }
+
+            const labels = timelineData.map((_, i) => `${i + 1}s`);
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6';
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: timelineData,
+                        borderColor: accentColor,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: timelineData.length > 30 ? 0 : 2
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        async function renderHistoryChart(modeRaw, currentWpm) {
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            let historyData = [];
+            let historyLabels = [];
+
+            try {
+                const { data: { session } } = await _supabase.auth.getSession();
+                if (session) {
+                    const { data: scores, error } = await _supabase
+                        .from('scores')
+                        .select('wpm, id')
+                        .eq('user_id', session.user.id)
+                        .eq('mode', modeRaw)
+                        .order('id', { ascending: false })
+                        .limit(10);
+
+                    if (!error && scores && scores.length > 0) {
+                        historyData = scores.map(s => s.wpm).reverse();
+                        historyLabels = historyData.map((_, i) => `Match ${i + 1}`);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed historical score compilation:", err);
+            }
+
+            if (historyData.length === 0) {
+                historyData = [currentWpm];
+                historyLabels = ['Current Match'];
+            }
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historyLabels,
+                    datasets: [{
+                        data: historyData,
+                        borderColor: '#10b981', 
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 4
+                    }]
+                },
+                options: chartOptions
+            });
         }
 
         initResults();
