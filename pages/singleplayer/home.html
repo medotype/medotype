@@ -142,7 +142,7 @@
     let wordsList = [];
 
     let isStarted = false;
-    let isFinishing = false; // FIX: Prevents overlapping finish calls
+    let isFinishing = false;
     let activeWordIdx = 0;
     let activeCharIdx = 0;
     let startTime = null;
@@ -150,9 +150,10 @@
     let correctChars = 0;
     let totalKeystrokes = 0;
     
-    // Anti-Cheat & Combo Trackers
+    // Anti-Cheat & Tracking
     let keyPressTimestamps = [];
     let currentCombo = 0;
+    let wpmTimeline = []; // Tracks pace over time
 
     const container = document.getElementById('word-container');
     const statVal = document.getElementById('stat-val');
@@ -196,7 +197,6 @@
     }
 
     async function selectMode(mode) {
-        // FIX: Stop any active timers immediately before async fetch operations
         clearInterval(timerInterval);
         isStarted = false;
 
@@ -261,7 +261,7 @@
     function resetGame() {
         clearInterval(timerInterval);
         isStarted = false;
-        isFinishing = false; // FIX: Reset state flag
+        isFinishing = false;
         activeWordIdx = 0;
         activeCharIdx = 0;
         correctChars = 0;
@@ -269,6 +269,7 @@
         startTime = null;
         
         keyPressTimestamps = [];
+        wpmTimeline = []; // Reset chart tracker
         currentCombo = 0;
         comboVal.innerText = "0";
         wpmVal.innerText = "0";
@@ -305,6 +306,9 @@
         const durationMinutes = elapsedMs / 60000;
         const currentWpm = Math.round((correctChars / 5) / durationMinutes) || 0;
         wpmVal.innerText = currentWpm;
+        
+        // Log pace for charting
+        wpmTimeline.push(currentWpm);
 
         if (activeModeConfig.type === 'time') {
             let left = Math.ceil(activeModeConfig.value - (elapsedMs / 1000));
@@ -400,11 +404,12 @@
 
         let saved = false;
         let earnedCoins = 0; 
+        let isBot = false;
+        let isWorthyScore = wpm >= 10 && acc >= 50;
 
         try {
             const { data: { session } } = await _supabase.auth.getSession();
             
-            let isBot = false;
             if (keyPressTimestamps.length > 10) {
                 let intervals = [];
                 for (let i = 1; i < keyPressTimestamps.length; i++) {
@@ -415,7 +420,6 @@
                 let variance = intervals.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
                 let stdDev = Math.sqrt(variance);
 
-                // Dynamically apply WPM cap based on singleplayer mode
                 const wpmCap = (activeModeConfig.id === 'single') ? 2000 : 300;
 
                 if (stdDev < 5 || wpm > wpmCap) {
@@ -423,8 +427,6 @@
                     isBot = true;
                 }
             }
-
-            const isWorthyScore = wpm >= 10 && acc >= 50;
 
             if (session && isWorthyScore && !isBot) {
                 const { error: scoreError } = await _supabase
@@ -455,7 +457,9 @@
             console.error("Database tracking failed, moving to fallback redirect:", dbError);
         }
 
-        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}`;
+        sessionStorage.setItem('wpmTimeline', JSON.stringify(wpmTimeline));
+        
+        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}&bot=${isBot}&worthy=${isWorthyScore}`;
     }
 
     initModes();
