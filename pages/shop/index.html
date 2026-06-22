@@ -491,7 +491,7 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
-        const priorityMap = { 'admin': 1, 'limited': 2, 'seasonal': 3, 'avatars': 4 };
+        const priorityMap = { 'admin': 1, 'limited': 2, 'seasonal': 3, 'avatar': 4 };
         const sortByPriorityAndPrice = (a, b) => {
             const priorityA = priorityMap[(a.category || '').toLowerCase()] || 0;
             const priorityB = priorityMap[(b.category || '').toLowerCase()] || 0;
