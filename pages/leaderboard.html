@@ -228,11 +228,14 @@
     // New variable to track active tab
     let currentCategory = 'singleplayer';
 
-    async function initModes() {
+async function initModes() {
         try {
             const response = await fetch('../data/json/modelist.json');
             if(!response.ok) throw new Error("JSON not found");
-            availableModes = await response.json();
+            
+            // take out random diddy modes
+            const allModes = await response.json();
+            availableModes = allModes.filter(mode => mode.isSaved === true);
             
             buildNav();
             
