@@ -226,7 +226,7 @@
             const moreBtn = document.createElement('div');
             moreBtn.className = 'mode-item';
             moreBtn.id = 'more-toggle-btn';
-            moreBtn.innerHTML = `<i class="fa-solid fa-ellipsis"></i> Mixed`;
+            moreBtn.innerHTML = `<i class="fa-solid fa-ellipsis"></i> Other`;
             moreBtn.onclick = (e) => {
                 e.stopPropagation();
                 menu.classList.toggle('show');
@@ -272,7 +272,6 @@
         if (activeEl) {
             activeEl.classList.add(mode.id === 'blitz' ? 'blitz-active' : 'active');
             
-            // Highlight the dropdown expansion button parent if selected node was nested
             if (activeEl.parentElement.classList.contains('dropdown-menu') && moreToggle) {
                 moreToggle.classList.add('active');
             }
