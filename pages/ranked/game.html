@@ -11,6 +11,7 @@
     
     <link rel="stylesheet" href="../../data/css/root.css">
     <link rel="stylesheet" href="game.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../../data/js/theme.js"></script>
 </head>
 <body>
@@ -72,14 +73,22 @@
             </div>
         </div>
 
-        <div id="results-screen" class="hidden overlay">
+<div id="results-screen" class="hidden overlay">
             <div class="results-card">
                 <h1 class="winner-text" id="final-result">VICTORY</h1>
                 <div class="elo-change" id="elo-change-text">+25 Elo</div>
-                <div class="coin-reward" id="coin-reward-text" style="display: none; font-size: 1.2rem; font-weight: 600; color: #fbbf24; margin-bottom: 2rem;">
+                <div class="coin-reward" id="coin-reward-text" style="display: none; font-size: 1.2rem; font-weight: 600; color: #fbbf24; margin-bottom: 1rem;">
                     <i class="fa-solid fa-coins"></i> +0 Coins
                 </div>
-                <button class="btn-home" onclick="window.location.href='../../../pages/home.html'">Back to Lobby</button>
+                
+                <div class="chart-container">
+                    <canvas id="matchChart"></canvas>
+                </div>
+
+                <div class="results-buttons">
+                    <button class="btn-home" style="background: rgba(255,255,255,0.1);" onclick="window.location.href='../../../pages/home.html'">Lobby</button>
+                    <button class="btn-play-again" onclick="window.location.href='../../../pages/home.html'">Play Again <i class="fa-solid fa-rotate-right"></i></button>
+                </div>
             </div>
         </div>
 
