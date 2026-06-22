@@ -28,6 +28,9 @@ let oppTotalScore = 0;
 let myLastRoundScore = 0;
 let oppLastRoundScore = 0;
 
+let myScoreHistory = [];
+let oppScoreHistory = [];
+
 let activeWordIdx = 0;
 let activeCharIdx = 0;
 let isStarted = false;
@@ -76,7 +79,6 @@ async function initMatch() {
                 .on('broadcast', { event: 'round_finished' }, handleRoundFinished)
                 .on('broadcast', { event: 'player_heartbeat' }, handlePlayerHeartbeat) 
                 .on('broadcast', { event: 'player_left' }, handlePlayerLeft)    
-                // NEW: Battle Event Listeners      
                 .on('broadcast', { event: 'battle_attack' }, handleBattleAttack)
                 .on('broadcast', { event: 'battle_progress' }, handleBattleProgress)
                 .subscribe(async (status, err) => {
@@ -87,17 +89,15 @@ async function initMatch() {
                 });
 }
 
-// NEW: Show floating action text (e.g., "COMBO ATTACK!")
 function showActionText(text, color = "var(--accent)") {
     const el = document.getElementById('action-text');
     el.innerText = text;
     el.style.color = color;
     el.classList.remove('action-anim');
-    void el.offsetWidth; // trigger reflow
+    void el.offsetWidth; 
     el.classList.add('action-anim');
 }
 
-// UPDATED: Combo logic with Attacks
 function updateCombo(reset = false) {
     if (reset) {
         currentCombo = 0;
@@ -135,7 +135,6 @@ function handleBattleAttack({ payload }) {
     }
 }
 
-// NEW: Update live visual progress 
 function updateProgressBar(wordIdx, isOpponent = false) {
     const pct = Math.min(100, Math.max(0, (wordIdx / WORDS_PER_ROUND) * 100));
     if (isOpponent) {
@@ -145,7 +144,6 @@ function updateProgressBar(wordIdx, isOpponent = false) {
     }
 }
 
-// NEW: Handle opponent's live progress
 function handleBattleProgress({ payload }) {
     if (payload.id === oppId && gameState === 'PLAYING') {
         updateProgressBar(payload.wordIdx, true);
@@ -265,6 +263,7 @@ async function handleOpponentForfeit(reason) {
 
     await removeFromQueue(); 
     _supabase.removeChannel(matchChannel);
+    renderMatchChart();
 }
 
 function startRoundSequence() {
@@ -272,7 +271,6 @@ function startRoundSequence() {
     myRoundFinished = false;
     oppRoundFinished = false;
     
-    // Show and reset battle track
     document.getElementById('battle-track-container').style.display = 'block';
     updateProgressBar(0, false);
     updateProgressBar(0, true);
@@ -345,7 +343,7 @@ window.addEventListener('keydown', (e) => {
             activeWordIdx++;
             
             matchChannel.send({ type: 'broadcast', event: 'battle_progress', payload: { id: myId, wordIdx: activeWordIdx } });
-            updateProgressBar(activeWordIdx, false); // Update local visual
+            updateProgressBar(activeWordIdx, false); 
 
             if (activeWordIdx >= WORDS_PER_ROUND) {
                 finishTyping(); 
@@ -408,6 +406,7 @@ function finishTyping() {
     const roundScore = wpm + acc;
     myLastRoundScore = roundScore;
     myTotalScore += roundScore;
+    myScoreHistory.push(roundScore);
     
     document.getElementById('my-score').innerText = myTotalScore;
 
@@ -426,11 +425,11 @@ function handleRoundFinished({ payload }) {
     if (payload.id === oppId) {
         oppLastRoundScore = payload.score;
         oppTotalScore += payload.score;
+        oppScoreHistory.push(payload.score);
         document.getElementById('opp-score').innerText = oppTotalScore;
         lastOpponentActivity = Date.now(); 
         oppRoundFinished = true;
         
-        // Push opponent's track to 100% just in case
         updateProgressBar(WORDS_PER_ROUND, true);
 
         if (myRoundFinished) {
@@ -476,7 +475,7 @@ async function endMatch() {
     const resultsScreen = document.getElementById('results-screen');
     const resultText = document.getElementById('final-result');
     const eloText = document.getElementById('elo-change-text');
-    const coinText = document.getElementById('coin-reward-text'); // Fix for coins
+    const coinText = document.getElementById('coin-reward-text');
 
     resultsScreen.classList.remove('hidden');
     document.getElementById('typing-viewport').style.display = 'none';
@@ -524,6 +523,59 @@ async function endMatch() {
 
     await removeFromQueue(); 
     _supabase.removeChannel(matchChannel);
+    renderMatchChart();
+}
+
+function renderMatchChart() {
+    const ctx = document.getElementById('matchChart');
+    if (!ctx) return;
+    const labels = Array.from({ length: Math.max(myScoreHistory.length, oppScoreHistory.length, 1) }, (_, i) => `Round ${i + 1}`);
+    new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: myUsername || 'You',
+                    data: myScoreHistory,
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: oppUsername || 'Opponent',
+                    data: oppScoreHistory,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: 'rgba(255,255,255,0.9)', font: { family: "'Inter', sans-serif" } }
+                }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: 'rgba(255,255,255,0.6)' }, 
+                    grid: { color: 'rgba(255,255,255,0.05)' } 
+                },
+                y: { 
+                    ticks: { color: 'rgba(255,255,255,0.6)' }, 
+                    grid: { color: 'rgba(255,255,255,0.05)' }, 
+                    beginAtZero: true 
+                }
+            }
+        }
+    });
 }
 
 window.addEventListener('beforeunload', () => {
