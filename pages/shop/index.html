@@ -6,7 +6,7 @@
     <title>MeDoType | Shop</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="../../data/css/root.css">
@@ -232,6 +232,12 @@
             gap: 4px;
         }
 
+        .badge.admin {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+        }
+
         .badge.limited {
             background: #f59e0b;
             color: white;
@@ -422,12 +428,9 @@
 
     // Tab Switching Logic
     function switchTab(tabId) {
-        // Hide all contents
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        // Remove active state from all buttons
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
-        // Show selected content & highlight button
         document.getElementById(`tab-${tabId}`).classList.add('active');
         document.getElementById(`btn-${tabId}`).classList.add('active');
     }
@@ -441,10 +444,7 @@
         
         myId = session.user.id;
         
-        // Load items from database
         await loadShopDataFromDB();
-        
-        // Load player profile data
         await fetchUserData();
     }
 
@@ -491,11 +491,25 @@
         inventoryContainer.innerHTML = "";
         shopContainer.innerHTML = "";
 
+        // Sorting rule structure mapping categories to a numeric rank hierarchy
+        const priorityMap = { 'admin': 3, 'limited': 2, 'seasonal': 1 };
+        const sortByPriorityAndPrice = (a, b) => {
+            const priorityA = priorityMap[(a.category || '').toLowerCase()] || 0;
+            const priorityB = priorityMap[(b.category || '').toLowerCase()] || 0;
+            
+            // Sort by descending priority, fallback to ascending price
+            return priorityB - priorityA || a.price - b.price;
+        };
+
         // 1. Inventory displays everything you already own
-        const ownedItems = masterCatalog.filter(item => unlockedAvatars.includes(item.id));
+        const ownedItems = masterCatalog
+            .filter(item => unlockedAvatars.includes(item.id))
+            .sort(sortByPriorityAndPrice);
         
         // 2. Shop displays everything currently marked as "in stock"
-        const storefrontItems = masterCatalog.filter(item => activeStockIds.includes(item.id));
+        const storefrontItems = masterCatalog
+            .filter(item => activeStockIds.includes(item.id))
+            .sort(sortByPriorityAndPrice);
 
         // Show items in your Inventory
         if (ownedItems.length === 0) {
@@ -507,7 +521,6 @@
                     ? `<button class="btn-action equipped" disabled>Equipped</button>` 
                     : `<button class="btn-action" onclick="equipItem('${item.id}')">Equip</button>`;
 
-                // Shows the price even though it is in your inventory!
                 const priceLabel = `<i class="fa-solid fa-coins"></i> Value: ${item.price} Coins`;
                 const card = createCardMarkup(item, priceLabel, actionBtnHtml);
                 inventoryContainer.appendChild(card);
@@ -523,7 +536,6 @@
                 let actionBtnHtml = "";
                 
                 if (alreadyOwned) {
-                    // Item is bought -> shows "Purchased" instead of a buy option
                     actionBtnHtml = `<button class="btn-action" disabled style="background: rgba(255,255,255,0.04); color: var(--text-faded); border-color: transparent;">Purchased</button>`;
                 } else {
                     const canAfford = myCoins >= item.price;
@@ -541,8 +553,11 @@
 
     function createCardMarkup(item, priceLabel, buttonHtml) {
         let badgeHtml = "";
-        const categoryLower = item.category.toLowerCase();
-        if (categoryLower === "limited") {
+        const categoryLower = (item.category || '').toLowerCase();
+        
+        if (categoryLower === "admin") {
+            badgeHtml = `<div class="badge admin"><i class="fa-solid fa-user-shield"></i> Admin</div>`;
+        } else if (categoryLower === "limited") {
             badgeHtml = `<div class="badge limited"><i class="fa-solid fa-star"></i> Limited</div>`;
         } else if (categoryLower === "seasonal") {
             badgeHtml = `<div class="badge seasonal"><i class="fa-solid fa-leaf"></i> Seasonal</div>`;
