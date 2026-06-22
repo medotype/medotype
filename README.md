@@ -1,4 +1,6 @@
-# ⌨️ MeDoType
+<h1 align="center">
+⌨️ MeDoType
+</h1>
 
 <p align="center">
   <strong>A sleek, minimalist, and feature-rich typing platform built for speed, competition, and progression.</strong>
