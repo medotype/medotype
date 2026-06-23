@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Legal Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+    <style>
+        :root {
+            --bg: #0b0c10;
+            --card-bg: #1f2833;
+            --text-bright: #66fcf1;
+            --text-faded: #c5a059;
+            --accent: #45f3ff;
+            --error: #ff4d4d;
+            --font: 'Inter', sans-serif;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-bright); 
+            font-family: var(--font); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: flex-start; 
+            min-height: 100vh; 
+            padding: 3rem 2rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        #app { 
+            width: 100%; 
+            max-width: 850px; 
+            text-align: center; 
+            position: relative; 
+        }
+
+        .title-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .title-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0 0 0.5rem 0;
+            color: var(--text-bright);
+        }
+
+        .title-header p {
+            color: var(--text-faded);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+                
+        .mode-settings-container { 
+            display: flex; 
+            justify-content: center; 
+            margin-bottom: 2.5rem; 
+            position: relative; 
+            z-index: 50; 
+        }
+
+        .mode-group { 
+            display: flex; 
+            background: var(--card-bg); 
+            padding: 6px; 
+            border-radius: 12px; 
+            gap: 4px; 
+            align-items: center; 
+        }
+
+        .mode-item { 
+            padding: 10px 20px; 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            color: var(--text-faded); 
+            cursor: pointer; 
+            border-radius: 8px; 
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            white-space: nowrap; 
+            border: none;
+            background: transparent;
+        }
+
+        .mode-item:hover { 
+            color: var(--text-bright); 
+        }
+
+        .mode-item.active { 
+            color: var(--accent); 
+            background: rgba(255, 255, 255, 0.05); 
+        }
+
+        /* Document Container Styling */
+        .doc-viewport {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .doc-section {
+            display: none;
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .doc-section.active-doc {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin-top: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p, li {
+            color: var(--text-faded);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            padding-left: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-box {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: var(--text-bright);
+            font-weight: 500;
+        }
+
+        .email-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px dashed var(--accent);
+        }
+
+        .email-link:hover {
+            opacity: 0.8;
+        }
+
+        .btn-back {
+            margin-top: 2rem;
+            background: transparent;
+            color: var(--text-faded);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover {
+            color: var(--text-bright);
+            border-color: var(--text-bright);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="title-header">
+            <h1>MeDoType</h1>
+            <p>Legal Center & System Policies</p>
+        </div>
+
+        <div class="mode-settings-container">
+            <div class="mode-group">
+                <button class="mode-item active" onclick="switchTab('tos', this)">
+                    <i class="fa-solid fa-scale-balanced"></i> Terms of Service
+                </button>
+                <button class="mode-item" onclick="switchTab('privacy', this)">
+                    <i class="fa-solid fa-shield-halved"></i> Privacy Policy
+                </button>
+                <button class="mode-item" onclick="switchTab('dmca', this)">
+                    <i class="fa-solid fa-copyright"></i> DMCA Policy
+                </button>
+            </div>
+        </div>
+
+        <div class="doc-viewport">
+            
+            <div id="tos" class="doc-section active-doc">
+                <h2>Terms of Service</h2>
+                <p>Welcome to MeDoType. By accessing or playing on our website, you agree to comply with and be bound by the following terms and conditions. Please read them carefully.</p>
+                
+                <h3>1. Acceptance of Terms</h3>
+                <p>By using the MeDoType typing platform, system software, and competitive frameworks, you express consent to these terms. If you do not accept any dynamic clause outlined here, you are prohibited from utilizing our platforms.</p>
+                
+                <h3>2. Account Registration & User Protection</h3>
+                <p>To use full leaderboards, competitive matchmaking systems, save typing scores, and progress in your account balance metrics, you may verify credentials via Supabase authentication. You are responsible for ensuring account key privacy and avoiding programmatic automation shortcuts.</p>
+                
+                <h3>3. Prohibited Conduct & Game Integrity</h3>
+                <p>You strictly agree not to manipulate client system interactions. Prohibited activities include:</p>
+                <ul>
+                    <li>Deploying typing bots, structural macros, automated layout scripts, or unfair inject actions.</li>
+                    <li>Exploiting platform vulnerabilities to artificially inflate Words Per Minute (WPM), Accuracy values, or competitive Rank Elo calculations.</li>
+                    <li>Harassing other typing match opponents or misusing administrative interface elements.</li>
+                </ul>
+                <p>MeDoType utilizes automated telemetry and bot-detection features. Violation of game integrity results in localized score dismissal or permanent system exclusions.</p>
+                
+                <h3>4. Limitations of Liability</h3>
+                <p>MeDoType is delivered "as-is." We do not guarantee uninterrupted server uptimes, instantaneous database sync protocols, or loss immunity regarding localized token points, account levels, or session tracking information.</p>
+            </div>
+
+            <div id="privacy" class="doc-section">
+                <h2>Privacy Policy</h2>
+                <p>Your privacy is deeply important to us. This policy details how MeDoType gathers, parses, records, and stores data interactions across the core singleplayer and ranked typing clients.</p>
+                
+                <h3>1. Data Collection Protocols</h3>
+                <p>When interacting with our ecosystem, specific metrics are securely cataloged:</p>
+                <ul>
+                    <li><strong>Account Identity Information:</strong> Handled securely via Supabase authorization tokens (User IDs, registration metadata, display names).</li>
+                    <li><strong>Performance Stat Profiles:</strong> Record data points containing absolute Words Per Minute speed metrics, typist keystroke precision ratings, dynamic combo thresholds, and active game session timestamps.</li>
+                    <li><strong>Telemetry Data:</strong> Temporary structural typing timeline records processed exclusively to determine engine bot statuses and prevent script manipulation.</li>
+                </ul>
+                
+                <h3>2. How We Store Your Information</h3>
+                <p>All core score histories, dynamic theme preference properties, coin wallet sums, and ranked competitive tiers are hosted using external secure cloud database infrastructures provided by Supabase. passwords are encrypted and never directly visible to our platform managers.</p>
+                
+                <h3>3. Cookies and Local Browser Caching</h3>
+                <p>We leverage client browser `sessionStorage` and `localStorage` structures exclusively to cache functional viewport parameters, current typing mode identifiers, theme configurations, and temporary authentication session handshakes. We do not use third-party cross-site advertising trackers.</p>
+            </div>
+
+            <div id="dmca" class="doc-section">
+                <h2>DMCA Copyright Policy</h2>
+                <p>MeDoType respects the intellectual property rights of creators, developers, and asset holders. In accordance with the Digital Millennium Copyright Act ("DMCA"), we will respond rapidly to clear notices regarding claimed copyright infringement.</p>
+                
+                <h3>Filing a Takedown Notice</h3>
+                <p>If you identify copyrighted assets, custom typography elements, interface assets, or graphic additions within the MeDoType engine that you claim violate your direct ownership permissions, you may submit an official written notification to our designated copyright agent.</p>
+                
+                <div class="highlight-box">
+                    <p>All formal DMCA inquiries and removal notifications must be transmitted via email directly to:</p>
+                    <p style="margin-top: 0.5rem; font-size: 1.1rem;"><i class="fa-solid fa-envelope" style="color: var(--accent); margin-right: 8px;"></i> <a href="mailto:fortnitepoop6767@gmail.com" class="email-link">fortnitepoop6767@gmail.com</a></p>
+                </div>
+
+                <h3>Required Information for Claims</h3>
+                <p>To assure processing speed, ensure your notice details the following structural records:</p>
+                <ul>
+                    <li>An electronic or physical signature of the person authorized to represent the copyright owner.</li>
+                    <li>Clear identification of the specific copyrighted work or asset claimed to be infringed.</li>
+                    <li>The exact URL link, file script reference, or internal application location where the material resides.</li>
+                    <li>Your primary contact details, including full name, mailing address, telephone line, and email handle.</li>
+                    <li>A statement confirming your good-faith belief that use of the material is not authorized by the copyright owner.</li>
+                    <li>A statement, under penalty of perjury, that the information in your notice is completely accurate.</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <button class="btn-back" onclick="window.history.back();">
+            <i class="fa-solid fa-arrow-left"></i> Return
+        </button>
+    </div>
+
+    <script>
+        function switchTab(tabId, buttonElement) {
+            const items = document.querySelectorAll('.mode-item');
+            items.forEach(item => item.classList.remove('active'));
+            
+            const sections = document.querySelectorAll('.doc-section');
+            sections.forEach(section => section.classList.remove('active-doc'));
+            
+            buttonElement.classList.add('active');
+            document.getElementById(tabId).classList.add('active-doc');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
