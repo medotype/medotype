@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeDoType | Account</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../data/css/root.css">
     <script src="../../data/js/theme.js"></script>
     <style>
@@ -55,7 +55,7 @@
             flex-direction: column;
         }
 
-        #title, #subtitle {
+        #title, #subtitle, #legal-notice {
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
@@ -149,6 +149,22 @@
             gap: 8px;
         }
         .discord-btn:hover { background: #4752C4; opacity: 1; }
+
+        /* Legal Notice styling */
+        .legal-notice {
+            font-size: 0.72rem;
+            color: var(--text-faded);
+            margin-top: 1.2rem;
+            line-height: 1.4;
+        }
+        .legal-notice a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .legal-notice a:hover {
+            text-decoration: underline;
+        }
 
         .toggle-btn {
             background: transparent;
@@ -244,6 +260,10 @@
                 <svg width="18" height="18" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a74.37,74.37,0,0,0,6.73-11,68.43,68.43,0,0,1-10.64-5.12c.91-.66,1.8-1.34,2.65-2a75.58,75.58,0,0,0,72.86,0c.85.69,1.74,1.37,2.65,2a68.45,68.45,0,0,1-10.64,5.12,74.74,74.74,0,0,0,6.73,11,105.73,105.73,0,0,0,31-18.83C129,50.7,122.64,27.78,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.87,46,53.87,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.11,46,96.11,53,91,65.69,84.69,65.69Z"/></svg>
                 Discord
             </button>
+
+            <div class="legal-notice" id="legal-notice">
+                By signing up, you agree to the <a href="legal.html">Terms of Service</a> and <a href="legal.html">Privacy Policy</a>.
+            </div>
         </div>
 
         <div class="form-side" style="position: relative;">
@@ -305,9 +325,11 @@
             const subtitle = document.getElementById('subtitle');
             const btn = document.getElementById('main-btn');
             const hint = document.getElementById('mode-hint');
+            const legalNotice = document.getElementById('legal-notice');
 
             title.style.opacity = 0;
             subtitle.style.opacity = 0;
+            legalNotice.style.opacity = 0;
 
             setTimeout(() => {
                 if (isLogin) {
@@ -316,15 +338,18 @@
                     subtitle.innerText = "Pick up where you left off.";
                     btn.innerText = "Login";
                     hint.innerText = "Need an account? Sign Up";
+                    legalNotice.innerHTML = 'By logging in, you agree to the <a href="legal.html">Terms of Service</a> and <a href="legal.html">Privacy Policy</a>.';
                 } else {
                     userWrap.classList.remove('hidden');
                     title.innerText = "MeDoType";
                     subtitle.innerText = "Track your speed and progress.";
                     btn.innerText = "Sign Up";
                     hint.innerText = "Already a member? Login";
+                    legalNotice.innerHTML = 'By signing up, you agree to the <a href="legal.html">Terms of Service</a> and <a href="legal.html">Privacy Policy</a>.';
                 }
                 title.style.opacity = 1;
                 subtitle.style.opacity = 1;
+                legalNotice.style.opacity = 1;
             }, 200);
         }
 
@@ -390,7 +415,6 @@
 
             const targetRedirect = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/home.html';
 
-            // this is some bullshit i prob could have did this better
             const { data, error } = await _supabase.auth.signInWithOAuth({
                 provider: 'discord',
                 options: {
