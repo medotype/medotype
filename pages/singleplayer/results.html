@@ -73,15 +73,26 @@
         .stat-val { font-size: 5.5rem; font-weight: 600; color: var(--accent); margin: 0.2rem 0; text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
         .acc-val { color: var(--text-bright); font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 400; }
         
-        .coin-reward { 
-            color: #eab308; 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-            margin-bottom: 2rem; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px;
+        /* --- Rewards Styles --- */
+        .rewards-container { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+        .coin-reward { color: #eab308; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .xp-reward { color: #a855f7; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .level-up-msg {
+            background: linear-gradient(45deg, #a855f7, #3b82f6);
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            animation: bounceIn 0.5s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .status-msg { font-size: 0.8rem; margin-bottom: 1.5rem; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; line-height: 1.4; }
@@ -150,7 +161,8 @@
             <h1 class="stat-val" id="wpm">0</h1>
             <p class="acc-val" id="acc">ACCURACY: 0%</p>
             
-            <div id="coin-container"></div>
+            <div id="rewards-container" class="rewards-container"></div>
+            <div id="level-up-container"></div>
             <div id="status-container" class="status-msg">Checking status...</div>
             <div id="action-area"></div>
         </div>
@@ -193,7 +205,10 @@
             const modeRaw = params.get('mode') || 'time_15';
             const modeClean = modeRaw.replace('_', ' ');
             const isSaved = params.get('saved') === 'true';
+            
             const coins = parseInt(params.get('coins')) || 0;
+            const xp = parseInt(params.get('xp')) || 0;
+            const leveledUp = params.get('levelup') === 'true';
             
             const isBot = params.get('bot') === 'true';
             const isWorthy = params.get('worthy') !== 'false'; 
@@ -204,15 +219,22 @@
             document.getElementById('acc').innerText = `ACCURACY: ${acc}%`;
             document.getElementById('mode-display').innerText = `Mode: ${modeClean}`;
 
-            const coinContainer = document.getElementById('coin-container');
+            const rewardsContainer = document.getElementById('rewards-container');
+            const levelUpContainer = document.getElementById('level-up-container');
             const statusBox = document.getElementById('status-container');
             const actionArea = document.getElementById('action-area');
 
-            if (isSaved && coins > 0) {
-                coinContainer.className = "coin-reward";
-                coinContainer.innerHTML = `<i class="fa-solid fa-coins"></i> +${coins} Coins`;
+            if (isSaved) {
+                let rewardsHTML = '';
+                if (coins > 0) rewardsHTML += `<div class="coin-reward"><i class="fa-solid fa-coins"></i> +${coins} Coins</div>`;
+                if (xp > 0) rewardsHTML += `<div class="xp-reward"><i class="fa-solid fa-star"></i> +${xp} XP</div>`;
+                rewardsContainer.innerHTML = rewardsHTML;
+
+                if (leveledUp) {
+                    levelUpContainer.innerHTML = `<div class="level-up-msg"><i class="fa-solid fa-arrow-up-right-dots"></i> LEVEL UP!</div>`;
+                }
             } else {
-                coinContainer.style.display = "none";
+                rewardsContainer.style.display = "none";
                 document.getElementById('acc').style.marginBottom = "2rem";
             }
 
@@ -278,7 +300,6 @@
             let historyData = [];
             let historyLabels = [];
 
-            // Only fetch database metrics if it is not an alternate custom mode
             if (!isCustomMode) {
                 try {
                     const { data: { session } } = await _supabase.auth.getSession();
