@@ -1,6 +1,6 @@
-<h1 align="center">
-⌨️ MeDoType
-</h1>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/medotype/medotype/refs/heads/main/data/images/marketing/logo.png" alt="Centered Image Title" width="500">
+</p>
 
 <p align="center">
   <strong>A sleek, minimalist, and feature-rich typing platform built for speed, competition, and progression.</strong>
