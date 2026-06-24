@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | Ranked Match</title>
+    <title>MeDoType | Multiplayer Match</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -59,7 +59,7 @@
             <p id="overlay-sub">Waiting for opponent...</p>
         </div>
 
-<div id="round-results-overlay">
+        <div id="round-results-overlay">
             <h2 style="font-size: 2rem; margin:0; color: var(--text-bright);">Round Complete!</h2>
             <div class="round-scores-flex">
                 <div class="round-score-card">
@@ -75,15 +75,22 @@
 
         <div id="results-screen" class="hidden overlay">
             <div class="results-container">
-                
                 <div class="results-card">
                     <div class="mode-tag" id="mode-display">Ranked Match</div>
                     <p class="stat-label">Match Outcome</p>
                     <h1 class="stat-val" id="final-result">VICTORY</h1>
                     <p class="acc-val" id="elo-change-text">+25 Elo</p>
                     
-                    <div class="coin-reward" id="coin-reward-text" style="display: none;">
-                        <i class="fa-solid fa-coins"></i> +0 Coins
+                    <div class="rewards-wrapper">
+                        <div id="level-up-container"></div>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <div class="coin-reward" id="coin-reward-text" style="display: none;">
+                                <i class="fa-solid fa-coins"></i> +0 Coins
+                            </div>
+                            <div class="xp-reward" id="xp-reward-text" style="display: none;">
+                                <i class="fa-solid fa-star"></i> +0 XP
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="results-buttons">
@@ -103,12 +110,6 @@
 
             </div>
         </div>
-
-    </div>
-
-    <script src="game.js"></script>
-</body>
-</html>
 
     </div>
 
