@@ -357,7 +357,6 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
                 
                 if (!scoreError) saved = true;
 
-                // Call existing Coin RPC
                 const { data: coinData, error: coinError } = await _supabase
                     .rpc('reward_coins_for_game', { 
                         wpm_score: wpm, 
@@ -367,11 +366,12 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
                 
                 if (!coinError) earnedCoins = coinData; 
 
-                // Call new XP RPC
+                // Updated: Passing game_mode to the secure RPC function
                 const { data: xpData, error: xpError } = await _supabase
                     .rpc('reward_xp_for_game', {
                         wpm_score: wpm,
-                        acc_score: acc
+                        acc_score: acc,
+                        game_mode: activeModeConfig.id
                     });
                 
                 if (!xpError && xpData) {
@@ -385,7 +385,6 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
 
         sessionStorage.setItem('wpmTimeline', JSON.stringify(wpmTimeline));
         
-        // Pass XP and level status to URL
         window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}&xp=${earnedXp}&levelup=${leveledUp}&bot=${isBot}&worthy=${isWorthyScore}&isCustomMode=${!explicitlySaved}&failed=${suddenDeathFailed}`;
     }
 
