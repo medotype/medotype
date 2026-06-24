@@ -221,15 +221,46 @@ body {
 .acc-val { font-size: 1.4rem; font-weight: 600; color: #10b981; margin: 0 0 1.5rem 0; }
 .elo-change.negative { color: var(--error); }
 
+/* REWARDS MODULE */
+.rewards-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+
 .coin-reward { 
     color: #eab308; 
     font-size: 0.9rem; 
     font-weight: 600; 
-    margin-bottom: 1.5rem; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
     gap: 8px;
+}
+
+.xp-reward { 
+    color: #a855f7; 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px;
+}
+
+.level-up-msg {
+    background: linear-gradient(45deg, #a855f7, #3b82f6);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    animation: bounceIn 0.5s ease;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .results-buttons {
@@ -318,8 +349,6 @@ body {
 
 
 /* --- BATTLE UI FEATURES --- */
-
-/* Damage Flash */
 #damage-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -404,4 +433,27 @@ body {
 }
 .runner.opp-runner {
     background: var(--error);
+}
+
+@media (min-width: 768px) {
+    .results-card {
+        max-width: 850px;
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        grid-template-areas: 
+            "winner chart"
+            "elo chart"
+            "rewards chart"
+            "buttons chart";
+        gap: 12px 40px;
+        text-align: left;
+        align-items: center;
+        padding: 35px 45px;
+    }
+    
+    .winner-text { grid-area: winner; margin: 0; text-align: left; }
+    .elo-change { grid-area: elo; margin: 0; text-align: left; margin-bottom: 0px; }
+    .rewards-wrapper { grid-area: rewards; align-items: flex-start; margin-bottom: 0; }
+    .results-buttons { grid-area: buttons; margin: 5px 0 0 0; justify-content: flex-start; }
+    .chart-container { grid-area: chart; margin: 0; height: 100%; min-height: 250px; }
 }
