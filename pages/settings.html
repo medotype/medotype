@@ -135,6 +135,27 @@
             color: var(--text-bright);
         }
 
+        /* Load More Button */
+        .load-more-btn {
+            display: block;
+            margin: 1.5rem auto 0 auto;
+            background-color: var(--bg);
+            color: var(--text-bright);
+            border: 1px solid var(--text-faded);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .load-more-btn:hover {
+            background-color: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
         /* Sounds & Toggles */
         .setting-row {
             display: flex;
@@ -282,6 +303,36 @@
         <div class="settings-section">
             <h2><i class="fa-solid fa-palette"></i> Appearance</h2>
             <div class="theme-grid" id="themeGrid"></div>
+            <button id="loadMoreBtn" class="load-more-btn">Load More Themes</button>
+        </div>
+
+        <div class="settings-section">
+            <h2><i class="fa-solid fa-sliders"></i> General</h2>
+            
+            <div class="setting-row section-disabled">
+                <div class="setting-info">
+                    <h3>Language <span class="soon-badge">Coming Soon</span></h3>
+                    <p>Select your preferred interface display language</p>
+                </div>
+                <select id="languageSelect" disabled>
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                </select>
+            </div>
+
+            <div class="setting-row section-disabled">
+                <div class="setting-info">
+                    <h3>Font Size <span class="soon-badge">Coming Soon</span></h3>
+                    <p>Adjust global font text layouts</p>
+                </div>
+                <select id="fontSizeSelect" disabled>
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
         </div>
 
         <div class="settings-section">
@@ -340,31 +391,67 @@
             { id: 'default', name: 'Default', bg: '#0f172a', accent: '#3b82f6' },
             { id: 'theme-carbon', name: 'Carbon', bg: '#151515', accent: '#f5e076' },
             { id: 'theme-sakura', name: 'Sakura', bg: '#181013', accent: '#f43f5e' },
-            { id: 'theme-cyberpunk', name: 'Cyberpunk', bg: '#080710', accent: '#ff007f' },
             { id: 'theme-nordic', name: 'Frost', bg: '#0b131a', accent: '#22d3ee' },
             { id: 'theme-emerald', name: 'Emerald', bg: '#09110e', accent: '#10b981' },
-            { id: 'theme-dracula', name: 'Dracula', bg: '#1e1e2e', accent: '#cba6f7' }
+            { id: 'theme-dracula', name: 'Dracula', bg: '#1e1e2e', accent: '#cba6f7' },
+            { id: 'theme-gruvbox', name: 'Gruvbox', bg: '#1d2021', accent: '#fe8019' },
+            { id: 'theme-solarized', name: 'Solarized', bg: '#002b36', accent: '#268bd2' },
+            { id: 'theme-monokai', name: 'Monokai', bg: '#272822', accent: '#f92672' },
+            { id: 'theme-lavender', name: 'Lavender', bg: '#1e1b29', accent: '#80deea' },
+            { id: 'theme-synthwave', name: 'Synthwave', bg: '#26142c', accent: '#2de2e6' },
+            { id: 'theme-rosepine', name: 'Rosé Pine', bg: '#191724', accent: '#ebbcba' },
+            { id: 'theme-retro', name: 'Retro Amber', bg: '#0d0700', accent: '#ff9900' }
         ];
 
         const themeGrid = document.getElementById('themeGrid');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
         const savedTheme = localStorage.getItem('user-theme') || 'default';
+
+        let themesDisplayed = 6;
+        const chunkSize = 6;
+
+        // Smart edge case: if the user's active theme is further down the list, 
+        // expand visible chunks immediately so their choice isn't hidden on load.
+        const activeThemeIndex = themes.findIndex(t => t.id === savedTheme);
+        if (activeThemeIndex >= themesDisplayed) {
+            themesDisplayed = Math.ceil((activeThemeIndex + 1) / chunkSize) * chunkSize;
+        }
 
         if (savedTheme !== 'default') document.body.className = savedTheme;
 
-        // Populate Theme Grid
-        themes.forEach(theme => {
-            const card = document.createElement('div');
-            card.className = `theme-card ${savedTheme === theme.id ? 'active' : ''}`;
-            card.onclick = () => setTheme(theme.id);
-            
-            card.innerHTML = `
-                <div class="theme-colors">
-                    <div class="color-dot" style="background: ${theme.bg}; border: 1px solid var(--text-faded)"></div>
-                    <div class="color-dot" style="background: ${theme.accent}"></div>
-                </div>
-                <div class="theme-name">${theme.name}</div>
-            `;
-            themeGrid.appendChild(card);
+        // Render themes systematically up to the tracking layout count limit
+        function renderThemes() {
+            themeGrid.innerHTML = '';
+            const limit = Math.min(themesDisplayed, themes.length);
+
+            for (let i = 0; i < limit; i++) {
+                const theme = themes[i];
+                const card = document.createElement('div');
+                card.className = `theme-card ${savedTheme === theme.id ? 'active' : ''}`;
+                card.setAttribute('data-id', theme.id);
+                card.onclick = () => setTheme(theme.id);
+                
+                card.innerHTML = `
+                    <div class="theme-colors">
+                        <div class="color-dot" style="background: ${theme.bg}; border: 1px solid var(--text-faded)"></div>
+                        <div class="color-dot" style="background: ${theme.accent}"></div>
+                    </div>
+                    <div class="theme-name">${theme.name}</div>
+                `;
+                themeGrid.appendChild(card);
+            }
+
+            // Hide the pagination block if no remaining elements match criteria
+            if (themesDisplayed >= themes.length) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'block';
+            }
+        }
+
+        loadMoreBtn.addEventListener('click', () => {
+            themesDisplayed += chunkSize;
+            renderThemes();
         });
 
         function setTheme(themeId) {
@@ -372,8 +459,8 @@
             localStorage.setItem('user-theme', themeId);
 
             const cards = document.querySelectorAll('.theme-card');
-            cards.forEach((card, index) => {
-                if (themes[index].id === themeId) {
+            cards.forEach(card => {
+                if (card.getAttribute('data-id') === themeId) {
                     card.classList.add('active');
                 } else {
                     card.classList.remove('active');
@@ -381,17 +468,18 @@
             });
         }
 
+        // Initialize theme matrix configuration array loop
+        renderThemes();
+
         // --- Audio Settings Configuration Logic ---
         const musicToggle = document.getElementById('musicToggle');
         const musicVolume = document.getElementById('musicVolume');
         const volumeVal = document.getElementById('volumeVal');
         const volumeRow = document.getElementById('volumeRow');
 
-        // Fetch user audio properties or fallback to defaults
-        const savedMusicState = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
-        const savedVolumeLevel = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15%
+        const savedMusicState = localStorage.getItem('lobby-music-enabled') !== 'false';
+        const savedVolumeLevel = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15';
 
-        // Initialize UI Elements State
         musicToggle.checked = savedMusicState;
         musicVolume.value = savedVolumeLevel;
         volumeVal.innerText = `${savedVolumeLevel}%`;
@@ -400,7 +488,6 @@
             musicVolume.disabled = true;
         }
 
-        // Track Music Availability Configuration Check
         musicToggle.addEventListener('change', (e) => {
             const isEnabled = e.target.checked;
             localStorage.setItem('lobby-music-enabled', isEnabled);
@@ -413,19 +500,16 @@
                 musicVolume.disabled = true;
             }
 
-            // Optional Communication Dispatch to active Audio Engine elements if present
             window.dispatchEvent(new CustomEvent('lobby-audio-update', { 
                 detail: { enabled: isEnabled, volume: musicVolume.value / 100 } 
             }));
         });
 
-        // Track Volume Sliding Updates
         musicVolume.addEventListener('input', (e) => {
             const vol = e.target.value;
             volumeVal.innerText = `${vol}%`;
             localStorage.setItem('lobby-music-volume', vol);
 
-            // Optional Communication Dispatch to active Audio Engine elements if present
             window.dispatchEvent(new CustomEvent('lobby-audio-update', { 
                 detail: { enabled: musicToggle.checked, volume: vol / 100 } 
             }));
