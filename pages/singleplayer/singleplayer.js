@@ -1,4 +1,4 @@
-    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
     const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
@@ -27,7 +27,6 @@
     const modeIcon = document.getElementById('mode-icon');
     const results = document.getElementById('results-screen');
 
-    // Close options window on blur
     window.addEventListener('click', function() {
         const menu = document.getElementById('overflow-menu');
         if (menu) menu.classList.remove('show');
@@ -50,18 +49,15 @@
         const nav = document.getElementById('mode-nav');
         nav.innerHTML = '';
         
-        // Overflow threshold limit logic rule
         if (availableModes.length <= 5) {
             availableModes.forEach(mode => {
                 nav.appendChild(createModeElement(mode));
             });
         } else {
-            // Render first 4 inline directly
             for(let i = 0; i < 4; i++) {
                 nav.appendChild(createModeElement(availableModes[i]));
             }
 
-            // Create contextual ellipsis container
             const wrapper = document.createElement('div');
             wrapper.className = 'dropdown-wrapper';
 
@@ -78,7 +74,6 @@
             menu.className = 'dropdown-menu';
             menu.id = 'overflow-menu';
 
-            // Fill overflow menu with remainder indexes
             for(let i = 4; i < availableModes.length; i++) {
                 menu.appendChild(createModeElement(availableModes[i]));
             }
@@ -94,7 +89,6 @@
         div.className = 'mode-item';
         div.id = `mode-${mode.id}`;
         
-        // Dynamically pull icon directly from JSON config values
         let targetIcon = mode.icon || (mode.type === 'time' ? 'fa-clock' : 'fa-font');
         div.innerHTML = `<i class="fa-solid ${targetIcon}"></i> ${mode.label}`;
         
@@ -119,7 +113,6 @@
             }
         }
 
-        // Apply alternate logic structural scripts
         container.className = ''; 
         if (mode.script === 'blind') {
             container.classList.add('mode-blind');
@@ -252,7 +245,6 @@
         const letters = currentWord.querySelectorAll('.letter');
 
         if (e.key === 'Backspace') {
-            // Block structural backspaces in sudden death mode 
             if (activeModeConfig.script === 'sudden_death') return;
 
             if (activeCharIdx > 0) {
@@ -292,7 +284,6 @@
                     letters[activeCharIdx].classList.add('incorrect');
                     updateCombo(true);
 
-                    // Alternate Script Hook: Sudden Death Instant summary cutoff breakout
                     if (activeModeConfig.script === 'sudden_death') {
                         finish(true); 
                         return;
@@ -322,18 +313,18 @@
         clearInterval(timerInterval);
         const durationMinutes = (Date.now() - startTime) / 60000;
         
-        // Calculate WPM cleanly even for custom failures
         let wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
-        if (suddenDeathFailed) wpm = Math.round(correctChars / 5) || 0; // Handle immediate breakdown math edge case
+        if (suddenDeathFailed) wpm = Math.round(correctChars / 5) || 0; 
 
         const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
 
         let saved = false;
         let earnedCoins = 0; 
+        let earnedXp = 0;
+        let leveledUp = false;
         let isBot = false;
         let isWorthyScore = wpm >= 10 && acc >= 50;
 
-        // Force check alternate non-saved settings flags
         const explicitlySaved = activeModeConfig.isSaved !== false;
 
         try {
@@ -354,7 +345,6 @@
                 }
             }
 
-            // Only run insertion logic if the JSON profile settings allow saves
             if (session && isWorthyScore && !isBot && explicitlySaved) {
                 const { error: scoreError } = await _supabase
                     .from('scores')
@@ -367,6 +357,7 @@
                 
                 if (!scoreError) saved = true;
 
+                // Call existing Coin RPC
                 const { data: coinData, error: coinError } = await _supabase
                     .rpc('reward_coins_for_game', { 
                         wpm_score: wpm, 
@@ -375,6 +366,18 @@
                     });
                 
                 if (!coinError) earnedCoins = coinData; 
+
+                // Call new XP RPC
+                const { data: xpData, error: xpError } = await _supabase
+                    .rpc('reward_xp_for_game', {
+                        wpm_score: wpm,
+                        acc_score: acc
+                    });
+                
+                if (!xpError && xpData) {
+                    earnedXp = xpData.xp_gained;
+                    leveledUp = xpData.leveled_up;
+                }
             }
         } catch (dbError) {
             console.error(dbError);
@@ -382,7 +385,8 @@
 
         sessionStorage.setItem('wpmTimeline', JSON.stringify(wpmTimeline));
         
-        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}&bot=${isBot}&worthy=${isWorthyScore}&isCustomMode=${!explicitlySaved}&failed=${suddenDeathFailed}`;
+        // Pass XP and level status to URL
+        window.location.href = `results.html?wpm=${wpm}&acc=${acc}&mode=${activeModeConfig.id}&saved=${saved}&coins=${earnedCoins}&xp=${earnedXp}&levelup=${leveledUp}&bot=${isBot}&worthy=${isWorthyScore}&isCustomMode=${!explicitlySaved}&failed=${suddenDeathFailed}`;
     }
 
     initModes();
