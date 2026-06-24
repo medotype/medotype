@@ -28,7 +28,7 @@
 
         .container { width: 100%; max-width: 800px; }
 
-        /* New Category Navigation Styles */
+        /* Category Navigation Styles */
         .category-nav {
             display: flex;
             gap: 25px;
@@ -188,7 +188,8 @@
 <div class="container">
     <div class="category-nav">
         <button class="category-btn active" id="cat-single" onclick="switchCategory('singleplayer')">Singleplayer</button>
-        <button class="category-btn" id="cat-ranked" onclick="switchCategory('ranked')">Ranked</button>
+        <button class="category-btn" id="cat-ranked" onclick="switchCategory('ranked')">Multiplayer</button>
+        <button class="category-btn" id="cat-levels" onclick="switchCategory('levels')">Levels</button>
     </div>
 
     <div class="header">
@@ -199,8 +200,7 @@
     <div class="board-card">
         <table id="lb-table" style="display:none">
             <thead>
-                <tr id="table-headers">
-                    </tr>
+                <tr id="table-headers"></tr>
             </thead>
             <tbody id="lb-body"></tbody>
         </table>
@@ -216,24 +216,22 @@
 </div>
 
 <script>
-        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
-        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
-        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+    const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let currentData = [];
     let currentPage = 1;
     let availableModes = [];
     const ITEMS_PER_PAGE = 10;
     
-    // New variable to track active tab
     let currentCategory = 'singleplayer';
 
-async function initModes() {
+    async function initModes() {
         try {
             const response = await fetch('../data/json/modelist.json');
             if(!response.ok) throw new Error("JSON not found");
             
-            // take out random diddy modes
             const allModes = await response.json();
             availableModes = allModes.filter(mode => mode.isSaved === true);
             
@@ -265,11 +263,12 @@ async function initModes() {
         });
     }
 
-    // Category Switcher
+    // Category Switcher (Fixed conditional logic and ID routing references)
     function switchCategory(cat) {
         currentCategory = cat;
         document.getElementById('cat-single').classList.toggle('active', cat === 'singleplayer');
         document.getElementById('cat-ranked').classList.toggle('active', cat === 'ranked');
+        document.getElementById('cat-levels').classList.toggle('active', cat === 'levels');
         
         const modeNav = document.getElementById('mode-nav');
         
@@ -280,9 +279,12 @@ async function initModes() {
             document.querySelectorAll('.mode-btn').forEach((b, i) => {
                 b.classList.toggle('active', i === 0);
             });
-        } else {
+        } else if (cat === 'ranked') {
             modeNav.style.display = 'none';
             fetchRankedData();
+        } else if (cat === 'levels') {
+            modeNav.style.display = 'none';
+            fetchLevelData();
         }
     }
 
@@ -322,6 +324,45 @@ async function initModes() {
         } catch (err) {
             console.error("Ranked Load Failed:", err);
             status.innerText = "Error loading ranked standings.";
+        }
+    }
+
+    // Fetch Levels Data (Fixed context labels)
+    async function fetchLevelData() {
+        const status = document.getElementById('status');
+        const table = document.getElementById('lb-table');
+        const pagination = document.getElementById('pagination');
+
+        table.style.display = 'none';
+        pagination.style.display = 'none';
+        status.style.display = 'block';
+        status.innerText = 'fetching level standings...';
+
+        try {
+            const { data: profiles, error } = await _supabase
+                .from('profiles')
+                .select('username, level')
+                .order('level', { ascending: false })
+                .limit(500);
+
+            if (error) throw error;
+            if (!profiles || profiles.length === 0) {
+                status.innerText = 'no players found';
+                return;
+            }
+
+            currentData = profiles.map(p => ({
+                username: p.username || "Unknown",
+                level: p.level || 1
+            }));
+
+            currentPage = 1;
+            status.style.display = 'none';
+            table.style.display = 'table';
+            renderPage();
+        } catch (err) {
+            console.error("Levels Load Failed:", err);
+            status.innerText = "Error loading levels.";
         }
     }
 
@@ -386,7 +427,7 @@ async function initModes() {
         }
     }
 
-    // Dynamic Render Logic
+    // Dynamic Render Logic (Fixed layouts for 'ranked' vs 'levels')
     function renderPage() {
         const body = document.getElementById('lb-body');
         const headers = document.getElementById('table-headers');
@@ -400,11 +441,17 @@ async function initModes() {
                 <th style="text-align:right">wpm</th>
                 <th style="text-align:right">accuracy</th>
             `;
-        } else {
+        } else if (currentCategory === 'ranked') {
             headers.innerHTML = `
                 <th class="rank-col">#</th>
                 <th>user</th>
                 <th style="text-align:right">elo rating</th>
+            `;
+        } else if (currentCategory === 'levels') {
+            headers.innerHTML = `
+                <th class="rank-col">#</th>
+                <th>user</th>
+                <th style="text-align:right">level</th>
             `;
         }
 
@@ -435,12 +482,19 @@ async function initModes() {
                         <td class="wpm-col">${s.wpm}</td>
                         <td class="acc-col">${s.accuracy}%</td>
                     </tr>`;
-            } else {
+            } else if (currentCategory === 'ranked') {
                 body.innerHTML += `
                     <tr>
                         <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
                         <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
                         <td class="wpm-col">${s.elo}</td>
+                    </tr>`;
+            } else if (currentCategory === 'levels') {
+                body.innerHTML += `
+                    <tr>
+                        <td class="rank-col" style="${rowStyle}">${absoluteRank}</td>
+                        <td class="user-col" style="${rowStyle}">${crownIcon}${s.username}</td>
+                        <td class="wpm-col">Lvl ${s.level}</td>
                     </tr>`;
             }
         });
