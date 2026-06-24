@@ -1,14 +1,14 @@
-        :root {
-            --bg: #121213;
-            --card-bg: #1e1e1f;
-            --text-faded: #565656;
-            --text-bright: #ffffff;
-            --accent: #3b82f6;
-            --error: #ef4444;
-            --success: #10b981;
-            --firstplace: #FFD700;
-            --font: 'Inter', sans-serif;
-        }
+:root {
+    --bg: #121213;
+    --card-bg: #1e1e1f;
+    --text-faded: #565656;
+    --text-bright: #ffffff;
+    --accent: #3b82f6;
+    --error: #ef4444;
+    --success: #10b981;
+    --firstplace: #FFD700;
+    --font: 'Inter', sans-serif;
+}
 
 * {
     box-sizing: border-box;
@@ -31,18 +31,6 @@ body.theme-sakura {
     --text-bright: #fff1f2;
     --accent: #f43f5e;
     --firstplace: #fbbf24;
-}
-
-/* this next theme is shit was i high making this */
-
-body.theme-cyberpunk {
-    --bg: #080710;
-    --card-bg: #131124;
-    --text-faded: #818cf8;
-    --text-bright: #00ffff;
-    --accent: #ff007f;
-    --success: #00ffaa;
-    --firstplace: #ffdf00;
 }
 
 body.theme-nordic {
@@ -72,4 +60,67 @@ body.theme-dracula {
     --error: #f38ba8;
     --success: #a6e3a1;
     --firstplace: #f9e2af;
+}
+
+body.theme-gruvbox {
+    --bg: #1d2021;
+    --card-bg: #282828;
+    --text-faded: #a89984;
+    --text-bright: #fbf1c7;
+    --accent: #fe8019;
+    --firstplace: #fabd2f;
+}
+
+body.theme-solarized {
+    --bg: #002b36;
+    --card-bg: #073642;
+    --text-faded: #859900;
+    --text-bright: #93a1a1;
+    --accent: #268bd2;
+    --firstplace: #b58900;
+}
+
+body.theme-monokai {
+    --bg: #272822;
+    --card-bg: #3e3d32;
+    --text-faded: #75715e;
+    --text-bright: #f8f8f2;
+    --accent: #f92672;
+    --firstplace: #e6db74;
+}
+
+body.theme-lavender {
+    --bg: #1e1b29;
+    --card-bg: #2d283e;
+    --text-faded: #9fa8da;
+    --text-bright: #e8eaf6;
+    --accent: #80deea;
+    --firstplace: #fff59d;
+}
+
+body.theme-synthwave {
+    --bg: #26142c;
+    --card-bg: #341c3d;
+    --text-faded: #ff7edb;
+    --text-bright: #f3efe0;
+    --accent: #2de2e6;
+    --firstplace: #f6019d;
+}
+
+body.theme-rosepine {
+    --bg: #191724;
+    --card-bg: #1f1d2e;
+    --text-faded: #908caa;
+    --text-bright: #e0def4;
+    --accent: #ebbcba;
+    --firstplace: #f6c177;
+}
+
+body.theme-retro {
+    --bg: #0d0700;
+    --card-bg: #1a0f00;
+    --text-faded: #b37400;
+    --text-bright: #ffb732;
+    --accent: #ff9900;
+    --firstplace: #ffcc00;
 }
