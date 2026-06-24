@@ -40,6 +40,11 @@ let totalKeystrokes = 0;
 let myRoundFinished = false;
 let oppRoundFinished = false;
 
+// Aggregated match tracking for XP evaluation
+let matchTotalWpm = 0;
+let matchTotalCorrectChars = 0;
+let matchTotalKeystrokes = 0;
+
 const container = document.getElementById('word-container');
 const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
@@ -403,6 +408,11 @@ function finishTyping() {
     const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
     const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
     
+    // Increment global match stats for final XP calculation
+    matchTotalWpm += wpm;
+    matchTotalCorrectChars += correctChars;
+    matchTotalKeystrokes += totalKeystrokes;
+
     const roundScore = wpm + acc;
     myLastRoundScore = roundScore;
     myTotalScore += roundScore;
@@ -476,6 +486,8 @@ async function endMatch() {
     const resultText = document.getElementById('final-result');
     const eloText = document.getElementById('elo-change-text');
     const coinText = document.getElementById('coin-reward-text');
+    const xpText = document.getElementById('xp-reward-text');
+    const levelUpContainer = document.getElementById('level-up-container');
 
     resultsScreen.classList.remove('hidden');
     document.getElementById('typing-viewport').style.display = 'none';
@@ -512,13 +524,35 @@ async function endMatch() {
         await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
     }
 
-    const estimatedAverageWpm = Math.floor(myTotalScore / TOTAL_ROUNDS);
+    // Calculate aggregated Match Accuracy/WPM metrics
+    const avgWpm = Math.round(matchTotalWpm / TOTAL_ROUNDS) || 0;
+    const avgAcc = matchTotalKeystrokes > 0 ? Math.round((matchTotalCorrectChars / matchTotalKeystrokes) * 100) : 0;
+
+    // Issue Coins Reward
     const { data: coinData, error: coinError } = await _supabase
-        .rpc('reward_coins_for_game', { wpm_score: estimatedAverageWpm, acc_score: 95 });
+        .rpc('reward_coins_for_game', { wpm_score: avgWpm, acc_score: avgAcc, game_mode: 'ranked' });
         
     if (!coinError && coinData !== null) {
         coinText.innerHTML = `<i class="fa-solid fa-coins"></i> +${coinData} Coins`;
-        coinText.style.display = 'block';
+        coinText.style.display = 'flex';
+    }
+
+    // Issue XP Reward
+    const { data: xpData, error: xpError } = await _supabase
+        .rpc('reward_xp_for_game', {
+            wpm_score: avgWpm,
+            acc_score: avgAcc,
+            game_mode: 'ranked'
+        });
+
+    if (!xpError && xpData) {
+        if (xpData.xp_gained > 0) {
+            xpText.innerHTML = `<i class="fa-solid fa-star"></i> +${xpData.xp_gained} XP`;
+            xpText.style.display = 'flex';
+        }
+        if (xpData.leveled_up) {
+            levelUpContainer.innerHTML = `<div class="level-up-msg"><i class="fa-solid fa-arrow-up-right-dots"></i> LEVEL UP!</div>`;
+        }
     }
 
     await removeFromQueue(); 
