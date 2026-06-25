@@ -57,12 +57,4 @@ MeDoType is engineered utilizing a modern, lightweight tech stack focused on raw
 ## 📂 Project Structure Sketch
 
 ```text
-├── data/
-│   ├── css/          # System root variables and theme styles
-│   ├── js/           # Theme handlers and shared utilities
-│   └── json/         # Configurable game modes (modelist.json)
-├── account/
-│   ├── index.html    # Main dashboard & user profile statistics
-│   ├── loadprofile.html # Dynamic profile viewer for user searches
-│   └── leaderboard.html # Live global ranking system
-└── ...
+im not making this shi
