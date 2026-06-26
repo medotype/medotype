@@ -54,6 +54,7 @@
     <script src="../data/js/warning.js"></script>
 
     <style>
+        /* Interactive Toast Style Notification styling */
         #incoming-toast {
             position: fixed;
             bottom: 24px;
@@ -127,61 +128,79 @@
             object-fit: cover;
         }
 
-        /* Requirements Spec Compliant Broadcast Overlay System Layout */
+        /* Non-blocking Roblox Style Global Message System Overlay */
         #global-message-overlay {
             position: fixed;
             top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.5); /* 0.5 transparent dark bg */
+            width: 100vw;
             z-index: 100005; 
             display: none;
-            align-items: center;
             justify-content: center;
             font-family: var(--font, 'Inter', sans-serif);
-            padding: 20px;
+            padding: 0;
             box-sizing: border-box;
+            pointer-events: none; /* Allows user to interact with the site underneath */
         }
         #global-message-overlay.active { display: flex; }
 
         .global-message-card {
-            background: #121214; 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 28px;
+            background: rgba(18, 18, 20, 0.5); /* 0.5 transparent dark background */
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0 0 16px 16px;
+            padding: 16px 28px 8px 28px;
             width: 100%;
-            max-width: 480px;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.7);
-            text-align: left;
-            position: relative;
+            max-width: 650px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+            text-align: center;
+            pointer-events: auto; /* Restores button clickability on the message itself */
+            animation: robloxSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        @keyframes robloxSlideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         .global-message-header {
             font-size: 0.8rem;
             font-weight: 800;
             color: var(--accent, #a855f7);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
         }
+        
         .global-message-body {
             font-size: 1.05rem;
-            line-height: 1.6;
-            color: #ffffff; /* White text of the message */
-            margin-bottom: 24px;
+            line-height: 1.5;
+            color: #ffffff; /* White text of the broadcast message */
+            margin-bottom: 10px;
             word-wrap: break-word;
+            font-weight: 500;
         }
-        .global-message-close-btn {
-            background: rgba(255, 255, 255, 0.06);
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
+
+        .global-message-close-container {
+            display: flex;
+            justify-content: center;
             width: 100%;
-            transition: background 0.2s;
         }
-        .global-message-close-btn:hover { background: rgba(255, 255, 255, 0.12); }
+
+        .global-message-close-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            padding: 2px 10px;
+            transition: color 0.2s, opacity 0.2s;
+        }
+        .global-message-close-btn:hover { color: #ffffff; }
     </style>
 </head>
     
@@ -246,7 +265,9 @@
         <div class="global-message-card">
             <div id="global-msg-user-header" class="global-message-header">sent by Admin</div>
             <div id="global-msg-body-content" class="global-message-body">Message Content Goes Here.</div>
-            <button class="global-message-close-btn" onclick="closeGlobalMessageOverlay()">Dismiss Server Message</button>
+            <div class="global-message-close-container">
+                <button class="global-message-close-btn" onclick="closeGlobalMessageOverlay()">[ close ]</button>
+            </div>
         </div>
     </div>
 
@@ -270,6 +291,7 @@
 
         let shellCurrentUsername = null;
         let shellActiveRequest = null;
+        let autoDismissTimer = null; // Holds the reference for the 5s auto-fade timer
 
         async function initGlobalChallengeListener() {
             const { data: { session } } = await shellSupabase.auth.getSession();
@@ -327,6 +349,7 @@
                 .subscribe();
         }
 
+        // Updated global message window behavior engine loop
         function displayGlobalClientMessage(sender, message) {
             const msgOverlay = document.getElementById('global-message-overlay');
             const msgHeader = document.getElementById('global-msg-user-header');
@@ -336,12 +359,28 @@
                 msgHeader.innerText = `sent by ${sender}`;
                 msgBody.innerText = message;
                 msgOverlay.classList.add('active');
+
+                // Clear prior timeout loops to avoid conflicts on rapid sequential broadcasts
+                if (autoDismissTimer) {
+                    clearTimeout(autoDismissTimer);
+                }
+
+                // Automatically clear overlay message after 5 seconds
+                autoDismissTimer = setTimeout(() => {
+                    closeGlobalMessageOverlay();
+                }, 5000);
             }
         }
 
         function closeGlobalMessageOverlay() {
             const msgOverlay = document.getElementById('global-message-overlay');
-            if (msgOverlay) msgOverlay.classList.remove('active');
+            if (msgOverlay) {
+                msgOverlay.classList.remove('active');
+            }
+            if (autoDismissTimer) {
+                clearTimeout(autoDismissTimer);
+                autoDismissTimer = null;
+            }
         }
 
         function executeClientSideJumpscare(visualSource) {
