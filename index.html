@@ -12,8 +12,6 @@
     </script>
 
     <script>
-
-        // theres prob a better way to do this fuck me
     function syncNav() {
         const frame = document.getElementById('main-frame');
         const currentUrl = frame.contentWindow.location.pathname;
@@ -31,7 +29,7 @@
         navLinks.forEach(link => {
             link.classList.remove('active');
             
-            const category = link.getAttribute('data-category'); // boi this is terrible code :sob:
+            const category = link.getAttribute('data-category');
             if (category && categoryMap[category].some(keyword => currentUrl.includes(keyword))) {
                 link.classList.add('active');
             }
@@ -46,7 +44,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="data/css/index.css">
     <link rel="stylesheet" href="data/css/root.css">
     <script src="/data/js/theme.js"></script>
@@ -110,10 +108,7 @@
 
         #jumpscare-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: #000;
             z-index: 100000;
             display: none;
@@ -131,6 +126,62 @@
             height: 100%;
             object-fit: cover;
         }
+
+        /* Requirements Spec Compliant Broadcast Overlay System Layout */
+        #global-message-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.5); /* 0.5 transparent dark bg */
+            z-index: 100005; 
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font, 'Inter', sans-serif);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #global-message-overlay.active { display: flex; }
+
+        .global-message-card {
+            background: #121214; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 28px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+            text-align: left;
+            position: relative;
+        }
+        .global-message-header {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--accent, #a855f7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .global-message-body {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #ffffff; /* White text of the message */
+            margin-bottom: 24px;
+            word-wrap: break-word;
+        }
+        .global-message-close-btn {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .global-message-close-btn:hover { background: rgba(255, 255, 255, 0.12); }
     </style>
 </head>
     
@@ -147,39 +198,37 @@
             <input type="text" id="global-search" placeholder="search users..." onkeypress="if(event.key === 'Enter') handleSearch()">
         </div>
         
-<nav class="nav-links">
-    <a onclick="navigateFrame('pages/home.html', this)" data-category="home" class="active" title="Home">
-        <i class="fa-solid fa-house"></i>
-    </a>
-    <a onclick="navigateFrame('pages/shop', this)" data-category="shop" title="Shop">
-        <i class="fa-solid fa-bag-shopping"></i>
-    </a>
-    <a onclick="navigateFrame('pages/leaderboard.html', this)" data-category="leaderboard" title="Leaderboard">
-        <i class="fa-solid fa-trophy"></i>
-    </a>
-    <a onclick="navigateFrame('pages/settings.html', this)" data-category="settings" title="Settings">
-        <i class="fa-solid fa-gear"></i>
-    </a>
-    <a id="nav-admin" onclick="navigateFrame('pages/admin/index.html', this)" data-category="admin" title="Admin" style="display: none;">
-        <i class="fa-solid fa-user-gear"></i>
-    </a>
-    <a onclick="navigateFrame('pages/account/index.html', this)" data-category="account" title="Account">
-        <i class="fa-solid fa-circle-user"></i>
-    </a>
-</nav>
+        <nav class="nav-links">
+            <a onclick="navigateFrame('pages/home.html', this)" data-category="home" class="active" title="Home">
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <a onclick="navigateFrame('pages/shop', this)" data-category="shop" title="Shop">
+                <i class="fa-solid fa-bag-shopping"></i>
+            </a>
+            <a onclick="navigateFrame('pages/leaderboard.html', this)" data-category="leaderboard" title="Leaderboard">
+                <i class="fa-solid fa-trophy"></i>
+            </a>
+            <a onclick="navigateFrame('pages/settings.html', this)" data-category="settings" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </a>
+            <a id="nav-admin" onclick="navigateFrame('pages/admin/index.html', this)" data-category="admin" title="Admin" style="display: none;">
+                <i class="fa-solid fa-user-gear"></i>
+            </a>
+            <a onclick="navigateFrame('pages/account/index.html', this)" data-category="account" title="Account">
+                <i class="fa-solid fa-circle-user"></i>
+            </a>
+        </nav>
     </header>
 
     <main class="content-wrapper">
-<iframe id="main-frame" src="pages/home.html" onload="syncNav()" title="Loading..."></iframe>
+        <iframe id="main-frame" src="pages/home.html" onload="syncNav()" title="Loading..."></iframe>
     </main>
 
     <footer>
         <div class="footer-left">
             <span>&copy; 2026 <span class="footer-accent">MeDoType</span></span>
         </div>
-        <div class="footer-right">
-            BETA
-        </div>
+        <div class="footer-right">BETA</div>
     </footer>
 
     <div id="incoming-toast">
@@ -193,6 +242,14 @@
         </div>
     </div>
 
+    <div id="global-message-overlay">
+        <div class="global-message-card">
+            <div id="global-msg-user-header" class="global-message-header">sent by Admin</div>
+            <div id="global-msg-body-content" class="global-message-body">Message Content Goes Here.</div>
+            <button class="global-message-close-btn" onclick="closeGlobalMessageOverlay()">Dismiss Server Message</button>
+        </div>
+    </div>
+
     <div id="jumpscare-overlay">
         <img id="jumpscare-image" src="" alt="Jumpscare">
     </div>
@@ -201,22 +258,10 @@
 
     <script>
         const JUMPSCARE_CONFIG = {
-            "shittyclown": {
-                "image": "../data/images/jumpscares/shittyclown.png",
-                "audio": "/data/sounds/jumpscare/scream.mp3"
-            },
-            "doggun": {
-                "image": "../data/images/jumpscares/doggun.png",
-                "audio": "/data/sounds/jumpscare/scream.mp3"
-            },
-            "cityboii": {
-                "image": "../data/images/jumpscares/cityboii.png",
-                "audio": "/data/sounds/jumpscare/cityboii.mp3"
-            },
-            "fart": {
-                "image": "../data/images/jumpscares/fart.png",
-                "audio": "/data/sounds/jumpscare/fart.mp3"
-            }
+            "shittyclown": { "image": "../data/images/jumpscares/shittyclown.png", "audio": "/data/sounds/jumpscare/scream.mp3" },
+            "doggun": { "image": "../data/images/jumpscares/doggun.png", "audio": "/data/sounds/jumpscare/scream.mp3" },
+            "cityboii": { "image": "../data/images/jumpscares/cityboii.png", "audio": "/data/sounds/jumpscare/cityboii.mp3" },
+            "fart": { "image": "../data/images/jumpscares/fart.png", "audio": "/data/sounds/jumpscare/fart.mp3" }
         };
 
         const SHELL_SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
@@ -239,9 +284,7 @@
             if (profile) {
                 if (profile.is_admin === true) {
                     const adminNavButton = document.getElementById('nav-admin');
-                    if (adminNavButton) {
-                        adminNavButton.style.display = ''; 
-                    }
+                    if (adminNavButton) adminNavButton.style.display = ''; 
                 }
 
                 if (profile.username) {
@@ -263,7 +306,7 @@
             }
         }
 
-        function initGlobalJumpscareListener() {
+        function initGlobalCommunicationListener() {
             shellSupabase.channel('app-jumpscare-stream')
                 .on('broadcast', { event: 'execute-scare' }, payload => {
                     const target = payload.payload.targetUsername;
@@ -273,7 +316,32 @@
                         executeClientSideJumpscare(visual);
                     }
                 })
+                .on('broadcast', { event: 'global-message' }, payload => {
+                    displayGlobalClientMessage(payload.payload.sender, payload.payload.message);
+                })
+                .on('broadcast', { event: 'chest-settings-update' }, payload => {
+                    console.log("Daily Rewards Balance updated on Server:", payload.payload);
+                    window.globalDailyChestRewardBase = payload.payload.baseCoins;
+                    window.globalDailyChestCooldownHours = payload.payload.cooldownHrs;
+                })
                 .subscribe();
+        }
+
+        function displayGlobalClientMessage(sender, message) {
+            const msgOverlay = document.getElementById('global-message-overlay');
+            const msgHeader = document.getElementById('global-msg-user-header');
+            const msgBody = document.getElementById('global-msg-body-content');
+
+            if (msgOverlay && msgHeader && msgBody) {
+                msgHeader.innerText = `sent by ${sender}`;
+                msgBody.innerText = message;
+                msgOverlay.classList.add('active');
+            }
+        }
+
+        function closeGlobalMessageOverlay() {
+            const msgOverlay = document.getElementById('global-message-overlay');
+            if (msgOverlay) msgOverlay.classList.remove('active');
         }
 
         function executeClientSideJumpscare(visualSource) {
@@ -366,11 +434,7 @@
 
                 if (!error) {
                     const frame = document.getElementById('main-frame');
-                    if (frame) {
-                        frame.src = `pages/ranked/1v1.html?${uniqueRoomId}`;
-                    }
-                } else {
-                    console.error("Failed to accept challenge", error);
+                    if (frame) frame.src = `pages/ranked/1v1.html?${uniqueRoomId}`;
                 }
             } else {
                 await shellSupabase.from('1v1_queue').update({ status: 'declined' }).eq('id', req.id);
@@ -379,7 +443,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initGlobalChallengeListener();
-            initGlobalJumpscareListener();
+            initGlobalCommunicationListener();
         });
     </script>
 </body>
