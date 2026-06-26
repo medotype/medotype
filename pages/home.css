@@ -28,7 +28,7 @@ body {
     display: flex; 
     justify-content: center; 
     align-items: center; 
-    gap: 40px; 
+    gap: 20px; 
     width: 100%; 
     margin-bottom: 2rem; 
     height: 2rem; 
@@ -400,76 +400,37 @@ body {
     100% { transform: translateX(100vw); }
 }
 
-/* --- Daily Chest --- */
-.daily-chest-container {
-    position: fixed;
-    right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--card-bg);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 20px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    z-index: 1000;
-    text-align: center;
-    width: 130px;
-    animation: fadeIn 0.5s ease;
-}
-
-.chest-icon {
-    font-size: 3.5rem;
-    color: #ffd700;
+/* --- Premium Mini Daily Chest Styles --- */
+.chest-box {
     cursor: pointer;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.3));
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
 }
 
-.chest-icon:hover {
-    transform: scale(1.1) rotate(5deg);
-    filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+.chest-box i {
+    color: #ffd700 !important;
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+    transition: transform 0.2s ease;
 }
 
-.chest-disabled {
-    color: var(--text-faded);
-    cursor: not-allowed;
-    filter: grayscale(1);
+.chest-box:hover:not(.disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(255, 215, 0, 0.3);
+    background: rgba(255, 215, 0, 0.03);
 }
 
-.chest-disabled:hover {
-    transform: none;
-    filter: grayscale(1);
+.chest-box:hover:not(.disabled) i {
+    transform: scale(1.1) rotate(4deg);
 }
 
-.chest-timer {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: var(--text-faded);
-    font-variant-numeric: tabular-nums;
+.chest-box.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5;
+    background: rgba(255, 255, 255, 0.01);
 }
 
-.chest-title {
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    color: var(--text-bright);
-    letter-spacing: 0.05em;
-}
-
-@media (max-width: 1200px) {
-    .daily-chest-container {
-        position: relative;
-        right: auto;
-        top: auto;
-        transform: none;
-        margin: 2rem auto 0 auto;
-        flex-direction: row;
-        width: 100%;
-        max-width: 300px;
-        justify-content: space-between;
-    }
+.chest-box.disabled i {
+    color: var(--text-faded) !important;
+    filter: none !important;
+    transform: none !important;
 }
