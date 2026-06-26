@@ -66,6 +66,12 @@
         <span id="error-text">Error message</span>
     </div>
 
+    <div class="daily-chest-container" id="daily-chest-container" style="display: none;">
+        <div class="chest-title">Daily Chest</div>
+        <i class="fa-solid fa-gem chest-icon" id="chest-icon" onclick="claimChest()"></i>
+        <div class="chest-timer" id="chest-timer">Loading...</div>
+    </div>
+
     <div class="modal-overlay" id="ranked-modal-overlay" onclick="closeRankedModal()">
         <div class="challenge-modal" onclick="event.stopPropagation()">
             <h3 class="modal-title"><i class="fa-solid fa-trophy" style="color:var(--accent); margin-right:10px;"></i>Multiplayer</h3>
@@ -129,12 +135,12 @@
         </div>
 
         <div class="bottom-actions">
-<button class="btn btn-shop" id="shop-btn">
-    <span class="icon-wrapper">
-        <i class="fa-solid fa-store" id="shop-icon" style="margin-right: 8px;"></i>
-    </span>
-    Shop
-</button>
+            <button class="btn btn-shop" id="shop-btn">
+                <span class="icon-wrapper">
+                    <i class="fa-solid fa-store" id="shop-icon" style="margin-right: 8px;"></i>
+                </span>
+                Shop
+            </button>
 
             <div id="queue-container">
                 <button class="btn btn-cancel" id="cancel-queue-btn" onclick="stopQueueUI()">
@@ -169,21 +175,20 @@
         let queueId = null;
         let queueSubscription = null;
         let errorTimeout;
-
+        let chestCooldownInterval; // Daily chest interval
 
         const lobbyMusic = new Audio('../data/sounds/music/lobby.m4a');
         lobbyMusic.loop = true;
 
         function applyAudioSettings() {
-            const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
-            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15%
+            const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; 
+            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; 
 
             lobbyMusic.volume = parseInt(musicVolumeSetting, 10) / 100;
 
             return musicEnabled;
         }
 
-        // Handle live multi-tab updates seamlessly
         window.addEventListener('storage', (e) => {
             if (e.key === 'lobby-music-volume' || e.key === 'lobby-music-enabled') {
                 const shouldPlay = applyAudioSettings();
@@ -195,23 +200,20 @@
             }
         });
 
-function startLobby() {
-    const splash = document.getElementById('welcome-splash');
+        function startLobby() {
+            const splash = document.getElementById('welcome-splash');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
 
-    splash.style.opacity = '0';
-
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
-    const shouldPlay = applyAudioSettings();
-
-    if (shouldPlay) {
-        lobbyMusic.play().catch(err => {
-            console.log("Audio playback failed:", err);
-        });
-    }
-}
+            const shouldPlay = applyAudioSettings();
+            if (shouldPlay) {
+                lobbyMusic.play().catch(err => {
+                    console.log("Audio playback failed:", err);
+                });
+            }
+        }
 
         async function loadUserProfile() {
             const { data: { session } } = await _supabase.auth.getSession();
@@ -230,9 +232,10 @@ function startLobby() {
             document.getElementById('shop-btn').classList.remove('btn-locked');
             document.getElementById('shop-btn').disabled = false;
 
+            // Updated query to grab chest claim status
             const { data: profile, error } = await _supabase
                 .from('profiles')
-                .select('elo, username')
+                .select('elo, username, last_chest_claim')
                 .eq('id', session.user.id)
                 .single();
 
@@ -243,6 +246,9 @@ function startLobby() {
                 document.getElementById('username-display').innerText = currentUsername;
                 document.getElementById('elo-display').innerText = `${currentElo}`;
                 document.getElementById('profile-stats').style.opacity = '1';
+
+                // Initialize Chest Tracker
+                initDailyChest(profile.last_chest_claim);
             }
         }
 
@@ -253,6 +259,92 @@ function startLobby() {
             clearTimeout(errorTimeout);
             errorTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
         }
+
+        // --- Daily Chest JS Start ---
+        function initDailyChest(lastClaimStr) {
+            const container = document.getElementById('daily-chest-container');
+            container.style.display = 'flex';
+            updateChestUI(lastClaimStr);
+        }
+
+        function updateChestUI(lastClaimStr) {
+            const chestIcon = document.getElementById('chest-icon');
+            const timerText = document.getElementById('chest-timer');
+            clearInterval(chestCooldownInterval);
+
+            if (!lastClaimStr) {
+                chestIcon.classList.remove('chest-disabled');
+                timerText.innerText = "Claim Now!";
+                timerText.style.color = 'var(--accent)';
+                return;
+            }
+
+            const lastClaim = new Date(lastClaimStr);
+            const now = new Date();
+            const hoursSince = (now - lastClaim) / (1000 * 60 * 60);
+
+            if (hoursSince >= 24) {
+                chestIcon.classList.remove('chest-disabled');
+                timerText.innerText = "Claim Now!";
+                timerText.style.color = 'var(--accent)';
+            } else {
+                chestIcon.classList.add('chest-disabled');
+                timerText.style.color = 'var(--text-faded)';
+                
+                const targetTime = new Date(lastClaim.getTime() + 24 * 60 * 60 * 1000);
+                
+                chestCooldownInterval = setInterval(() => {
+                    const currentNow = new Date();
+                    const diff = targetTime - currentNow;
+                    
+                    if (diff <= 0) {
+                        clearInterval(chestCooldownInterval);
+                        updateChestUI(new Date(currentNow.getTime() - 25 * 60 * 60 * 1000).toISOString());
+                        return;
+                    }
+                    
+                    const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                    const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+                    timerText.innerText = `${h}:${m}:${s}`;
+                }, 1000);
+            }
+        }
+
+        async function claimChest() {
+            const chestIcon = document.getElementById('chest-icon');
+            if (chestIcon.classList.contains('chest-disabled')) return;
+
+            chestIcon.classList.add('chest-disabled');
+            document.getElementById('chest-timer').innerText = "Claiming...";
+
+            try {
+                const { data: reward, error } = await _supabase.rpc('claim_daily_chest');
+                
+                if (error) {
+                    showError(error.message || "Failed to claim chest.");
+                    updateChestUI(null); 
+                    return;
+                }
+
+                const toast = document.getElementById('error-toast');
+                toast.style.background = '#10b981'; 
+                document.getElementById('error-text').innerText = `Daily Chest Claimed! +${reward} Coins`;
+                toast.classList.add('show');
+                
+                setTimeout(() => { 
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.style.background = 'var(--error)', 300); 
+                }, 3000);
+
+                updateChestUI(new Date().toISOString());
+
+            } catch (err) {
+                console.error(err);
+                showError("Network error claiming chest.");
+            }
+        }
+        // --- Daily Chest JS End ---
 
         function handleModeClick(mode) {
             if (!isLoggedIn) {
@@ -301,7 +393,6 @@ function startLobby() {
             document.getElementById('queue-timer').innerText = "00:00";
         }
 
-        // --- Queue Functions ---
         async function startMatchmaking(mode) {
             closeRankedModal();
             
@@ -542,15 +633,14 @@ function startLobby() {
             }
         }
 
-const shopBtn = document.getElementById('shop-btn');
+        const shopBtn = document.getElementById('shop-btn');
 
-if (shopBtn) {
-    shopBtn.addEventListener('click', function() {
-        window.location.href = '/pages/shop/index.html'; 
-    });
-}
+        if (shopBtn) {
+            shopBtn.addEventListener('click', function() {
+                window.location.href = '/pages/shop/index.html'; 
+            });
+        }
 
-        // --- App Initializations ---
         loadUserProfile();
         createFloatingWords();
     </script>
