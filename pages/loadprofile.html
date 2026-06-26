@@ -93,7 +93,7 @@
         .profile-details h2 { margin: 0 0 0.2rem 0; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; }
         .profile-details p { color: var(--text-faded); font-size: 0.9rem; margin: 0; }
 
-                /* --- XP & Level Styles --- */
+        /* --- XP & Level Styles --- */
         .level-badge {
             background: var(--accent);
             color: white;
@@ -359,6 +359,7 @@
                             </div>
                             <span id="xp-label" class="xp-label">0 / 500 XP</span>
                         </div>
+                    </div>
                 </div>
             </div>
 
@@ -420,7 +421,6 @@
     </div>
 
     <script>
-        // Production App Keys
         const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
         const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
@@ -428,11 +428,10 @@
         let availableModes = [];
         let targetUserId = null;
 
-        // Fixes image database pathways so they are mapped correctly outside the shop subfolder
         function fixSrcPath(src) {
             if (!src) return '../data/images/default.png';
             if (src.startsWith('../../')) {
-                return src.substring(3); // strips '../../data/images/x.png' down to '../data/images/x.png'
+                return src.substring(3);
             }
             return src;
         }
@@ -449,7 +448,6 @@
             }
 
             try {
-                // Fetch profiles details schema
                 const { data: profile, error: pErr } = await _supabase
                     .from('profiles')
                     .select('id, username, updated_at, elo, coins, avatar_id, unlocked_avatars, xp, level')
@@ -464,18 +462,19 @@
                 targetUserId = profile.id;
                 const activeAvatarId = profile.avatar_id || "default";
                 const unlockedAvatars = profile.unlocked_avatars || ["default"];
+                const currentLevel = profile.level || 1;
+                const currentXp = profile.xp || 0;
 
                 const { data: items } = await _supabase.from('items').select('*');
                 const catalog = items || [];
 
-                // Setup Core Details UI
                 msg.style.display = 'none';
                 view.style.display = 'flex';
                 document.getElementById('p-name').innerHTML = `${profile.username} <span id="p-level" class="level-badge">Lvl ${currentLevel}</span>`;
                 document.getElementById('user-elo').innerText = profile.elo ?? 0;
                 document.getElementById('user-coins').innerText = profile.coins ?? 0;
 
-                                const xpNeeded = currentLevel * 500;
+                const xpNeeded = currentLevel * 500;
                 const xpPercentage = Math.min((currentXp / xpNeeded) * 100, 100);
                 document.getElementById('xp-label').innerText = `${currentXp} / ${xpNeeded} XP`;
                 setTimeout(() => {
@@ -485,7 +484,6 @@
                 const joinDate = new Date(profile.updated_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
                 document.getElementById('p-joined').innerHTML = `<i class="fa-solid fa-calendar-days" style="font-size: 0.8rem; margin-right: 5px;"></i> Member since ${joinDate}`;
 
-                // Set Active Avatar Profile Asset
                 const imgEl = document.getElementById('profile-img');
                 const fallbackEl = document.getElementById('profile-fallback');
                 
@@ -494,10 +492,7 @@
                 imgEl.style.display = 'block';
                 fallbackEl.style.display = 'none';
 
-                // Render visual Inventory grid structure
                 renderInventory(unlockedAvatars, activeAvatarId, catalog);
-
-                // Initialize Dynamic Game Mode Navigation
                 initModes();
 
             } catch (err) {
@@ -547,12 +542,11 @@
             });
         }
 
-async function initModes() {
+        async function initModes() {
             try {
                 const response = await fetch('../data/json/modelist.json');
                 if(!response.ok) throw new Error("Could not fetch modes");
                 
-                // im gonna kill myself if i edit this file one more time
                 const allModes = await response.json();
                 availableModes = allModes.filter(mode => mode.isSaved === true);
                 
@@ -589,7 +583,6 @@ async function initModes() {
 
             if (!targetUserId) return;
 
-            // Fetch specific scores table data strictly limited to the last 10 records
             const { data, error } = await _supabase
                 .from('scores')
                 .select('*')
