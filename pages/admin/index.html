@@ -78,6 +78,34 @@
         .header-title h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
         .header-title p { margin: 4px 0 0; color: var(--text-faded); font-size: 0.9rem; }
 
+        /* Tabs System Layout */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 12px;
+            width: 100%;
+        }
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-faded);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-bright); }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -153,6 +181,7 @@
         .btn-save { background: #10b981; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; }
         .btn-danger { background: #ef4444; }
         .btn-mini-scare { background: #f97316; font-size: 0.75rem; padding: 5px 10px; border-radius: 6px; }
+        .btn-chest { background: #eab308; color: #000; font-size: 0.75rem; padding: 5px 10px; border-radius: 6px; }
 
         .table-card {
             background: var(--card-bg);
@@ -200,7 +229,6 @@
         .pagination-info { color: var(--text-faded); font-size: 0.9rem; }
         .pagination-buttons { display: flex; gap: 10px; }
 
-        /* Shop & Inventory Modals/Items */
         .shop-items-grid {
             display: flex; 
             gap: 10px; 
@@ -290,12 +318,10 @@
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.err { border-left-color: #ef4444; }
         
-        /* Custom scrollbar for modal */
         .modal-body::-webkit-scrollbar { width: 6px; }
         .modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
         .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         
-        /* New styling for avatar add form */
         .input-group {
             display: flex;
             gap: 10px;
@@ -328,113 +354,152 @@
         <button class="btn btn-secondary" onclick="window.location.href='home.html'">Exit Admin</button>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-box">
-            <span>Users Displayed</span>
-            <h3 id="stat-count">0</h3>
-        </div>
-        <div class="stat-box">
-            <span>Total Coins</span>
-            <h3 id="stat-coins">0</h3>
-        </div>
-        <div class="stat-box">
-            <span>Avg Elo Rating</span>
-            <h3 id="stat-elo">0</h3>
-        </div>
+    <div class="admin-tabs">
+        <button class="tab-btn active" onclick="switchAdminTab('users-tab', this)"><i class="fa-solid fa-users"></i> Users Management</button>
+        <button class="tab-btn" onclick="switchAdminTab('shop-tab', this)"><i class="fa-solid fa-store"></i> Shop & DB Catalog</button>
+        <button class="tab-btn" onclick="switchAdminTab('systems-tab', this)"><i class="fa-solid fa-gears"></i> System & Broadcasts</button>
     </div>
 
-    <div class="panel-card" id="shop-management-panel">
-        <h2 class="panel-title"><i class="fa-solid fa-store"></i> Active Shop Stock Rotation</h2>
-        <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Select which items currently appear in the public Shop for users to buy.</p>
-        
-        <div class="shop-items-grid" id="shop-items-container">
-            <span style="color: var(--text-faded); font-size: 0.9rem;">Loading catalog...</span>
+    <div id="users-tab" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span>Users Displayed</span>
+                <h3 id="stat-count">0</h3>
+            </div>
+            <div class="stat-box">
+                <span>Total Coins</span>
+                <h3 id="stat-coins">0</h3>
+            </div>
+            <div class="stat-box">
+                <span>Avg Elo Rating</span>
+                <h3 id="stat-elo">0</h3>
+            </div>
         </div>
-        
-        <button class="btn" onclick="saveShopStock()" style="background: #a855f7; color: white;">
-            <i class="fa-solid fa-rotate"></i> Sync Storefront Stock
-        </button>
-    </div>
 
-    <div class="panel-card" id="add-item-panel">
-        <h2 class="panel-title"><i class="fa-solid fa-plus"></i> Add New Avatar to Database</h2>
-        <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Insert a new cosmetic item directly into the database catalog.</p>
-        
-        <div class="input-group">
-            <input type="text" id="new-item-id" class="input-field flex-half" placeholder="Unique ID (e.g., example)" style="margin-bottom:0;">
-            <input type="text" id="new-item-name" class="input-field flex-half" placeholder="Display Name (e.g., Example)" style="margin-bottom:0;">
-        </div>
-        <div class="input-group">
-            <input type="text" id="new-item-src" class="input-field flex-half" placeholder="Image Source URL (e.g., /data/images/example.png)" style="margin-bottom:0;">
-            <input type="number" id="new-item-price" class="input-field flex-half" placeholder="Price in Coins" style="margin-bottom:0;">
-        </div>
-        <div class="input-group">
-            <input type="text" id="new-item-category" class="input-field flex-half" placeholder="Category (e.g., Seasonal, Avatar)" style="margin-bottom:0;">
-        </div>
-        
-        <button class="btn btn-save" onclick="addNewItem()" style="margin-top: 5px; font-size: 0.9rem; padding: 10px 16px;">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Upload to Database
-        </button>
-    </div>
-
-    <div class="panel-card">
-        <div class="search-row">
-            <input type="text" id="search-input" class="input-field" style="margin-bottom:0;" placeholder="Search by username (case-insensitive)...">
-            <button class="btn" onclick="searchForUser()">
-                <i class="fa-solid fa-magnifying-glass"></i> Search
-            </button>
-        </div>
-        
-        <div class="filter-options-row">
-            <div>
-                <label style="color: var(--text-faded); font-size: 0.85rem; margin-right: 8px;">Sort Order:</label>
-                <select id="sort-filter" class="filter-select" onchange="processAndDisplayPageData()">
-                    <option value="username">Username (A-Z)</option>
-                    <option value="coins">Highest Balance</option>
-                    <option value="elo">Highest Elo</option>
-                </select>
+        <div class="panel-card">
+            <div class="search-row">
+                <input type="text" id="search-input" class="input-field" style="margin-bottom:0;" placeholder="Search by username (case-insensitive)...">
+                <button class="btn" onclick="searchForUser()">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
             </div>
             
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <select id="scare-type" class="filter-select" onchange="toggleCustomUrlInput()">
-                </select>
-                <input type="text" id="custom-scare-url" class="input-field" style="margin-bottom:0; display:none; width: 150px; padding: 8px 12px; font-size: 0.85rem;" placeholder="Image URL">
-                <button class="btn btn-danger" onclick="transmitJumpscareSignal('all')">
-                    <i class="fa-solid fa-ghost"></i> Jumpscare Everyone
-                </button>
-                <button class="btn btn-secondary" onclick="loadAllUsers()">
-                    <i class="fa-solid fa-users"></i> View All Users
-                </button>
+            <div class="filter-options-row">
+                <div>
+                    <label style="color: var(--text-faded); font-size: 0.85rem; margin-right: 8px;">Sort Order:</label>
+                    <select id="sort-filter" class="filter-select" onchange="processAndDisplayPageData()">
+                        <option value="username">Username (A-Z)</option>
+                        <option value="coins">Highest Balance</option>
+                        <option value="elo">Highest Elo</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn btn-secondary" onclick="loadAllUsers()">
+                        <i class="fa-solid fa-users"></i> View All Users
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Coins Balance</th>
+                        <th>Elo Rating</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-tbody">
+                    <tr>
+                        <td colspan="5" style="text-align:center; color: var(--text-faded)">
+                            Search a username or load all users to start.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-row">
+            <div class="pagination-info" id="page-indicator">Page 1 of 1</div>
+            <div class="pagination-buttons">
+                <button class="btn btn-secondary" id="btn-prev" onclick="changeActivePage(-1)">Previous</button>
+                <button class="btn btn-secondary" id="btn-next" onclick="changeActivePage(1)">Next</button>
             </div>
         </div>
     </div>
 
-    <div class="table-card">
-        <table>
-            <thead>
-                <tr>
-                    <th>User ID</th>
-                    <th>Username</th>
-                    <th>Coins Balance</th>
-                    <th>Elo Rating</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="user-tbody">
-                <tr>
-                    <td colspan="5" style="text-align:center; color: var(--text-faded)">
-                        Search a username or load all users to start.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <div id="shop-tab" class="tab-content">
+        <div class="panel-card" id="shop-management-panel">
+            <h2 class="panel-title"><i class="fa-solid fa-store"></i> Active Shop Stock Rotation</h2>
+            <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Select which items currently appear in the public Shop for users to buy.</p>
+            
+            <div class="shop-items-grid" id="shop-items-container">
+                <span style="color: var(--text-faded); font-size: 0.9rem;">Loading catalog...</span>
+            </div>
+            
+            <button class="btn" onclick="saveShopStock()" style="background: #a855f7; color: white;">
+                <i class="fa-solid fa-rotate"></i> Sync Storefront Stock
+            </button>
+        </div>
+
+        <div class="panel-card" id="add-item-panel">
+            <h2 class="panel-title"><i class="fa-solid fa-plus"></i> Add New Avatar to Database</h2>
+            <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Insert a new cosmetic item directly into the database catalog.</p>
+            
+            <div class="input-group">
+                <input type="text" id="new-item-id" class="input-field flex-half" placeholder="Unique ID (e.g., example)" style="margin-bottom:0;">
+                <input type="text" id="new-item-name" class="input-field flex-half" placeholder="Display Name (e.g., Example)" style="margin-bottom:0;">
+            </div>
+            <div class="input-group">
+                <input type="text" id="new-item-src" class="input-field flex-half" placeholder="Image Source URL (e.g., /data/images/example.png)" style="margin-bottom:0;">
+                <input type="number" id="new-item-price" class="input-field flex-half" placeholder="Price in Coins" style="margin-bottom:0;">
+            </div>
+            <div class="input-group">
+                <input type="text" id="new-item-category" class="input-field flex-half" placeholder="Category (e.g., Seasonal, Avatar)" style="margin-bottom:0;">
+            </div>
+            
+            <button class="btn btn-save" onclick="addNewItem()" style="margin-top: 5px; font-size: 0.9rem; padding: 10px 16px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload to Database
+            </button>
+        </div>
     </div>
 
-    <div class="pagination-row">
-        <div class="pagination-info" id="page-indicator">Page 1 of 1</div>
-        <div class="pagination-buttons">
-            <button class="btn btn-secondary" id="btn-prev" onclick="changeActivePage(-1)">Previous</button>
-            <button class="btn btn-secondary" id="btn-next" onclick="changeActivePage(1)">Next</button>
+    <div id="systems-tab" class="tab-content">
+        <div class="panel-card">
+            <h2 class="panel-title"><i class="fa-solid fa-bullhorn"></i> Global Announcement System</h2>
+            <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Send a system-wide announcement overlay instantly to all logged-in active players.</p>
+            <textarea id="global-msg-text" class="input-field" rows="3" style="resize: vertical; height: auto;" placeholder="Type your server announcement message here..."></textarea>
+            <button class="btn" onclick="sendGlobalServerMessage()" style="background: #0ea5e9;">
+                <i class="fa-solid fa-paper-plane"></i> Broadcast Message System
+            </button>
+        </div>
+
+        <div class="panel-card">
+            <h2 class="panel-title"><i class="fa-solid fa-gift"></i> Daily Chest Rewards Parameters</h2>
+            <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Configure global reward base values for standard client claims.</p>
+            <div class="input-group">
+                <input type="number" id="chest-base-coins" class="input-field flex-half" placeholder="Base Claims Coins Value (Default: 250)" style="margin-bottom:0;">
+                <input type="number" id="chest-cooldown-hours" class="input-field flex-half" placeholder="Cooldown Timer in Hours (Default: 24)" style="margin-bottom:0;">
+            </div>
+            <button class="btn btn-save" onclick="saveGlobalChestSettings()" style="margin-top: 10px; font-size: 0.9rem; padding: 10px 16px;">
+                <i class="fa-solid fa-floppy-disk"></i> Apply Rewards Architecture
+            </button>
+        </div>
+
+        <div class="panel-card">
+            <h2 class="panel-title"><i class="fa-solid fa-ghost"></i> Target Diagnostics & Jumpscares</h2>
+            <p style="font-size: 0.85rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Execute interactive real-time client testing routines.</p>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <select id="scare-type" class="filter-select" onchange="toggleCustomUrlInput()"></select>
+                <input type="text" id="custom-scare-url" class="input-field" style="margin-bottom:0; display:none; width: 220px; padding: 8px 12px; font-size: 0.85rem;" placeholder="Image URL">
+                <button class="btn btn-danger" onclick="transmitJumpscareSignal('all')">
+                    <i class="fa-solid fa-ghost"></i> Jumpscare Everyone Online
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -444,8 +509,7 @@
     <h3 class="modal-title" id="inv-modal-title">Manage Inventory</h3>
     <p style="font-size: 0.8rem; color: var(--text-faded); margin-top: -10px; margin-bottom: 15px;">Check items to add them to this user's unlocked avatars.</p>
     
-    <div class="modal-body" id="inv-modal-items">
-        </div>
+    <div class="modal-body" id="inv-modal-items"></div>
     
     <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeInventoryModal()">Cancel</button>
