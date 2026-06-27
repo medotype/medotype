@@ -2,6 +2,10 @@ const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
 const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+let currentCombo = 0;
+const comboVal = document.getElementById('combo-val');
+const comboStat = document.getElementById('combo-stat');
+
 const matchId = new URLSearchParams(window.location.search).get('id') || window.location.search.replace('?', '');
 let matchChannel;
 
@@ -24,6 +28,9 @@ let oppTotalScore = 0;
 let myLastRoundScore = 0;
 let oppLastRoundScore = 0;
 
+let myScoreHistory = [];
+let oppScoreHistory = [];
+
 let activeWordIdx = 0;
 let activeCharIdx = 0;
 let isStarted = false;
@@ -32,6 +39,11 @@ let correctChars = 0;
 let totalKeystrokes = 0;
 let myRoundFinished = false;
 let oppRoundFinished = false;
+
+// Aggregated match tracking for stats (if needed in future)
+let matchTotalWpm = 0;
+let matchTotalCorrectChars = 0;
+let matchTotalKeystrokes = 0;
 
 const container = document.getElementById('word-container');
 const overlay = document.getElementById('overlay');
@@ -60,12 +72,11 @@ async function initMatch() {
     myElo = profile?.elo || 0;
     
     const myNameEl = document.getElementById('my-name');
-    if (myNameEl) {
-        myNameEl.innerText = myUsername;
-    }
-
-    console.log("[INIT] Subscribing to Supabase Realtime channel: match_" + matchId);
+    if (myNameEl) myNameEl.innerText = myUsername;
     
+    const modeDisplay = document.getElementById('mode-display');
+    if (modeDisplay) modeDisplay.innerText = "1v1 Match";
+
     matchChannel = _supabase.channel(`match_${matchId}`, {
         config: { broadcast: { self: false } }
     });
@@ -75,52 +86,95 @@ async function initMatch() {
                 .on('broadcast', { event: 'player_ready' }, handlePlayerReady)
                 .on('broadcast', { event: 'round_finished' }, handleRoundFinished)
                 .on('broadcast', { event: 'player_heartbeat' }, handlePlayerHeartbeat) 
-                .on('broadcast', { event: 'player_left' }, handlePlayerLeft)          
+                .on('broadcast', { event: 'player_left' }, handlePlayerLeft)    
+                .on('broadcast', { event: 'battle_attack' }, handleBattleAttack)
+                .on('broadcast', { event: 'battle_progress' }, handleBattleProgress)
                 .subscribe(async (status, err) => {
-                    if (err) console.error("[REALTIME] Subscription Error:", err);
-                    console.log("[REALTIME] Connection Status changed to:", status);
-                    
                     if (status === 'SUBSCRIBED') {
-                        console.log("[REALTIME] Channel verified. Starting heartbeat synchronization loop.");
                         statusText.innerText = "Searching for opponent...";
                         syncInterval = setInterval(syncGame, 1000);
                     }
                 });
 }
 
+function showActionText(text, color = "var(--accent)") {
+    const el = document.getElementById('action-text');
+    el.innerText = text;
+    el.style.color = color;
+    el.classList.remove('action-anim');
+    void el.offsetWidth; 
+    el.classList.add('action-anim');
+}
+
+function updateCombo(reset = false) {
+    if (reset) {
+        currentCombo = 0;
+        comboStat.style.color = "var(--error)";
+        setTimeout(() => comboStat.style.color = "var(--accent)", 200);
+    } else {
+        currentCombo++;
+        if (currentCombo > 0 && currentCombo % 15 === 0) {
+            matchChannel.send({
+                type: 'broadcast',
+                event: 'battle_attack',
+                payload: { id: myId }
+            });
+            showActionText("+15 COMBO");
+        }
+    }
+    comboVal.innerText = currentCombo;
+    
+    if (currentCombo > 0 && currentCombo % 10 === 0) {
+        comboStat.style.transform = "scale(1.2)";
+        setTimeout(() => comboStat.style.transform = "scale(1)", 150);
+    }
+}
+
+function handleBattleAttack({ payload }) {
+    if (payload.id !== myId && gameState === 'PLAYING') {
+        document.body.classList.add('shake-anim');
+        document.getElementById('damage-overlay').classList.add('flash');
+        showActionText("GO QUICKER!", "var(--error)");
+        
+        setTimeout(() => {
+            document.body.classList.remove('shake-anim');
+            document.getElementById('damage-overlay').classList.remove('flash');
+        }, 500);
+    }
+}
+
+function updateProgressBar(wordIdx, isOpponent = false) {
+    const pct = Math.min(100, Math.max(0, (wordIdx / WORDS_PER_ROUND) * 100));
+    if (isOpponent) {
+        document.getElementById('opp-runner').style.left = `${pct}%`;
+    } else {
+        document.getElementById('my-runner').style.left = `${pct}%`;
+    }
+}
+
+function handleBattleProgress({ payload }) {
+    if (payload.id === oppId && gameState === 'PLAYING') {
+        updateProgressBar(payload.wordIdx, true);
+    }
+}
+
 async function syncGame() {
     if (gameState === 'GAME_OVER') return;
 
     if (gameState === 'WAITING') {
-        matchChannel.send({
-            type: 'broadcast',
-            event: 'player_joined',
-            payload: { id: myId, username: myUsername, elo: myElo }
-        });
+        matchChannel.send({ type: 'broadcast', event: 'player_joined', payload: { id: myId, username: myUsername, elo: myElo } });
 
         if (oppId && myId > oppId) {
-            if (allWords.length === 0) {
-                if (!isGeneratingWords) {
-                    await generateWordsLocal();
-                }
-            } else {
-                matchChannel.send({
-                    type: 'broadcast',
-                    event: 'game_words',
-                    payload: { words: allWords }
-                });
+            if (allWords.length === 0 && !isGeneratingWords) {
+                await generateWordsLocal();
+            } else if (allWords.length > 0) {
+                matchChannel.send({ type: 'broadcast', event: 'game_words', payload: { words: allWords } });
             }
         }
-    } 
-    else if (gameState === 'COUNTDOWN' || gameState === 'PLAYING' || gameState === 'ROUND_OVER') {
-        matchChannel.send({
-            type: 'broadcast',
-            event: 'player_heartbeat',
-            payload: { id: myId }
-        });
+    } else if (['COUNTDOWN', 'PLAYING', 'ROUND_OVER'].includes(gameState)) {
+        matchChannel.send({ type: 'broadcast', event: 'player_heartbeat', payload: { id: myId } });
 
         if (oppId && (Date.now() - lastOpponentActivity > 60000)) {
-            console.warn("[TIMEOUT] Opponent dropped connections or went AFK for 60s.");
             handleOpponentForfeit('AFK');
         }
     }
@@ -129,6 +183,7 @@ async function syncGame() {
 async function removeFromQueue() {
     if (!myId) return;
     await _supabase.from('queue').delete().eq('user_id', myId);
+    if (matchId) await _supabase.from('matches').delete().eq('id', matchId); 
 }
 
 function handlePlayerJoined({ payload }) {
@@ -147,9 +202,7 @@ async function generateWordsLocal() {
     let fetchedWords = fallbackWords;
     try {
         const resp = await fetch('../../data/json/wordlistcommon.json');
-        if (resp.ok) {
-            fetchedWords = await resp.json();
-        }
+        if (resp.ok) fetchedWords = await resp.json();
     } catch(e) {}
 
     allWords = fetchedWords.sort(() => Math.random() - 0.5).slice(0, TOTAL_ROUNDS * WORDS_PER_ROUND);
@@ -158,20 +211,14 @@ async function generateWordsLocal() {
 
 function handleGameWords({ payload }) {
     if (gameState !== 'WAITING') {
-        if (gameState === 'COUNTDOWN' || gameState === 'PLAYING') {
+        if (['COUNTDOWN', 'PLAYING'].includes(gameState)) {
             matchChannel.send({ type: 'broadcast', event: 'player_ready' });
         }
         return;
     }
-
     allWords = payload.words;
     lastOpponentActivity = Date.now();
-    
-    matchChannel.send({
-        type: 'broadcast',
-        event: 'player_ready'
-    });
-    
+    matchChannel.send({ type: 'broadcast', event: 'player_ready' });
     removeFromQueue();
     startRoundSequence();
 }
@@ -184,15 +231,11 @@ function handlePlayerReady() {
 }
 
 function handlePlayerHeartbeat({ payload }) {
-    if (payload.id === oppId) {
-        lastOpponentActivity = Date.now();
-    }
+    if (payload.id === oppId) lastOpponentActivity = Date.now();
 }
 
 function handlePlayerLeft({ payload }) {
-    if (payload.id === oppId && gameState !== 'GAME_OVER') {
-        handleOpponentForfeit('LEFT');
-    }
+    if (payload.id === oppId && gameState !== 'GAME_OVER') handleOpponentForfeit('LEFT');
 }
 
 async function handleOpponentForfeit(reason) {
@@ -203,6 +246,7 @@ async function handleOpponentForfeit(reason) {
     document.getElementById('round-results-overlay').classList.remove('show');
     document.getElementById('typing-viewport').style.display = 'none';
     document.querySelector('.match-header').style.display = 'none';
+    document.getElementById('battle-track-container').style.display = 'none';
 
     const resultsScreen = document.getElementById('results-screen');
     const resultText = document.getElementById('final-result');
@@ -227,6 +271,7 @@ async function handleOpponentForfeit(reason) {
 
     await removeFromQueue(); 
     _supabase.removeChannel(matchChannel);
+    renderMatchChart();
 }
 
 function startRoundSequence() {
@@ -234,6 +279,10 @@ function startRoundSequence() {
     myRoundFinished = false;
     oppRoundFinished = false;
     
+    document.getElementById('battle-track-container').style.display = 'block';
+    updateProgressBar(0, false);
+    updateProgressBar(0, true);
+
     const roundWords = allWords.slice((currentRound - 1) * WORDS_PER_ROUND, currentRound * WORDS_PER_ROUND);
     container.innerHTML = roundWords.map((w) => `
         <span class="word">
@@ -275,11 +324,8 @@ function startRoundSequence() {
 
 window.addEventListener('keydown', (e) => {
     if (gameState !== 'PLAYING') return;
-    if (e.key === 'Tab') { e.preventDefault(); return; }
-    if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== ' ') return;
-    if (e.key === ' ') e.preventDefault();
 
-    if (!isStarted && e.key.length === 1) {
+    if (!isStarted) {
         isStarted = true;
         startTime = Date.now();
     }
@@ -302,10 +348,15 @@ window.addEventListener('keydown', (e) => {
         }
     } else if (e.key === ' ') {
         if (activeCharIdx > 0) {
-            if (activeWordIdx + 1 >= WORDS_PER_ROUND) {
-                finishTyping(); return;
-            }
             activeWordIdx++;
+            
+            matchChannel.send({ type: 'broadcast', event: 'battle_progress', payload: { id: myId, wordIdx: activeWordIdx } });
+            updateProgressBar(activeWordIdx, false); 
+
+            if (activeWordIdx >= WORDS_PER_ROUND) {
+                finishTyping(); 
+                return;
+            }
             activeCharIdx = 0;
             handleScroll(words[activeWordIdx]);
         }
@@ -315,13 +366,18 @@ window.addEventListener('keydown', (e) => {
             if (e.key === letters[activeCharIdx].innerText) {
                 letters[activeCharIdx].classList.add('correct');
                 correctChars++;
+                updateCombo(false); 
             } else {
                 letters[activeCharIdx].classList.add('incorrect');
+                updateCombo(true); 
             }
             activeCharIdx++;
 
             if (activeWordIdx === WORDS_PER_ROUND - 1 && activeCharIdx === letters.length) {
-                finishTyping(); return;
+                matchChannel.send({ type: 'broadcast', event: 'battle_progress', payload: { id: myId, wordIdx: WORDS_PER_ROUND } });
+                updateProgressBar(WORDS_PER_ROUND, false); 
+                finishTyping(); 
+                return;
             }
         }
     }
@@ -329,9 +385,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 function updateCaret() {
-    document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => {
-        el.classList.remove('active-char', 'active-end', 'active');
-    });
+    document.querySelectorAll('.active-char, .active-end, .word.active').forEach(el => el.classList.remove('active-char', 'active-end', 'active'));
     const words = container.querySelectorAll('.word');
     const currentWord = words[activeWordIdx];
     if (!currentWord) return;
@@ -357,9 +411,14 @@ function finishTyping() {
     const wpm = Math.round((correctChars / 5) / durationMinutes) || 0;
     const acc = totalKeystrokes > 0 ? Math.round((correctChars / totalKeystrokes) * 100) : 0;
     
+    matchTotalWpm += wpm;
+    matchTotalCorrectChars += correctChars;
+    matchTotalKeystrokes += totalKeystrokes;
+
     const roundScore = wpm + acc;
     myLastRoundScore = roundScore;
     myTotalScore += roundScore;
+    myScoreHistory.push(roundScore);
     
     document.getElementById('my-score').innerText = myTotalScore;
 
@@ -369,12 +428,7 @@ function finishTyping() {
         statusText.innerText = `You scored ${roundScore}!`;
     }
 
-    matchChannel.send({
-        type: 'broadcast',
-        event: 'round_finished',
-        payload: { id: myId, score: roundScore }
-    });
-
+    matchChannel.send({ type: 'broadcast', event: 'round_finished', payload: { id: myId, score: roundScore } });
     myRoundFinished = true;
     checkRoundAdvance();
 }
@@ -383,21 +437,22 @@ function handleRoundFinished({ payload }) {
     if (payload.id === oppId) {
         oppLastRoundScore = payload.score;
         oppTotalScore += payload.score;
+        oppScoreHistory.push(payload.score);
         document.getElementById('opp-score').innerText = oppTotalScore;
         lastOpponentActivity = Date.now(); 
         oppRoundFinished = true;
         
+        updateProgressBar(WORDS_PER_ROUND, true);
+
         if (myRoundFinished) {
             statusText.innerText = "Opponent finished!";
         }
-
         checkRoundAdvance();
     }
 }
 
 function checkRoundAdvance() {
     if (myRoundFinished && oppRoundFinished) {
-        
         const animOverlay = document.getElementById('round-results-overlay');
         const myScoreAnim = document.getElementById('anim-my-score');
         const oppScoreAnim = document.getElementById('anim-opp-score');
@@ -415,7 +470,6 @@ function checkRoundAdvance() {
 
         setTimeout(() => {
             animOverlay.classList.remove('show');
-            
             if (currentRound > TOTAL_ROUNDS) {
                 endMatch();
             } else {
@@ -435,12 +489,13 @@ async function endMatch() {
     const eloText = document.getElementById('elo-change-text');
 
     resultsScreen.classList.remove('hidden');
-    
     document.getElementById('typing-viewport').style.display = 'none';
     document.querySelector('.match-header').style.display = 'none';
+    document.getElementById('battle-track-container').style.display = 'none';
     
     let newElo = myElo;
-    
+
+    // Apply strict 1v1 Server Logic (No Elo modifications unless forfeited)
     if (myTotalScore > oppTotalScore) {
         resultText.innerText = "VICTORY";
         resultText.style.color = "#10b981";
@@ -464,20 +519,73 @@ async function endMatch() {
         await _supabase.from('profiles').update({ elo: newElo }).eq('id', myId);
     }
 
+    // Hide extra Ranked elements for 1v1
+    const coinRewardText = document.getElementById('coin-reward-text');
+    const xpRewardText = document.getElementById('xp-reward-text');
+    if (coinRewardText) coinRewardText.style.display = 'none';
+    if (xpRewardText) xpRewardText.style.display = 'none';
+
     await removeFromQueue(); 
     _supabase.removeChannel(matchChannel);
+    renderMatchChart();
+}
+
+function renderMatchChart() {
+    const ctx = document.getElementById('matchChart');
+    if (!ctx) return;
+    const labels = Array.from({ length: Math.max(myScoreHistory.length, oppScoreHistory.length, 1) }, (_, i) => `Round ${i + 1}`);
+    new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: myUsername || 'You',
+                    data: myScoreHistory,
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: oppUsername || 'Opponent',
+                    data: oppScoreHistory,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: 'rgba(255,255,255,0.9)', font: { family: "'Inter', sans-serif" } }
+                }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: 'rgba(255,255,255,0.6)' }, 
+                    grid: { color: 'rgba(255,255,255,0.05)' } 
+                },
+                y: { 
+                    ticks: { color: 'rgba(255,255,255,0.6)' }, 
+                    grid: { color: 'rgba(255,255,255,0.05)' }, 
+                    beginAtZero: true 
+                }
+            }
+        }
+    });
 }
 
 window.addEventListener('beforeunload', () => {
-    if (myId) {
-        _supabase.from('queue').delete().eq('user_id', myId);
-    }
+    if (myId) _supabase.from('queue').delete().eq('user_id', myId);
     if (matchChannel && gameState !== 'GAME_OVER' && oppId) {
-        matchChannel.send({
-            type: 'broadcast',
-            event: 'player_left',
-            payload: { id: myId }
-        });
+        matchChannel.send({ type: 'broadcast', event: 'player_left', payload: { id: myId } });
     }
 });
 
