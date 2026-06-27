@@ -330,6 +330,22 @@
             font-style: italic;
         }
 
+        .btn-friend {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-family: var(--font);
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-left: auto;
+}
+.btn-friend:hover {
+    background: var(--accent);
+    color: white;
+}
         @media (max-width: 650px) {
             .profile-card { flex-direction: column; gap: 1.5rem; text-align: center; }
             .profile-info { flex-direction: column; text-align: center; }
@@ -356,6 +372,9 @@
                         <div class="xp-container">
                             <div class="xp-bar-bg">
                                 <div id="xp-bar-fill" class="xp-bar-fill"></div>
+                                <button id="add-friend-btn" class="btn-friend" style="display: none;" onclick="sendFriendRequest()">
+    <i class="fa-solid fa-user-plus"></i> Add Friend
+</button>
                             </div>
                             <span id="xp-label" class="xp-label">0 / 500 XP</span>
                         </div>
@@ -427,6 +446,32 @@
 
         let availableModes = [];
         let targetUserId = null;
+
+        let loggedInUserId = null;
+
+const { data: { session } } = await _supabase.auth.getSession();
+if (session) loggedInUserId = session.user.id;
+
+if (loggedInUserId && loggedInUserId !== targetUserId) {
+    document.getElementById('add-friend-btn').style.display = 'block';
+}
+
+async function sendFriendRequest() {
+    if (!loggedInUserId || !targetUserId) return;
+    
+    const { error } = await _supabase
+        .from('friends')
+        .insert([{ requester_id: loggedInUserId, receiver_id: targetUserId, status: 'pending' }]);
+        
+    if (!error) {
+        const btn = document.getElementById('add-friend-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Request Sent';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+    } else {
+        alert("Failed to send request. You might already be friends or have a pending request.");
+    }
+}
 
         function fixSrcPath(src) {
             if (!src) return '../data/images/default.png';
