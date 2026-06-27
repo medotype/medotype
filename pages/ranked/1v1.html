@@ -3,31 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeDoType | 1v1</title>
+    <title>MeDoType | Multiplayer Match</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="../../data/css/root.css">
-        <link rel="stylesheet" href="game.css">
+    <link rel="stylesheet" href="game.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../../data/js/theme.js"></script>
-    </head>
+</head>
 <body>
+
+    <div id="damage-overlay"></div>
+
+    <div id="action-text"></div>
 
     <div id="app">
         <div class="match-header">
             <div class="player-info">
                 <span class="player-name" id="my-name">Me</span>
                 <span class="player-score">Score: <span id="my-score">0</span></span>
+                <div id="combo-stat" style="color: var(--accent); font-weight: 600; margin-top: 5px;">
+                    <i class="fa-solid fa-fire"></i> <span id="combo-val">0</span>
+                </div>
             </div>
+            
             <div class="round-info">
                 <span class="round-text">ROUND <span id="round-display">1</span></span>
                 <span class="round-status" id="round-status">Connecting...</span>
             </div>
+
             <div class="player-info right">
                 <span class="player-name" id="opp-name">Opponent</span>
                 <span class="player-score">Score: <span id="opp-score">0</span></span>
+            </div>
+        </div>
+
+        <div class="battle-track-container" id="battle-track-container" style="display: none;">
+            <div class="track my-track">
+                <div class="runner" id="my-runner">YOU</div>
+            </div>
+            <div class="track opp-track">
+                <div class="runner opp-runner" id="opp-runner">OPP</div>
             </div>
         </div>
 
@@ -55,15 +74,45 @@
         </div>
 
         <div id="results-screen" class="hidden overlay">
-            <div class="results-card">
-                <h1 class="winner-text" id="final-result">VICTORY</h1>
-                <div class="elo-change" id="elo-change-text">No ELO</div>
-                <button class="btn-home" onclick="window.location.href='../../../pages/home.html'">Back to Lobby</button>
+            <div class="results-container">
+                <div class="results-card">
+                    <div class="mode-tag" id="mode-display">Ranked Match</div>
+                    <p class="stat-label">Match Outcome</p>
+                    <h1 class="stat-val" id="final-result">VICTORY</h1>
+                    <p class="acc-val" id="elo-change-text">+25 Elo</p>
+                    
+                    <div class="rewards-wrapper">
+                        <div id="level-up-container"></div>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <div class="coin-reward" id="coin-reward-text" style="display: none;">
+                                <i class="fa-solid fa-coins"></i> +0 Coins
+                            </div>
+                            <div class="xp-reward" id="xp-reward-text" style="display: none;">
+                                <i class="fa-solid fa-star"></i> +0 XP
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="results-buttons">
+                        <button class="btn-home" onclick="window.location.href='../../../pages/home.html'">Lobby</button>
+                        <button class="btn-play-again" onclick="window.location.href='../../../pages/home.html'">Play Again <i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="charts-panel">
+                    <div class="chart-box">
+                        <h3><i class="fa-solid fa-chart-line"></i> Match Pace (WPM Delta)</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="matchChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
     </div>
 
-    <script src="1v1.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
