@@ -454,7 +454,7 @@
                 .from('friends')
                 .select('*')
                 .or(`and(requester_id.eq.${loggedInUserId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${loggedInUserId})`)
-                .single();
+                .maybeSingle();
 
             if (data) {
                 if (data.status === 'accepted') {
