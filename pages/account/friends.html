@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeDoType | Friends</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../data/css/root.css">
+    <script src="../../data/js/theme.js"></script>
+    <style>
+        body {
+            background-color: var(--bg);
+            color: var(--text-bright);
+            font-family: var(--font);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #msg { 
+            text-align: center; 
+            padding: 50px; 
+            color: var(--text-faded); 
+            font-style: italic; 
+            font-size: 1.2rem; 
+        }
+
+        #friends-view {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-actions h1 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.8rem;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* --- Send Request Section --- */
+        .search-box {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .input-field {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text-bright);
+            font-family: var(--font);
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* --- Panel List Layouts --- */
+        .friends-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .section-title {
+            color: var(--text-faded);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .friend-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .friend-item {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            padding: 14px 20px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .friend-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        .friend-meta {
+            font-size: 0.8rem;
+            color: var(--text-faded);
+            margin: 0;
+        }
+
+        .level-badge {
+            background: var(--accent);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-accept {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .btn-accept:hover { background: rgba(16, 185, 129, 0.25); }
+
+        .btn-decline {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+        .btn-decline:hover { background: rgba(239, 68, 68, 0.2); }
+
+        .no-data {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-faded);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        #search-status {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="msg">Verifying session...</div>
+
+        <div id="friends-view">
+            <div class="header-actions">
+                <h1>Community</h1>
+                <button class="btn-secondary" onclick="window.location.href='index.html'">
+                    <i class="fa-solid fa-arrow-left"></i> Account Profile
+                </button>
+            </div>
+
+            <div>
+                <span class="section-title">Send Friend Request</span>
+                <div class="search-box">
+                    <input type="text" id="search-username" class="input-field" placeholder="Enter target exact username...">
+                    <button class="btn-secondary" onclick="sendFriendRequest()" style="background: var(--accent); border: none; color: white;">
+                        <i class="fa-solid fa-paper-plane"></i> Send Request
+                    </button>
+                </div>
+                <div id="search-status"></div>
+            </div>
+
+            <div class="friends-section" id="requests-panel" style="display: none;">
+                <span class="section-title"><i class="fa-solid fa-clock-solid fa-bell" style="color: #f59e0b; margin-right: 6px;"></i> Pending Incoming Requests</span>
+                <div class="friend-list" id="requests-list"></div>
+            </div>
+
+            <div class="friends-section">
+                <span class="section-title"><i class="fa-solid fa-user-group" style="color: var(--accent); margin-right: 6px;"></i> Friends List</span>
+                <div class="friend-list" id="friends-list"></div>
+                <div id="no-friends" class="no-data" style="display: none;">You haven't added any friends yet.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SB_URL = 'https://tzaowqeofmwfnprrfwat.supabase.co';
+        const SB_KEY = 'sb_publishable_Sr33ux9FL6QZaJlfhjoqFw_tIwQhSbx';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        let currentUserId = null;
+
+        async function initFriendsPage() {
+            const { data: { session }, error } = await _supabase.auth.getSession();
+
+            if (!session || error) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            currentUserId = session.user.id;
+            
+            document.getElementById('msg').style.display = 'none';
+            document.getElementById('friends-view').style.display = 'flex';
+
+            await loadAllFriendsData();
+        }
+
+        async function loadAllFriendsData() {
+            await Promise.all([
+                loadPendingRequests(),
+                loadActiveFriends()
+            ]);
+        }
+
+        async function loadPendingRequests() {
+            const listEl = document.getElementById('requests-list');
+            const panelEl = document.getElementById('requests-panel');
+            listEl.innerHTML = '';
+
+            // 1. Fetch pending rows where you are the receiver
+            const { data: requests, error } = await _supabase
+                .from('friends')
+                .select('requester_id')
+                .eq('receiver_id', currentUserId)
+                .eq('status', 'pending');
+
+            if (error || !requests || requests.length === 0) {
+                panelEl.style.display = 'none';
+                return;
+            }
+
+            panelEl.style.display = 'block';
+            const profileIds = requests.map(r => r.requester_id);
+
+            // 2. Resolve usernames for the requesters
+            const { data: profiles } = await _supabase
+                .from('profiles')
+                .select('id, username')
+                .in('id', profileIds);
+
+            if (!profiles) return;
+
+            profiles.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'friend-item';
+                item.innerHTML = `
+                    <div class="friend-info">
+                        <p class="friend-name">${p.username}</p>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn-action btn-accept" onclick="acceptRequest('${p.id}')">Accept</button>
+                        <button class="btn-action btn-decline" onclick="removeOrDecline('${p.id}')">Decline</button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        async function loadActiveFriends() {
+            const listEl = document.getElementById('friends-list');
+            const noFriendsEl = document.getElementById('no-friends');
+            listEl.innerHTML = '';
+
+            // 1. Fetch friendships where status is accepted
+            const { data: friendships, error } = await _supabase
+                .from('friends')
+                .select('requester_id, receiver_id')
+                .eq('status', 'accepted');
+
+            if (error || !friendships || friendships.length === 0) {
+                noFriendsEl.style.display = 'block';
+                return;
+            }
+
+            // Filter out friendships belonging to other users since client query handles broad filters
+            const targetFriendships = friendships.filter(f => f.requester_id === currentUserId || f.receiver_id === currentUserId);
+
+            if (targetFriendships.length === 0) {
+                noFriendsEl.style.display = 'block';
+                return;
+            }
+
+            noFriendsEl.style.display = 'none';
+            const friendIds = targetFriendships.map(f => f.requester_id === currentUserId ? f.receiver_id : f.requester_id);
+
+            // 2. Fetch friend profiles details
+            const { data: profiles } = await _supabase
+                .from('profiles')
+                .select('id, username, elo, level')
+                .in('id', friendIds);
+
+            if (!profiles) return;
+
+            profiles.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'friend-item';
+                item.innerHTML = `
+                    <div class="friend-info">
+                        <div>
+                            <p class="friend-name">${p.username} <span class="level-badge">Lvl ${p.level || 1}</span></p>
+                            <p class="friend-meta"><i class="fa-solid fa-trophy" style="font-size:0.75rem; color: #fbbf24; margin-right:4px;"></i> ${p.elo ?? 0} ELO</p>
+                        </div>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn-action btn-decline" onclick="removeOrDecline('${p.id}')"><i class="fa-solid fa-user-minus"></i> Remove</button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        async function sendFriendRequest() {
+            const statusEl = document.getElementById('search-status');
+            const usernameInput = document.getElementById('search-username').value.trim();
+            statusEl.innerText = '';
+
+            if (!usernameInput) return;
+
+            // 1. Find profile matching username
+            const { data: targetProfile, error: pErr } = await _supabase
+                .from('profiles')
+                .select('id')
+                .eq('username', usernameInput)
+                .maybeSingle();
+
+            if (pErr || !targetProfile) {
+                statusEl.style.color = 'var(--error)';
+                statusEl.innerText = "User not found. Check spelling.";
+                return;
+            }
+
+            if (targetProfile.id === currentUserId) {
+                statusEl.style.color = 'var(--error)';
+                statusEl.innerText = "You cannot add yourself!";
+                return;
+            }
+
+            // 2. Check if connection status already exists
+            const { data: existing } = await _supabase
+                .from('friends')
+                .select('*')
+                .or(`and(requester_id.eq.${currentUserId},receiver_id.eq.${targetProfile.id}),and(requester_id.eq.${targetProfile.id},receiver_id.eq.${currentUserId})`)
+                .maybeSingle();
+
+            if (existing) {
+                statusEl.style.color = '#f59e0b';
+                statusEl.innerText = existing.status === 'pending' ? "Request is already pending." : "You are already friends!";
+                return;
+            }
+
+            // 3. Insert friend row
+            const { error: insErr } = await _supabase
+                .from('friends')
+                .insert({
+                    requester_id: currentUserId,
+                    receiver_id: targetProfile.id,
+                    status: 'pending'
+                });
+
+            if (insErr) {
+                statusEl.style.color = 'var(--error)';
+                statusEl.innerText = "Failed sending request.";
+            } else {
+                statusEl.style.color = '#10b981';
+                statusEl.innerText = "Friend request dispatched successfully!";
+                document.getElementById('search-username').value = '';
+                await loadAllFriendsData();
+            }
+        }
+
+        async function acceptRequest(requesterId) {
+            const { error } = await _supabase
+                .from('friends')
+                .update({ status: 'accepted' })
+                .eq('requester_id', requesterId)
+                .eq('receiver_id', currentUserId);
+
+            if (!error) {
+                await loadAllFriendsData();
+            }
+        }
+
+        async function removeOrDecline(targetId) {
+            const { error } = await _supabase
+                .from('friends')
+                .delete()
+                .or(`and(requester_id.eq.${currentUserId},receiver_id.eq.${targetId}),and(requester_id.eq.${targetId},receiver_id.eq.${currentUserId})`);
+
+            if (!error) {
+                await loadAllFriendsData();
+            }
+        }
+
+        window.onload = initFriendsPage;
+    </script>
+</body>
+</html>
