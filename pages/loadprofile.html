@@ -93,7 +93,6 @@
         .profile-details h2 { margin: 0 0 0.2rem 0; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; }
         .profile-details p { color: var(--text-faded); font-size: 0.9rem; margin: 0; }
 
-        /* --- XP & Level Styles --- */
         .level-badge {
             background: var(--accent);
             color: white;
@@ -137,7 +136,39 @@
             font-weight: 600;
         }
 
-        /* --- Analytics Header & Mode Selector --- */
+        /* --- Profile Actions (Add Friend) --- */
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
         .analytics-header {
             display: flex;
             justify-content: space-between;
@@ -179,7 +210,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        /* --- Stats Layout --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -196,9 +226,7 @@
             transition: transform 0.2s;
         }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
+        .stat-card:hover { transform: translateY(-2px); }
 
         .stat-label {
             color: var(--text-faded);
@@ -210,19 +238,9 @@
             font-weight: 600;
         }
 
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--accent);
-        }
+        .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--accent); }
+        .stat-sub { font-size: 0.85rem; color: var(--text-faded); margin-top: 5px; }
 
-        .stat-sub {
-            font-size: 0.85rem;
-            color: var(--text-faded);
-            margin-top: 5px;
-        }
-
-        /* --- Inventory Viewer Grid --- */
         .inventory-container {
             background: var(--card-bg);
             border-radius: 20px;
@@ -251,10 +269,7 @@
             transition: all 0.2s ease;
         }
 
-        .inventory-card.equipped {
-            border-color: var(--accent);
-            background: rgba(255, 255, 255, 0.02);
-        }
+        .inventory-card.equipped { border-color: var(--accent); background: rgba(255, 255, 255, 0.02); }
 
         .inventory-avatar-container {
             width: 55px;
@@ -265,90 +280,28 @@
             margin-bottom: 8px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-
-        .inventory-avatar-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .inventory-item-name {
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--text-bright);
-            margin: 0;
-            letter-spacing: 0.02em;
-        }
-
+        .inventory-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .inventory-item-name { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-bright); margin: 0; letter-spacing: 0.02em; }
         .equipped-badge {
-            position: absolute;
-            bottom: -6px;
-            background: #10b981;
-            color: white;
-            font-size: 0.6rem;
-            font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            position: absolute; bottom: -6px; background: #10b981; color: white;
+            font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
 
-        /* --- History Layout --- */
         .history-container {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 1.5rem;
-            text-align: left;
-            border: 1px solid rgba(255,255,255,0.03);
+            background: var(--card-bg); border-radius: 20px; padding: 1.5rem;
+            text-align: left; border: 1px solid rgba(255,255,255,0.03);
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th { color: var(--text-faded); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        td { padding: 15px 12px; font-size: 0.95rem; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .no-data { padding: 40px; text-align: center; color: var(--text-faded); font-style: italic; }
 
-        th {
-            color: var(--text-faded);
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        td {
-            padding: 15px 12px;
-            font-size: 0.95rem;
-            border-bottom: 1px solid rgba(255,255,255,0.02);
-        }
-
-        .no-data {
-            padding: 40px;
-            text-align: center;
-            color: var(--text-faded);
-            font-style: italic;
-        }
-
-        .btn-friend {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--accent);
-    background: transparent;
-    color: var(--accent);
-    font-family: var(--font);
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-    margin-left: auto;
-}
-.btn-friend:hover {
-    background: var(--accent);
-    color: white;
-}
         @media (max-width: 650px) {
             .profile-card { flex-direction: column; gap: 1.5rem; text-align: center; }
             .profile-info { flex-direction: column; text-align: center; }
+            .profile-actions { flex-direction: column; width: 100%; }
             .analytics-header { flex-direction: column; gap: 1rem; }
             .xp-container { margin: 10px auto 0 auto; }
         }
@@ -370,15 +323,16 @@
                         <h2 id="p-name">Username <span id="p-level" class="level-badge">Lvl 1</span></h2>
                         <p id="p-joined"><i class="fa-solid fa-calendar-days" style="font-size: 0.8rem; margin-right: 5px;"></i> Loading details...</p>
                         <div class="xp-container">
-                            <div class="xp-bar-bg">
-                                <div id="xp-bar-fill" class="xp-bar-fill"></div>
-                                <button id="add-friend-btn" class="btn-friend" style="display: none;" onclick="sendFriendRequest()">
-    <i class="fa-solid fa-user-plus"></i> Add Friend
-</button>
-                            </div>
+                            <div class="xp-bar-bg"><div id="xp-bar-fill" class="xp-bar-fill"></div></div>
                             <span id="xp-label" class="xp-label">0 / 500 XP</span>
                         </div>
                     </div>
+                </div>
+                
+                <div class="profile-actions" id="action-container" style="display: none;">
+                    <button id="friend-btn" class="btn-secondary" onclick="sendFriendRequest()">
+                        <i class="fa-solid fa-user-plus"></i> Add Friend
+                    </button>
                 </div>
             </div>
 
@@ -387,33 +341,12 @@
                     <h1>Analytics</h1>
                     <div class="mode-nav" id="mode-nav"></div>
                 </div>
-
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-label">Ranked Elo</span>
-                        <div class="stat-value" id="user-elo">--</div>
-                        <div class="stat-sub">Competitive Rating</div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Coins</span>
-                        <div class="stat-value" id="user-coins">--</div>
-                        <div class="stat-sub">Wallet Balance</div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Best WPM</span>
-                        <div class="stat-value" id="best-wpm">-</div>
-                        <div class="stat-sub">Highest Record</div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Avg. WPM</span>
-                        <div class="stat-value" id="avg-wpm">-</div>
-                        <div class="stat-sub">Last 10 tests</div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Avg. Accuracy</span>
-                        <div class="stat-value" id="avg-acc">-</div>
-                        <div class="stat-sub">Last 10 tests</div>
-                    </div>
+                    <div class="stat-card"><span class="stat-label">Ranked Elo</span><div class="stat-value" id="user-elo">--</div><div class="stat-sub">Competitive Rating</div></div>
+                    <div class="stat-card"><span class="stat-label">Coins</span><div class="stat-value" id="user-coins">--</div><div class="stat-sub">Wallet Balance</div></div>
+                    <div class="stat-card"><span class="stat-label">Best WPM</span><div class="stat-value" id="best-wpm">-</div><div class="stat-sub">Highest Record</div></div>
+                    <div class="stat-card"><span class="stat-label">Avg. WPM</span><div class="stat-value" id="avg-wpm">-</div><div class="stat-sub">Last 10 tests</div></div>
+                    <div class="stat-card"><span class="stat-label">Avg. Accuracy</span><div class="stat-value" id="avg-acc">-</div><div class="stat-sub">Last 10 tests</div></div>
                 </div>
             </div>
 
@@ -425,13 +358,7 @@
             <div class="history-container">
                 <span class="stat-label" style="margin-left: 12px; margin-bottom: 15px;">Recent History (Max 10)</span>
                 <table id="history-table">
-                    <thead>
-                        <tr>
-                            <th>WPM</th>
-                            <th>Accuracy</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>WPM</th><th>Accuracy</th><th>Date</th></tr></thead>
                     <tbody id="history-body"></tbody>
                 </table>
                 <div id="no-data-msg" class="no-data" style="display: none;">No tests completed in this mode yet.</div>
@@ -446,38 +373,11 @@
 
         let availableModes = [];
         let targetUserId = null;
-
         let loggedInUserId = null;
-
-const { data: { session } } = await _supabase.auth.getSession();
-if (session) loggedInUserId = session.user.id;
-
-if (loggedInUserId && loggedInUserId !== targetUserId) {
-    document.getElementById('add-friend-btn').style.display = 'block';
-}
-
-async function sendFriendRequest() {
-    if (!loggedInUserId || !targetUserId) return;
-    
-    const { error } = await _supabase
-        .from('friends')
-        .insert([{ requester_id: loggedInUserId, receiver_id: targetUserId, status: 'pending' }]);
-        
-    if (!error) {
-        const btn = document.getElementById('add-friend-btn');
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> Request Sent';
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-    } else {
-        alert("Failed to send request. You might already be friends or have a pending request.");
-    }
-}
 
         function fixSrcPath(src) {
             if (!src) return '../data/images/default.png';
-            if (src.startsWith('../../')) {
-                return src.substring(3);
-            }
+            if (src.startsWith('../../')) return src.substring(3);
             return src;
         }
 
@@ -487,10 +387,10 @@ async function sendFriendRequest() {
             const view = document.getElementById('profile-view');
             const msg = document.getElementById('msg');
 
-            if (!username) {
-                msg.innerText = "No user specified.";
-                return;
-            }
+            if (!username) { msg.innerText = "No user specified."; return; }
+
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) loggedInUserId = session.user.id;
 
             try {
                 const { data: profile, error: pErr } = await _supabase
@@ -499,12 +399,16 @@ async function sendFriendRequest() {
                     .ilike('username', username)
                     .single();
 
-                if (pErr || !profile) {
-                    msg.innerText = `User "${username}" not found.`;
-                    return;
-                }
+                if (pErr || !profile) { msg.innerText = `User "${username}" not found.`; return; }
 
                 targetUserId = profile.id;
+                
+                // Show Friend button if logged in and looking at someone else
+                if (loggedInUserId && loggedInUserId !== targetUserId) {
+                    document.getElementById('action-container').style.display = 'flex';
+                    checkFriendStatus();
+                }
+
                 const activeAvatarId = profile.avatar_id || "default";
                 const unlockedAvatars = profile.unlocked_avatars || ["default"];
                 const currentLevel = profile.level || 1;
@@ -522,9 +426,7 @@ async function sendFriendRequest() {
                 const xpNeeded = currentLevel * 500;
                 const xpPercentage = Math.min((currentXp / xpNeeded) * 100, 100);
                 document.getElementById('xp-label').innerText = `${currentXp} / ${xpNeeded} XP`;
-                setTimeout(() => {
-                    document.getElementById('xp-bar-fill').style.width = `${xpPercentage}%`;
-                }, 100);
+                setTimeout(() => { document.getElementById('xp-bar-fill').style.width = `${xpPercentage}%`; }, 100);
                 
                 const joinDate = new Date(profile.updated_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
                 document.getElementById('p-joined').innerHTML = `<i class="fa-solid fa-calendar-days" style="font-size: 0.8rem; margin-right: 5px;"></i> Member since ${joinDate}`;
@@ -546,28 +448,68 @@ async function sendFriendRequest() {
             }
         }
 
+        async function checkFriendStatus() {
+            const btn = document.getElementById('friend-btn');
+            const { data, error } = await _supabase
+                .from('friends')
+                .select('*')
+                .or(`and(requester_id.eq.${loggedInUserId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${loggedInUserId})`)
+                .single();
+
+            if (data) {
+                if (data.status === 'accepted') {
+                    btn.innerHTML = `<i class="fa-solid fa-user-check"></i> Friends`;
+                    btn.disabled = true;
+                } else if (data.status === 'pending') {
+                    if (data.requester_id === loggedInUserId) {
+                        btn.innerHTML = `<i class="fa-solid fa-clock"></i> Request Sent`;
+                        btn.disabled = true;
+                    } else {
+                        // We received it but haven't accepted (should go to account page, but let's just indicate pending)
+                        btn.innerHTML = `<i class="fa-solid fa-inbox"></i> Has Requested You`;
+                        btn.disabled = true;
+                    }
+                }
+            }
+        }
+
+        async function sendFriendRequest() {
+            const btn = document.getElementById('friend-btn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending...`;
+            
+            const { error } = await _supabase.from('friends').insert({
+                requester_id: loggedInUserId,
+                receiver_id: targetUserId,
+                status: 'pending'
+            });
+
+            if (!error) {
+                btn.innerHTML = `<i class="fa-solid fa-clock"></i> Request Sent`;
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error`;
+                setTimeout(() => { btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add Friend`; }, 2000);
+            }
+        }
+
         function renderInventory(unlockedAvatars, activeAvatarId, catalog) {
             const grid = document.getElementById('inventory-grid');
             grid.innerHTML = '';
-
             let itemsList = Array.isArray(unlockedAvatars) ? unlockedAvatars : ["default"];
             if (itemsList.length === 0) itemsList = ["default"];
 
             itemsList.forEach(avatarId => {
                 const itemMetadata = catalog.find(i => i.id === avatarId);
                 const isEquipped = avatarId === activeAvatarId;
-
                 const card = document.createElement('div');
                 card.className = isEquipped ? 'inventory-card equipped' : 'inventory-card';
 
                 const avatarContainer = document.createElement('div');
                 avatarContainer.className = 'inventory-avatar-container';
-
                 const img = document.createElement('img');
                 img.className = 'inventory-avatar-img';
                 img.src = itemMetadata ? fixSrcPath(itemMetadata.src) : '../data/images/default.png';
                 img.onerror = () => { img.src = '../data/images/default.png'; };
-
                 avatarContainer.appendChild(img);
                 card.appendChild(avatarContainer);
 
@@ -582,7 +524,6 @@ async function sendFriendRequest() {
                     badge.innerText = 'Equipped';
                     card.appendChild(badge);
                 }
-
                 grid.appendChild(card);
             });
         }
@@ -591,17 +532,11 @@ async function sendFriendRequest() {
             try {
                 const response = await fetch('../data/json/modelist.json');
                 if(!response.ok) throw new Error("Could not fetch modes");
-                
                 const allModes = await response.json();
                 availableModes = allModes.filter(mode => mode.isSaved === true);
-                
                 buildNav();
-                
-                if (availableModes.length > 0) {
-                    fetchAnalytics(availableModes[0].id);
-                }
+                if (availableModes.length > 0) fetchAnalytics(availableModes[0].id);
             } catch (e) {
-                console.error(e);
                 document.getElementById('no-data-msg').innerText = "Error loading dynamic game modes.";
                 document.getElementById('no-data-msg').style.display = 'block';
             }
@@ -610,7 +545,6 @@ async function sendFriendRequest() {
         function buildNav() {
             const nav = document.getElementById('mode-nav');
             nav.innerHTML = '';
-            
             availableModes.forEach((mode, index) => {
                 const btn = document.createElement('button');
                 btn.className = index === 0 ? 'mode-btn active' : 'mode-btn';
@@ -625,23 +559,11 @@ async function sendFriendRequest() {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                 btnElement.classList.add('active');
             }
-
             if (!targetUserId) return;
-
             const { data, error } = await _supabase
-                .from('scores')
-                .select('*')
-                .eq('user_id', targetUserId)
-                .eq('mode', modeId)
-                .order('created_at', { ascending: false })
-                .limit(10); 
-
-            if (error) {
-                console.error(error);
-                return;
-            }
-
-            updateUI(data);
+                .from('scores').select('*').eq('user_id', targetUserId)
+                .eq('mode', modeId).order('created_at', { ascending: false }).limit(10); 
+            if (!error) updateUI(data);
         }
 
         function updateUI(data) {
@@ -661,7 +583,6 @@ async function sendFriendRequest() {
 
             noDataMsg.style.display = 'none';
             table.style.display = 'table';
-
             const best = Math.max(...data.map(s => s.wpm));
             const avgWpm = Math.round(data.reduce((acc, curr) => acc + curr.wpm, 0) / data.length);
             const avgAcc = Math.round(data.reduce((acc, curr) => acc + curr.accuracy, 0) / data.length);
@@ -672,13 +593,11 @@ async function sendFriendRequest() {
 
             data.forEach(score => {
                 const date = new Date(score.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                const row = `
-                    <tr>
+                const row = `<tr>
                         <td style="color: var(--accent); font-weight: 800;">${score.wpm}</td>
                         <td>${score.accuracy}%</td>
                         <td style="color: var(--text-faded); font-size: 0.8rem;">${date}</td>
-                    </tr>
-                `;
+                    </tr>`;
                 historyBody.innerHTML += row;
             });
         }
