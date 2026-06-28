@@ -23,7 +23,7 @@
             'leaderboard': ['leaderboard.html'],
             'settings': ['settings.html'],
             'admin': ['admin'],
-            'account': ['login.html', 'account']
+            'account': ['login.html', 'account', 'index.html'] // Included index for account
         };
 
         navLinks.forEach(link => {
@@ -55,9 +55,8 @@
 
     <style>
         /* Interactive Toast Style Notification styling */
-        #incoming-toast {
+        .toast-notification {
             position: fixed;
-            bottom: 24px;
             right: 24px;
             background: var(--card-bg);
             border: 1px solid var(--accent);
@@ -75,7 +74,10 @@
             font-family: var(--font, 'Inter', sans-serif);
         }
 
-        #incoming-toast.show { transform: translateX(0); }
+        #incoming-toast { bottom: 24px; }
+        #friend-toast { bottom: 124px; border-color: #10b981; } /* Slightly higher up, distinct border */
+
+        .toast-notification.show { transform: translateX(0); }
 
         .incoming-header {
             font-size: 0.95rem;
@@ -86,10 +88,7 @@
             gap: 8px;
         }
 
-        .incoming-buttons {
-            display: flex;
-            gap: 8px;
-        }
+        .incoming-buttons { display: flex; gap: 8px; }
 
         .toast-btn {
             flex: 1;
@@ -104,6 +103,7 @@
         }
 
         .toast-btn-accept { background: var(--accent); color: white; }
+        .toast-btn-friend { background: #10b981; color: white; }
         .toast-btn-decline { background: rgba(255, 255, 255, 0.1); color: var(--text-faded); }
         .toast-btn:hover { opacity: 0.9; }
 
@@ -128,7 +128,6 @@
             object-fit: cover;
         }
 
-        /* Non-blocking Roblox Style Global Message System Overlay */
         #global-message-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -139,12 +138,12 @@
             font-family: var(--font, 'Inter', sans-serif);
             padding: 0;
             box-sizing: border-box;
-            pointer-events: none; /* Allows user to interact with the site underneath */
+            pointer-events: none;
         }
         #global-message-overlay.active { display: flex; }
 
         .global-message-card {
-            background: rgba(18, 18, 20, 0.5); /* 0.5 transparent dark background */
+            background: rgba(18, 18, 20, 0.5); 
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -156,7 +155,7 @@
             max-width: 650px;
             box-shadow: 0 16px 40px rgba(0,0,0,0.5);
             text-align: center;
-            pointer-events: auto; /* Restores button clickability on the message itself */
+            pointer-events: auto;
             animation: robloxSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -177,7 +176,7 @@
         .global-message-body {
             font-size: 1.05rem;
             line-height: 1.5;
-            color: #ffffff; /* White text of the broadcast message */
+            color: #ffffff; 
             margin-bottom: 10px;
             word-wrap: break-word;
             font-weight: 500;
@@ -250,7 +249,7 @@
         <div class="footer-right">BETA</div>
     </footer>
 
-    <div id="incoming-toast">
+    <div id="incoming-toast" class="toast-notification">
         <div class="incoming-header">
             <i class="fa-solid fa-bolt" style="color: var(--accent);"></i>
             <span id="challenge-prompt">Player challenged you!</span>
@@ -258,6 +257,17 @@
         <div class="incoming-buttons">
             <button class="toast-btn toast-btn-accept" onclick="respondToGlobalChallenge(true)">Accept</button>
             <button class="toast-btn toast-btn-decline" onclick="respondToGlobalChallenge(false)">Decline</button>
+        </div>
+    </div>
+
+    <div id="friend-toast" class="toast-notification">
+        <div class="incoming-header">
+            <i class="fa-solid fa-user-plus" style="color: #10b981;"></i>
+            <span id="friend-prompt">New friend request!</span>
+        </div>
+        <div class="incoming-buttons">
+            <button class="toast-btn toast-btn-friend" onclick="respondToFriendRequest(true)">Accept</button>
+            <button class="toast-btn toast-btn-decline" onclick="respondToFriendRequest(false)">Decline</button>
         </div>
     </div>
 
@@ -290,17 +300,21 @@
         const shellSupabase = supabase.createClient(SHELL_SB_URL, SHELL_SB_KEY);
 
         let shellCurrentUsername = null;
+        let shellCurrentUserId = null;
         let shellActiveRequest = null;
-        let autoDismissTimer = null; // Holds the reference for the 5s auto-fade timer
+        let shellActiveFriendReqId = null;
+        let autoDismissTimer = null; 
 
-        async function initGlobalChallengeListener() {
+        async function initGlobalListeners() {
             const { data: { session } } = await shellSupabase.auth.getSession();
             if (!session) return;
+            
+            shellCurrentUserId = session.user.id;
 
             const { data: profile } = await shellSupabase
                 .from('profiles')
                 .select('username, is_admin')
-                .eq('id', session.user.id)
+                .eq('id', shellCurrentUserId)
                 .single();
 
             if (profile) {
@@ -312,6 +326,7 @@
                 if (profile.username) {
                     shellCurrentUsername = profile.username;
                     
+                    // 1V1 Challenges
                     shellSupabase.channel('global_incoming_challenges')
                         .on('postgres_changes', {
                             event: 'INSERT',
@@ -319,12 +334,48 @@
                             table: '1v1_queue',
                             filter: `target_username=eq.${shellCurrentUsername}`
                         }, payload => {
-                            if (payload.new.status === 'pending') {
-                                showGlobalChallengeToast(payload.new);
-                            }
+                            if (payload.new.status === 'pending') showGlobalChallengeToast(payload.new);
                         })
                         .subscribe();
                 }
+            }
+
+            // Friend Requests Listener
+            shellSupabase.channel('global_incoming_friends')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'friends',
+                    filter: `receiver_id=eq.${shellCurrentUserId}`
+                }, async payload => {
+                    if (payload.new.status === 'pending') {
+                        // Fetch requester's username
+                        const { data } = await shellSupabase.from('profiles')
+                            .select('username').eq('id', payload.new.requester_id).single();
+                        if (data) showFriendToast(payload.new.id, data.username);
+                    }
+                })
+                .subscribe();
+        }
+
+        // --- Friend Request Logic ---
+        function showFriendToast(reqId, username) {
+            shellActiveFriendReqId = reqId;
+            document.getElementById('friend-prompt').innerHTML = `<b>${username}</b> sent a friend request!`;
+            document.getElementById('friend-toast').classList.add('show');
+        }
+
+        async function respondToFriendRequest(accept) {
+            if (!shellActiveFriendReqId) return;
+            document.getElementById('friend-toast').classList.remove('show');
+            const reqId = shellActiveFriendReqId;
+            shellActiveFriendReqId = null;
+
+            if (accept) {
+                await shellSupabase.from('friends').update({ status: 'accepted' }).eq('id', reqId);
+                // Optionally reload frame if they are on account page
+            } else {
+                await shellSupabase.from('friends').delete().eq('id', reqId);
             }
         }
 
@@ -342,14 +393,12 @@
                     displayGlobalClientMessage(payload.payload.sender, payload.payload.message);
                 })
                 .on('broadcast', { event: 'chest-settings-update' }, payload => {
-                    console.log("Daily Rewards Balance updated on Server:", payload.payload);
                     window.globalDailyChestRewardBase = payload.payload.baseCoins;
                     window.globalDailyChestCooldownHours = payload.payload.cooldownHrs;
                 })
                 .subscribe();
         }
 
-        // Updated global message window behavior engine loop
         function displayGlobalClientMessage(sender, message) {
             const msgOverlay = document.getElementById('global-message-overlay');
             const msgHeader = document.getElementById('global-msg-user-header');
@@ -360,23 +409,14 @@
                 msgBody.innerText = message;
                 msgOverlay.classList.add('active');
 
-                // Clear prior timeout loops to avoid conflicts on rapid sequential broadcasts
-                if (autoDismissTimer) {
-                    clearTimeout(autoDismissTimer);
-                }
-
-                // Automatically clear overlay message after 5 seconds
-                autoDismissTimer = setTimeout(() => {
-                    closeGlobalMessageOverlay();
-                }, 5000);
+                if (autoDismissTimer) clearTimeout(autoDismissTimer);
+                autoDismissTimer = setTimeout(() => closeGlobalMessageOverlay(), 5000);
             }
         }
 
         function closeGlobalMessageOverlay() {
             const msgOverlay = document.getElementById('global-message-overlay');
-            if (msgOverlay) {
-                msgOverlay.classList.remove('active');
-            }
+            if (msgOverlay) msgOverlay.classList.remove('active');
             if (autoDismissTimer) {
                 clearTimeout(autoDismissTimer);
                 autoDismissTimer = null;
@@ -404,10 +444,8 @@
             }
 
             imgElement.src = determinedImage;
-
-            if (audioProfile === "default_beep") {
-                playUniformBeepAudio();
-            } else {
+            if (audioProfile === "default_beep") playUniformBeepAudio();
+            else {
                 const customAudio = new Audio(audioProfile);
                 customAudio.play().catch(e => console.warn(e));
             }
@@ -427,14 +465,12 @@
             try {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContextClass) return;
-                
                 const audioCtx = new AudioContextClass();
                 const oscillator = audioCtx.createOscillator();
                 const audioGainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-                
                 audioGainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
                 audioGainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
                 
@@ -443,9 +479,7 @@
                 
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.4);
-            } catch (error) {
-                console.warn(error);
-            }
+            } catch (error) { console.warn(error); }
         }
 
         function showGlobalChallengeToast(request) {
@@ -457,7 +491,6 @@
         async function respondToGlobalChallenge(accept) {
             if (!shellActiveRequest) return;
             document.getElementById('incoming-toast').classList.remove('show');
-
             const req = shellActiveRequest;
             shellActiveRequest = null;
 
@@ -481,7 +514,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            initGlobalChallengeListener();
+            initGlobalListeners();
             initGlobalCommunicationListener();
         });
     </script>
