@@ -609,7 +609,7 @@
             });
         }
 
-async function initModes() {
+        async function initModes() {
             try {
                 const response = await fetch('/data/json/modelist.json');
                 if(!response.ok) throw new Error("Could not fetch modes");
