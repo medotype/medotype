@@ -13,15 +13,14 @@
     <script src="../../data/js/theme.js"></script>
 
     <style>
-        /* Splash screen styling */
+        /* Splash screen styling mapped entirely to theme variables */
         #welcome-splash {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #0b0c10; /* fallback dark background */
-            background: var(--bg, #0b0c10);
+            background: var(--bg);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -34,13 +33,13 @@
         #welcome-splash h1 {
             font-size: 3.5rem;
             font-weight: 800;
-            color: var(--text-bright, #ffffff);
+            color: var(--text-bright);
             margin-bottom: 15px;
             letter-spacing: -0.03em;
         }
         #welcome-splash p {
             font-size: 1.1rem;
-            color: var(--accent, #4fc3f7);
+            color: var(--accent);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.1em;
@@ -53,6 +52,8 @@
     </style>
 </head>
 <body>
+
+    <canvas id="interactive-dot-bg"></canvas>
 
     <div id="welcome-splash" onclick="startLobby()">
         <h1>MeDoType</h1>
@@ -74,7 +75,7 @@
                 <button class="btn btn-play" style="width: 100%;" onclick="startMatchmaking('ranked')">
                     <i class="fa-solid fa-globe"></i> Matchmaking
                 </button>
-                <button class="btn btn-play" style="width: 100%; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 6px 0 rgba(0,0,0,0.4); color: var(--text-bright);" onclick="openChallengeModalFromRanked()">
+                <button class="btn btn-challenge-1v1" style="width: 100%;" onclick="openChallengeModalFromRanked()">
                     <i class="fa-solid fa-user-plus"></i> Challenge 1v1
                 </button>
                 <button class="btn btn-modal-close" style="width: 100%; margin-top: 5px;" onclick="closeRankedModal()">Cancel</button>
@@ -164,7 +165,7 @@
         let currentElo = 0;
         let currentUsername = "Guest";
         let accessToken = null; 
-        let myGuestId = null; // Used if not logged in
+        let myGuestId = null; 
         
         let isQueueing = false;
         let currentMode = null; 
@@ -183,7 +184,6 @@
             const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; 
 
             lobbyMusic.volume = parseInt(musicVolumeSetting, 10) / 100;
-
             return musicEnabled;
         }
 
@@ -357,8 +357,8 @@
                     toast.classList.remove('show');
                     setTimeout(() => {
                         toast.style.background = 'var(--error)';
-                        toast.style.borderColor = '#ef4444';
-                        toast.style.boxShadow = '0 8px 0 #991b1b, 0 15px 30px rgba(0,0,0,0.5)';
+                        toast.style.borderColor = 'color-mix(in srgb, var(--error) 80%, white)';
+                        toast.style.boxShadow = '0 8px 0 color-mix(in srgb, var(--error) 60%, black), 0 15px 30px rgba(0,0,0,0.5)';
                     }, 400); 
                 }, 3000);
 
@@ -374,7 +374,6 @@
         }
 
         function handleModeClick(mode) {
-            // Both modes are completely unlocked for guests now!
             if (mode === 'practice') {
                 window.location.href = 'practice/home.html';
             } else if (mode === 'ranked') {
@@ -425,8 +424,6 @@
             
             const userId = isLoggedIn ? (await _supabase.auth.getSession()).data.session.user.id : myGuestId;
             const isGuest = !isLoggedIn;
-            
-            // Assign real elo for users, and -1 for guests to perfectly separate the queues.
             const queueElo = isGuest ? -1 : currentElo; 
 
             updateQueueUI(true, mode, "Searching");
@@ -473,7 +470,6 @@
                 .eq('status', 'searching')
                 .neq('id', queueId);
 
-            // GUESTS ONLY MATCH GUESTS, USERS ONLY MATCH USERS
             if (isGuest) {
                 query = query.eq('elo', -1);
             } else {
@@ -507,7 +503,7 @@
         }
 
         async function sendDirectChallenge() {
-            if (!isLoggedIn) return; // Prevent guest execution as fallback
+            if (!isLoggedIn) return; 
             
             const targetInput = document.getElementById('target-player-input');
             const targetName = targetInput.value.trim();
@@ -613,8 +609,8 @@
             const cancelBtn = document.getElementById('cancel-queue-btn');
             cancelBtn.innerHTML = '<i class="fa-solid fa-check"></i> Match Found!';
             cancelBtn.style.background = 'var(--accent)';
-            cancelBtn.style.borderColor = '#2563eb';
-            cancelBtn.style.boxShadow = '0 6px 0 #1e40af';
+            cancelBtn.style.borderColor = 'color-mix(in srgb, var(--accent) 60%, black)';
+            cancelBtn.style.boxShadow = '0 6px 0 color-mix(in srgb, var(--accent) 40%, black)';
             cancelBtn.style.pointerEvents = 'none';
             
             document.querySelector('#queue-status .spinner').style.display = 'none';
@@ -655,9 +651,7 @@
             for (let i = 0; i < numWords; i++) {
                 let wordEl = document.createElement('div');
                 wordEl.classList.add('floating-word');
-                
                 wordEl.innerText = typingWords[Math.floor(Math.random() * typingWords.length)];
-                
                 wordEl.style.top = Math.random() * 100 + 'vh';
                 
                 let duration = Math.random() * 25 + 15;
@@ -673,10 +667,92 @@
             }
         }
 
+        /* --- Interactive Dot Engine Script --- */
+        function initInteractiveDots() {
+            const canvas = document.getElementById('interactive-dot-bg');
+            const ctx = canvas.getContext('2d');
+            let dots = [];
+            const spacing = 32; 
+            let mouse = { x: -1000, y: -1000, radius: 140 };
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                createGrid();
+            }
+
+            function createGrid() {
+                dots = [];
+                const computed = getComputedStyle(document.documentElement);
+                const dotColor = computed.getPropertyValue('--text-bright').trim() || '#ffffff';
+                const accentColor = computed.getPropertyValue('--accent').trim() || '#4fc3f7';
+
+                for (let x = spacing / 2; x < canvas.width; x += spacing) {
+                    for (let y = spacing / 2; y < canvas.height; y += spacing) {
+                        dots.push({ x, y, baseX: x, baseY: y, dotColor, accentColor });
+                    }
+                }
+            }
+
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+
+            window.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                for (let i = 0; i < dots.length; i++) {
+                    const d = dots[i];
+                    const dx = mouse.x - d.baseX;
+                    const dy = mouse.y - d.baseY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    let size = 1.5;
+                    let alpha = 0.06;
+                    let useAccent = false;
+
+                    if (distance < mouse.radius) {
+                        const approachFactor = (mouse.radius - distance) / mouse.radius;
+                        size = 1.5 + approachFactor * 3.5; 
+                        alpha = 0.06 + approachFactor * 0.45;
+                        useAccent = true;
+                        
+                        // Subtle displacement away from cursor
+                        d.x = d.baseX - (dx / distance) * (approachFactor * 8);
+                        d.y = d.baseY - (dy / distance) * (approachFactor * 8);
+                    } else {
+                        // Smoothly snap back to origin point
+                        d.x += (d.baseX - d.x) * 0.1;
+                        d.y += (d.baseY - d.y) * 0.1;
+                    }
+
+                    ctx.fillStyle = useAccent ? d.accentColor : d.dotColor;
+                    ctx.globalAlpha = alpha;
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(render);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            render();
+            
+            // Watch for theme variation updates updates
+            const observer = new MutationObserver(createGrid);
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+
         const shopBtn = document.getElementById('shop-btn');
         if (shopBtn) {
             shopBtn.addEventListener('click', function() {
-                // Ignore if guest
                 if (!isLoggedIn) return;
                 window.location.href = '/pages/shop/index.html'; 
             });
@@ -684,6 +760,7 @@
 
         loadUserProfile();
         createFloatingWords();
+        initInteractiveDots();
     </script>
 </body>
 </html>
