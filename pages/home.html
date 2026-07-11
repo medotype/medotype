@@ -667,7 +667,6 @@
             }
         }
 
-        /* --- Interactive Dot Engine Script --- */
         function initInteractiveDots() {
             const canvas = document.getElementById('interactive-dot-bg');
             const ctx = canvas.getContext('2d');
@@ -685,7 +684,7 @@
                 dots = [];
                 const computed = getComputedStyle(document.documentElement);
                 const dotColor = computed.getPropertyValue('--text-bright').trim() || '#ffffff';
-                const accentColor = computed.getPropertyValue('--accent').trim() || '#4fc3f7';
+                const accentColor = computed.getPropertyValue('--accent').trim();
 
                 for (let x = spacing / 2; x < canvas.width; x += spacing) {
                     for (let y = spacing / 2; y < canvas.height; y += spacing) {
