@@ -129,7 +129,8 @@ body {
 .mode-card:not(.locked):hover {
     border-color: var(--accent);
     transform: translateY(-6px);
-    background: color-mix(in srgb, var(--accent) 5%, transparent);
+    /* Fixed: Blends accent color into var(--card-bg) instead of transparent so it stays solid */
+    background: color-mix(in srgb, var(--accent) 6%, var(--card-bg));
     box-shadow: 0 14px 0 color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
@@ -214,7 +215,8 @@ body {
 }
 
 .btn-shop:hover {
-    background: color-mix(in srgb, var(--text-bright) 5%, transparent);
+    /* Fixed: Blends text-bright into var(--card-bg) instead of transparent */
+    background: color-mix(in srgb, var(--text-bright) 6%, var(--card-bg));
     border-color: color-mix(in srgb, var(--text-bright) 30%, transparent);
     transform: translateY(-2px);
     box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
@@ -368,14 +370,16 @@ body {
 .modal-buttons { display: flex; gap: 12px; }
 
 .btn-modal-close {
-    background: color-mix(in srgb, var(--text-bright) 5%, transparent);
+    /* Fixed: Use var(--card-bg) mixed with light text so the base button backing is solid */
+    background: color-mix(in srgb, var(--text-bright) 6%, var(--card-bg));
     color: var(--text-bright);
     border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
     box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
     flex: 1;
 }
 .btn-modal-close:hover { 
-    background: color-mix(in srgb, var(--text-bright) 10%, transparent); 
+    /* Fixed: Slightly higher blend percentage for hover state over solid var(--card-bg) */
+    background: color-mix(in srgb, var(--text-bright) 12%, var(--card-bg)); 
     transform: translateY(-2px);
     box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
 }
@@ -475,7 +479,8 @@ body {
 .chest-box:hover:not(.disabled) {
     transform: translateY(-4px);
     border-color: rgba(255, 215, 0, 0.4); /* Kept chest gold thematic boundary */
-    background: rgba(255, 215, 0, 0.1);  /* Kept chest gold thematic glow */
+    /* Fixed: Mixes gold into var(--card-bg) instead of full transparency layer */
+    background: color-mix(in srgb, #ffd700 10%, var(--card-bg));
     box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
 }
 
