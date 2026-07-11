@@ -1,8 +1,5 @@
 body { 
     background-color: var(--bg); 
-    /* Added subtle game-like grid background - scales with bright/dark text theme variables */
-    background-image: radial-gradient(color-mix(in srgb, var(--text-bright) 5%, transparent) 2px, transparent 2px);
-    background-size: 30px 30px;
     color: var(--text-bright); 
     font-family: var(--font); 
     margin: 0; 
@@ -12,6 +9,17 @@ body {
     height: 100vh; 
     overflow: hidden; 
     position: relative;
+}
+
+/* Background Canvas Sizing */
+#interactive-dot-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
 }
 
 #app { 
@@ -48,11 +56,11 @@ body {
     color: var(--text-faded);
     justify-content: center;
     font-variant-numeric: tabular-nums;
-    background: rgba(0, 0, 0, 0.4);
+    background: color-mix(in srgb, var(--bg) 40%, transparent);
     padding: 8px 18px;
     border-radius: 12px;
     border: 2px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 0 color-mix(in srgb, var(--bg) 30%, black);
 }
 
 .stat-box i { color: var(--accent); }
@@ -72,16 +80,16 @@ body {
     color: var(--text-bright);
     line-height: 1;
     text-transform: uppercase;
-    /* Game-like title shadow */
-    text-shadow: 4px 4px 0 var(--accent), 8px 8px 0 rgba(0, 0, 0, 0.5);
+    text-shadow: 4px 4px 0 var(--accent), 8px 8px 0 color-mix(in srgb, var(--bg) 50%, black);
     transform: skew(-2deg);
+    will-change: transform;
 }
 
 .season-badge {
     display: inline-flex;
     align-items: center;
     background: var(--accent);
-    color: white;
+    color: var(--bg);
     padding: 6px 16px;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -123,13 +131,12 @@ body {
     justify-content: center;
     position: relative;
     cursor: pointer;
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 40%, black);
 }
 
 .mode-card:not(.locked):hover {
     border-color: var(--accent);
     transform: translateY(-6px);
-    /* Fixed: Blends accent color into var(--card-bg) instead of transparent so it stays solid */
     background: color-mix(in srgb, var(--accent) 6%, var(--card-bg));
     box-shadow: 0 14px 0 color-mix(in srgb, var(--accent) 30%, transparent);
 }
@@ -172,7 +179,7 @@ body {
     opacity: 0.4;
     cursor: not-allowed;
     filter: grayscale(1);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 0 color-mix(in srgb, var(--bg) 20%, black);
 }
 
 .bottom-actions {
@@ -200,7 +207,7 @@ body {
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all 0.1s ease;
-    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 0 color-mix(in srgb, var(--bg) 40%, black);
 }
 
 .btn:active {
@@ -215,11 +222,10 @@ body {
 }
 
 .btn-shop:hover {
-    /* Fixed: Blends text-bright into var(--card-bg) instead of transparent */
     background: color-mix(in srgb, var(--text-bright) 6%, var(--card-bg));
     border-color: color-mix(in srgb, var(--text-bright) 30%, transparent);
     transform: translateY(-2px);
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 50%, black);
 }
 
 .btn-locked, .btn-locked:hover {
@@ -228,12 +234,12 @@ body {
     pointer-events: none !important;
     transform: none !important;
     color: var(--text-faded) !important;
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 4px 0 color-mix(in srgb, var(--bg) 20%, black) !important;
 }
 
 .btn-cancel { 
     background: var(--error) !important; 
-    color: white;
+    color: var(--text-bright);
     border-color: color-mix(in srgb, var(--error) 70%, black);
     box-shadow: 0 6px 0 color-mix(in srgb, var(--error) 50%, black);
 }
@@ -246,7 +252,7 @@ body {
 
 .btn-play { 
     background: var(--accent); 
-    color: white; 
+    color: var(--bg); 
     border-color: color-mix(in srgb, var(--accent) 80%, black);
     box-shadow: 0 6px 0 color-mix(in srgb, var(--accent) 60%, black);
 }
@@ -255,6 +261,20 @@ body {
     filter: brightness(1.1); 
     transform: translateY(-2px); 
     box-shadow: 0 8px 0 color-mix(in srgb, var(--accent) 60%, black);
+}
+
+.btn-challenge-1v1 {
+    width: 100%; 
+    background: color-mix(in srgb, var(--text-bright) 5%, var(--card-bg)); 
+    border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent); 
+    box-shadow: 0 6px 0 color-mix(in srgb, var(--bg) 40%, black); 
+    color: var(--text-bright);
+}
+
+.btn-challenge-1v1:hover {
+    background: color-mix(in srgb, var(--text-bright) 10%, var(--card-bg));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 50%, black);
 }
 
 .icon-wrapper { position: relative; display: inline-flex; }
@@ -282,7 +302,7 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
-    background: rgba(0, 0, 0, 0.6);
+    background: color-mix(in srgb, var(--bg) 60%, black);
     padding: 12px 24px;
     border-radius: 12px;
     border: 2px solid var(--accent);
@@ -306,7 +326,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
@@ -331,7 +351,7 @@ body {
     gap: 20px;
     transform: scale(0.95);
     transition: all 0.25s ease;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 20px 50px color-mix(in srgb, var(--bg) 80%, black);
 }
 
 .modal-overlay.show .challenge-modal { transform: scale(1); }
@@ -344,11 +364,11 @@ body {
     color: var(--text-bright);
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px 0 color-mix(in srgb, var(--bg) 50%, black);
 }
 
 #target-player-input {
-    background: rgba(0, 0, 0, 0.4);
+    background: color-mix(in srgb, var(--bg) 40%, transparent);
     border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
     border-radius: 10px;
     color: var(--text-bright);
@@ -370,18 +390,16 @@ body {
 .modal-buttons { display: flex; gap: 12px; }
 
 .btn-modal-close {
-    /* Fixed: Use var(--card-bg) mixed with light text so the base button backing is solid */
     background: color-mix(in srgb, var(--text-bright) 6%, var(--card-bg));
     color: var(--text-bright);
     border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
-    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 0 color-mix(in srgb, var(--bg) 40%, black);
     flex: 1;
 }
 .btn-modal-close:hover { 
-    /* Fixed: Slightly higher blend percentage for hover state over solid var(--card-bg) */
     background: color-mix(in srgb, var(--text-bright) 12%, var(--card-bg)); 
     transform: translateY(-2px);
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 50%, black);
 }
 
 #error-toast {
@@ -391,7 +409,7 @@ body {
     transform: translate(-50%, -150px);
     background: var(--error);
     border: 2px solid color-mix(in srgb, var(--error) 80%, white);
-    box-shadow: 0 8px 0 color-mix(in srgb, var(--error) 60%, black), 0 15px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--error) 60%, black), 0 15px 30px rgba(0,0,0,0.5);
     color: white;
     padding: 16px 32px;
     border-radius: 12px;
@@ -449,7 +467,7 @@ body {
 
 .floating-word {
     position: absolute;
-    color: var(--text-faded, rgba(255, 255, 255, 0.5));
+    color: var(--text-faded);
     font-family: var(--font);
     font-weight: 800;
     text-transform: uppercase;
@@ -471,17 +489,16 @@ body {
 }
 
 .chest-box i {
-    color: #ffd700 !important; /* Kept chest gold */
-    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5)); /* Kept chest gold overlay shadow */
+    color: #ffd700 !important; 
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5)); 
     transition: transform 0.2s ease;
 }
 
 .chest-box:hover:not(.disabled) {
     transform: translateY(-4px);
-    border-color: rgba(255, 215, 0, 0.4); /* Kept chest gold thematic boundary */
-    /* Fixed: Mixes gold into var(--card-bg) instead of full transparency layer */
+    border-color: rgba(255, 215, 0, 0.4); 
     background: color-mix(in srgb, #ffd700 10%, var(--card-bg));
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 50%, black);
 }
 
 .chest-box:hover:not(.disabled) i {
@@ -491,8 +508,8 @@ body {
 .chest-box.disabled {
     cursor: not-allowed !important;
     opacity: 0.5;
-    background: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+    background: color-mix(in srgb, var(--bg) 40%, transparent);
+    box-shadow: 0 4px 0 color-mix(in srgb, var(--bg) 30%, black);
 }
 
 .chest-box.disabled i {
