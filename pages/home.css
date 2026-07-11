@@ -1,5 +1,8 @@
 body { 
     background-color: var(--bg); 
+    /* Added subtle game-like grid background - scales with bright/dark text theme variables */
+    background-image: radial-gradient(color-mix(in srgb, var(--text-bright) 5%, transparent) 2px, transparent 2px);
+    background-size: 30px 30px;
     color: var(--text-bright); 
     font-family: var(--font); 
     margin: 0; 
@@ -41,14 +44,15 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 800;
     color: var(--text-faded);
     justify-content: center;
     font-variant-numeric: tabular-nums;
-    background: color-mix(in srgb, var(--text-bright) 3%, transparent);
-    padding: 6px 16px;
-    border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 18px;
+    border-radius: 12px;
+    border: 2px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
 }
 
 .stat-box i { color: var(--accent); }
@@ -64,28 +68,29 @@ body {
     font-size: 4.5rem;
     font-weight: 800;
     margin: 0;
-    letter-spacing: -0.01em; /* Fixed letter crowding */
-    background: linear-gradient(to bottom, var(--text-bright) 50%, color-mix(in srgb, var(--accent) 50%, var(--text-bright)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text-bright);
+    line-height: 1;
     text-transform: uppercase;
-    filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--accent) 20%, transparent));
+    /* Game-like title shadow */
+    text-shadow: 4px 4px 0 var(--accent), 8px 8px 0 rgba(0, 0, 0, 0.5);
+    transform: skew(-2deg);
 }
 
 .season-badge {
     display: inline-flex;
     align-items: center;
-    background: color-mix(in srgb, var(--text-bright) 7%, transparent);
-    color: var(--text-bright);
-    border: 1px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    background: var(--accent);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-top: 0.8rem;
+    margin-top: 1rem;
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 70%, black);
+    transform: skew(-2deg);
 }
 
 .modes-grid {
@@ -104,38 +109,45 @@ body {
     transform: scale(0.98);
 }
 
+/* Arcade Flat / Neo-brutalist Mode Cards */
 .mode-card {
     background: var(--card-bg);
-    border: 1px solid color-mix(in srgb, var(--text-bright) 3%, transparent);
-    border-radius: 20px;
+    border: 3px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    border-radius: 16px;
     padding: 50px 25px;
     text-decoration: none;
-    transition: all 0.25s ease;
+    transition: all 0.15s ease-out;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
     cursor: pointer;
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
 }
 
 .mode-card:not(.locked):hover {
     border-color: var(--accent);
-    transform: translateY(-4px);
-    background: color-mix(in srgb, var(--accent) 3%, transparent);
-    box-shadow: 0 12px 24px color-mix(in srgb, var(--bg) 60%, black);
+    transform: translateY(-6px);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+    box-shadow: 0 14px 0 color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.mode-card:not(.locked):active {
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .mode-card i {
-    font-size: 3rem;
+    font-size: 3.5rem;
     color: var(--text-faded);
     margin-bottom: 1.5rem;
-    transition: color 0.25s ease;
+    transition: all 0.25s ease;
 }
 
 .mode-card h2 {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--text-bright);
     letter-spacing: 0.02em;
@@ -144,24 +156,26 @@ body {
 
 .mode-card p {
     margin-top: 12px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-faded);
     line-height: 1.5;
-    font-weight: 400;
+    font-weight: 600;
 }
 
 .mode-card:not(.locked):hover i {
     color: var(--accent);
+    transform: scale(1.1);
 }
 
 .mode-card.locked {
-    opacity: 0.25;
+    opacity: 0.4;
     cursor: not-allowed;
     filter: grayscale(1);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .bottom-actions {
-    margin-top: 2.5rem;
+    margin-top: 3rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -169,32 +183,41 @@ body {
     width: 100%;
 }
 
+/* Arcade Flat Buttons */
 .btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 14px 32px;
+    padding: 16px 36px;
     border-radius: 12px;
-    border: none;
+    border: 2px solid transparent;
     font-family: var(--font);
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
+}
+
+.btn:active {
+    transform: translateY(6px) !important;
+    box-shadow: 0 0 0 transparent !important;
 }
 
 .btn-shop { 
     background: var(--card-bg); 
     color: var(--text-bright); 
-    border: 1px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
 }
 
 .btn-shop:hover {
-    background: color-mix(in srgb, var(--text-bright) 3%, transparent);
+    background: color-mix(in srgb, var(--text-bright) 5%, transparent);
+    border-color: color-mix(in srgb, var(--text-bright) 30%, transparent);
     transform: translateY(-2px);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
 }
 
 .btn-locked, .btn-locked:hover {
@@ -203,20 +226,34 @@ body {
     pointer-events: none !important;
     transform: none !important;
     color: var(--text-faded) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2) !important;
 }
 
 .btn-cancel { 
     background: var(--error) !important; 
-    color: var(--text-bright);
+    color: white;
+    border-color: color-mix(in srgb, var(--error) 70%, black);
+    box-shadow: 0 6px 0 color-mix(in srgb, var(--error) 50%, black);
 }
 
-.btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); }
+.btn-cancel:hover { 
+    filter: brightness(1.1); 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--error) 50%, black);
+}
 
 .btn-play { 
     background: var(--accent); 
-    color: var(--bg); /* Highly legible relative contrast mapping */
+    color: white; 
+    border-color: color-mix(in srgb, var(--accent) 80%, black);
+    box-shadow: 0 6px 0 color-mix(in srgb, var(--accent) 60%, black);
 }
-.btn-play:hover { opacity: 0.9; transform: translateY(-2px); }
+
+.btn-play:hover { 
+    filter: brightness(1.1); 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--accent) 60%, black);
+}
 
 .icon-wrapper { position: relative; display: inline-flex; }
 .lock-badge {
@@ -243,10 +280,11 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
-    background: color-mix(in srgb, var(--bg) 30%, black);
+    background: rgba(0, 0, 0, 0.6);
     padding: 12px 24px;
     border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .spinner {
@@ -266,8 +304,8 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: color-mix(in srgb, var(--bg) 60%, transparent);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -281,9 +319,9 @@ body {
 
 .challenge-modal {
     background: var(--card-bg);
-    border: 1px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    border: 3px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
     padding: 30px;
-    border-radius: 20px;
+    border-radius: 16px;
     width: 100%;
     max-width: 380px;
     display: flex;
@@ -291,46 +329,55 @@ body {
     gap: 20px;
     transform: scale(0.95);
     transition: all 0.25s ease;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
 }
 
 .modal-overlay.show .challenge-modal { transform: scale(1); }
 
 .modal-title {
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     font-weight: 800;
     margin: 0;
     text-align: left;
     color: var(--text-bright);
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 #target-player-input {
-    background: color-mix(in srgb, var(--bg) 20%, black);
-    border: 2px solid color-mix(in srgb, var(--text-bright) 5%, transparent);
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
     border-radius: 10px;
     color: var(--text-bright);
     font-family: var(--font);
     font-size: 1.1rem;
+    font-weight: 600;
     padding: 14px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
     width: 100%;
     box-sizing: border-box;
 }
 
-#target-player-input:focus { border-color: var(--accent); }
+#target-player-input:focus { 
+    border-color: var(--accent); 
+    box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 30%, transparent);
+}
 
 .modal-buttons { display: flex; gap: 12px; }
 
 .btn-modal-close {
-    background: color-mix(in srgb, var(--text-bright) 3%, transparent);
-    color: var(--text-faded);
+    background: color-mix(in srgb, var(--text-bright) 5%, transparent);
+    color: var(--text-bright);
+    border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
     flex: 1;
 }
 .btn-modal-close:hover { 
-    background: color-mix(in srgb, var(--text-bright) 8%, transparent); 
-    color: var(--text-bright); 
+    background: color-mix(in srgb, var(--text-bright) 10%, transparent); 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
 }
 
 #error-toast {
@@ -339,16 +386,19 @@ body {
     left: 50%;
     transform: translate(-50%, -150px);
     background: var(--error);
-    color: var(--text-bright);
-    padding: 14px 28px;
+    border: 2px solid color-mix(in srgb, var(--error) 80%, white);
+    box-shadow: 0 8px 0 color-mix(in srgb, var(--error) 60%, black), 0 15px 30px rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 16px 32px;
     border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 12px;
     z-index: 3000;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s, color 0.3s;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #error-toast.show { transform: translate(-50%, 0); }
@@ -366,17 +416,17 @@ body {
     body { height: auto; min-height: 100vh; padding: 2rem 0; overflow-y: auto; }
     .modes-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; gap: 16px;} 
     .mode-card { padding: 30px 20px; }
-    .ranked-title { font-size: 3rem; }
+    .ranked-title { font-size: 3.5rem; }
 }
 
 @media (max-height: 750px) {
     #app { padding: 1rem; }
     .header-stats { margin-bottom: 1rem; }
     .title-container { margin-bottom: 1.5rem; }
-    .ranked-title { font-size: 2.8rem; }
+    .ranked-title { font-size: 3.5rem; }
     .modes-grid { gap: 16px; }
     .mode-card { padding: 25px 20px; }
-    .mode-card i { font-size: 2rem; margin-bottom: 0.8rem; }
+    .mode-card i { font-size: 2.5rem; margin-bottom: 0.8rem; }
     .mode-card h2 { font-size: 1.2rem; }
     .mode-card p { font-size: 0.8rem; margin-top: 6px; }
     .bottom-actions { margin-top: 1.5rem; }
@@ -395,7 +445,7 @@ body {
 
 .floating-word {
     position: absolute;
-    color: var(--text-faded);
+    color: var(--text-faded, rgba(255, 255, 255, 0.5));
     font-family: var(--font);
     font-weight: 800;
     text-transform: uppercase;
@@ -409,7 +459,7 @@ body {
     100% { transform: translateX(100vw); }
 }
 
-/* --- Premium Mini Daily Chest Styles (Strictly Theme Driven) --- */
+/* --- Premium Mini Daily Chest Styles --- */
 .chest-box {
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -417,16 +467,16 @@ body {
 }
 
 .chest-box i {
-    /* Uses Modern HSL Relative shift to create a vibrant golden variant relative to your accent color */
-    color: hsl(from var(--accent) calc(h + 35) 100% 60%) !important;
-    filter: drop-shadow(0 0 6px hsl(from var(--accent) calc(h + 35) 100% 45%));
+    color: #ffd700 !important; /* Kept chest gold */
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5)); /* Kept chest gold overlay shadow */
     transition: transform 0.2s ease;
 }
 
 .chest-box:hover:not(.disabled) {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-    background: color-mix(in srgb, var(--accent) 4%, transparent);
+    transform: translateY(-4px);
+    border-color: rgba(255, 215, 0, 0.4); /* Kept chest gold thematic boundary */
+    background: rgba(255, 215, 0, 0.1);  /* Kept chest gold thematic glow */
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
 }
 
 .chest-box:hover:not(.disabled) i {
@@ -436,7 +486,8 @@ body {
 .chest-box.disabled {
     cursor: not-allowed !important;
     opacity: 0.5;
-    background: color-mix(in srgb, var(--text-bright) 1%, transparent);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
 }
 
 .chest-box.disabled i {
