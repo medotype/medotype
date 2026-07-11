@@ -170,9 +170,11 @@ body {
     font-weight: 600;
 }
 
-.mode-card:not(.locked):hover i {
-    color: var(--accent);
-    transform: scale(1.1);
+.mode-card:not(.locked):hover {
+    border-color: var(--accent, #4fc3f7);
+    transform: translateY(-6px);
+    background: color-mix(in srgb, var(--accent, #4fc3f7) 6%, var(--card-bg, #23242a));
+    box-shadow: 0 14px 0 color-mix(in srgb, var(--accent, #4fc3f7) 30%, transparent);
 }
 
 .mode-card.locked {
