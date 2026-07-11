@@ -74,7 +74,7 @@
                 <button class="btn btn-play" style="width: 100%;" onclick="startMatchmaking('ranked')">
                     <i class="fa-solid fa-globe"></i> Matchmaking
                 </button>
-                <button class="btn btn-play" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-bright);" onclick="openChallengeModalFromRanked()">
+                <button class="btn btn-play" style="width: 100%; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 6px 0 rgba(0,0,0,0.4); color: var(--text-bright);" onclick="openChallengeModalFromRanked()">
                     <i class="fa-solid fa-user-plus"></i> Challenge 1v1
                 </button>
                 <button class="btn btn-modal-close" style="width: 100%; margin-top: 5px;" onclick="closeRankedModal()">Cancel</button>
@@ -118,13 +118,13 @@
                 <p>Standard typing test with customizable modes and personal bests.</p>
             </a>
 
-            <div class="mode-card locked" id="card-practice" onclick="handleModeClick('practice')">
+            <div class="mode-card" id="card-practice" onclick="handleModeClick('practice')">
                 <i class="fa-solid fa-dumbbell"></i>
                 <h2>Practice</h2>
                 <p>Sharpen your speed with infinite typing and live combo tracking.</p>
             </div>
 
-            <div class="mode-card locked" id="card-ranked" onclick="handleModeClick('ranked')">
+            <div class="mode-card" id="card-ranked" onclick="handleModeClick('ranked')">
                 <i class="fa-solid fa-crosshairs"></i>
                 <h2>Multiplayer</h2>
                 <p>Compete against people online to get higher ELO and unlock new avatars!</p>
@@ -132,7 +132,7 @@
         </div>
 
         <div class="bottom-actions">
-            <button class="btn btn-shop" id="shop-btn">
+            <button class="btn btn-shop btn-locked" id="shop-btn">
                 <span class="icon-wrapper">
                     <i class="fa-solid fa-store" id="shop-icon" style="margin-right: 8px;"></i>
                 </span>
@@ -164,6 +164,7 @@
         let currentElo = 0;
         let currentUsername = "Guest";
         let accessToken = null; 
+        let myGuestId = null; // Used if not logged in
         
         let isQueueing = false;
         let currentMode = null; 
@@ -178,15 +179,14 @@
         lobbyMusic.loop = true;
 
         function applyAudioSettings() {
-            const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; // default true
-            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; // default 15%
+            const musicEnabled = localStorage.getItem('lobby-music-enabled') !== 'false'; 
+            const musicVolumeSetting = localStorage.getItem('lobby-music-volume') !== null ? localStorage.getItem('lobby-music-volume') : '15'; 
 
             lobbyMusic.volume = parseInt(musicVolumeSetting, 10) / 100;
 
             return musicEnabled;
         }
 
-        // Handle live multi-tab updates seamlessly
         window.addEventListener('storage', (e) => {
             if (e.key === 'lobby-music-volume' || e.key === 'lobby-music-enabled') {
                 const shouldPlay = applyAudioSettings();
@@ -200,15 +200,12 @@
 
         function startLobby() {
             const splash = document.getElementById('welcome-splash');
-
             splash.style.opacity = '0';
-
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 500);
 
             const shouldPlay = applyAudioSettings();
-
             if (shouldPlay) {
                 lobbyMusic.play().catch(err => {
                     console.log("Audio playback failed:", err);
@@ -220,17 +217,22 @@
             const { data: { session } } = await _supabase.auth.getSession();
             
             if (!session) {
-                document.getElementById('username-display').innerText = "Guest";
+                isLoggedIn = false;
+                myGuestId = crypto.randomUUID();
+                currentUsername = "Guest_" + Math.floor(1000 + Math.random() * 9000);
+                
+                document.getElementById('username-display').innerText = currentUsername;
+                document.getElementById('elo-display').innerText = "Guest Pool";
                 document.getElementById('profile-stats').style.opacity = '1';
                 initDailyChest(null);
+                
+                document.getElementById('shop-btn').classList.add('btn-locked');
                 return;
             }
 
             isLoggedIn = true;
             accessToken = session.access_token;
 
-            document.getElementById('card-practice').classList.remove('locked');
-            document.getElementById('card-ranked').classList.remove('locked');
             document.getElementById('shop-btn').classList.remove('btn-locked');
             document.getElementById('shop-btn').disabled = false;
 
@@ -260,7 +262,6 @@
             errorTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // --- Daily Chest Controls ---
         function initDailyChest(lastClaimStr) {
             const chestBox = document.getElementById('daily-chest');
             chestBox.style.display = 'flex';
@@ -343,20 +344,24 @@
                     return;
                 }
 
-                // Smoothly toggle the open container icon state
                 chestIcon.className = 'fa-solid fa-box-open';
                 
                 const toast = document.getElementById('error-toast');
                 toast.style.background = '#10b981'; 
+                toast.style.borderColor = '#059669';
+                toast.style.boxShadow = '0 8px 0 #047857';
                 document.getElementById('error-text').innerText = `Daily Chest Opened! +${reward} Coins`;
                 toast.classList.add('show');
                 
                 setTimeout(() => { 
                     toast.classList.remove('show');
-                    setTimeout(() => toast.style.background = 'var(--error)', 300); 
+                    setTimeout(() => {
+                        toast.style.background = 'var(--error)';
+                        toast.style.borderColor = '#ef4444';
+                        toast.style.boxShadow = '0 8px 0 #991b1b, 0 15px 30px rgba(0,0,0,0.5)';
+                    }, 400); 
                 }, 3000);
 
-                // Wait 1.5 seconds while open before shifting into full cooldown state layout
                 setTimeout(() => {
                     updateChestUI(new Date().toISOString());
                 }, 1500);
@@ -369,10 +374,7 @@
         }
 
         function handleModeClick(mode) {
-            if (!isLoggedIn) {
-                return showError("Please log in to access this mode.");
-            }
-
+            // Both modes are completely unlocked for guests now!
             if (mode === 'practice') {
                 window.location.href = 'practice/home.html';
             } else if (mode === 'ranked') {
@@ -389,6 +391,9 @@
         }
 
         function openChallengeModalFromRanked() {
+            if (!isLoggedIn) {
+                return showError("You must be logged in to challenge specific players.");
+            }
             closeRankedModal();
             document.getElementById('challenge-modal-overlay').classList.add('show');
             document.getElementById('target-player-input').focus();
@@ -415,21 +420,23 @@
             document.getElementById('queue-timer').innerText = "00:00";
         }
 
-        // --- Queue Functions ---
         async function startMatchmaking(mode) {
             closeRankedModal();
             
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (!session) return showError("To play, please log in.");
+            const userId = isLoggedIn ? (await _supabase.auth.getSession()).data.session.user.id : myGuestId;
+            const isGuest = !isLoggedIn;
+            
+            // Assign real elo for users, and -1 for guests to perfectly separate the queues.
+            const queueElo = isGuest ? -1 : currentElo; 
 
             updateQueueUI(true, mode, "Searching");
 
             const { data, error } = await _supabase
                 .from('ranked_queue')
                 .insert([{ 
-                    user_id: session.user.id, 
+                    user_id: userId, 
                     username: currentUsername,
-                    elo: currentElo,
+                    elo: queueElo,
                     status: 'searching'
                 }])
                 .select();
@@ -453,11 +460,11 @@
                     }
                 })
                 .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') checkNearbyPoolPlayers(session.user.id);
+                    if (status === 'SUBSCRIBED') checkNearbyPoolPlayers(userId, isGuest);
                 });
         }
 
-        async function checkNearbyPoolPlayers(myId) {
+        async function checkNearbyPoolPlayers(myId, isGuest) {
             if (!queueId) return;
 
             let query = _supabase
@@ -465,6 +472,13 @@
                 .select('*')
                 .eq('status', 'searching')
                 .neq('id', queueId);
+
+            // GUESTS ONLY MATCH GUESTS, USERS ONLY MATCH USERS
+            if (isGuest) {
+                query = query.eq('elo', -1);
+            } else {
+                query = query.gte('elo', 0);
+            }
 
             if (!window.location.href.includes('medotypebeta.wasmer.app')) {
                 query = query.neq('user_id', myId);
@@ -493,6 +507,8 @@
         }
 
         async function sendDirectChallenge() {
+            if (!isLoggedIn) return; // Prevent guest execution as fallback
+            
             const targetInput = document.getElementById('target-player-input');
             const targetName = targetInput.value.trim();
 
@@ -557,7 +573,6 @@
                 document.getElementById('queue-action-label').innerText = statusLabel;
                 queueContainer.style.display = 'flex';
                 
-                cancelBtn.style.background = 'var(--error)';
                 cancelBtn.style.pointerEvents = 'auto';
                 document.querySelector('#queue-status .spinner').style.display = 'block';
 
@@ -598,6 +613,8 @@
             const cancelBtn = document.getElementById('cancel-queue-btn');
             cancelBtn.innerHTML = '<i class="fa-solid fa-check"></i> Match Found!';
             cancelBtn.style.background = 'var(--accent)';
+            cancelBtn.style.borderColor = '#2563eb';
+            cancelBtn.style.boxShadow = '0 6px 0 #1e40af';
             cancelBtn.style.pointerEvents = 'none';
             
             document.querySelector('#queue-status .spinner').style.display = 'none';
@@ -657,9 +674,10 @@
         }
 
         const shopBtn = document.getElementById('shop-btn');
-
         if (shopBtn) {
             shopBtn.addEventListener('click', function() {
+                // Ignore if guest
+                if (!isLoggedIn) return;
                 window.location.href = '/pages/shop/index.html'; 
             });
         }
