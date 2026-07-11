@@ -74,7 +74,7 @@
         /* The Slide Effect */
         .input-wrap {
             flex: 1;
-            min-width: 0; /* Allows shrinking below content size */
+            min-width: 0;
             text-align: left;
             opacity: 1;
             transform: translateY(0);
@@ -132,11 +132,24 @@
             cursor: pointer;
             white-space: nowrap;
             transition: transform 0.2s, opacity 0.2s;
-            margin-bottom: 1px; /* Align with inputs */
+            margin-bottom: 1px;
+            width: 100%;
         }
 
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
+
+        /* Secondary Skip Button */
+        .btn-skip {
+            background: transparent;
+            color: var(--text-faded);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+        .btn-skip:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
 
         /* Discord Button Styling */
         .discord-btn {
@@ -200,7 +213,6 @@
             .toggle-btn { text-align: center; }
             .form-side { flex-direction: column; width: 100%; align-items: stretch; }
             .input-wrap.hidden { flex: none; height: 0; overflow: hidden; }
-            .btn { width: 100%; }
         }
         
         /* Overlay Styles */
@@ -228,6 +240,8 @@
             border: 1px solid rgba(255,255,255,0.05);
             max-width: 400px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
         }
 
         .verify-card i {
@@ -282,7 +296,7 @@
                 <input type="password" id="password" placeholder="••••••••">
             </div>
 
-            <button class="btn" id="main-btn" onclick="handleAuth()">Go</button>
+            <button class="btn" id="main-btn" onclick="handleAuth()" style="width: auto;">Go</button>
             
             <div id="msg-container">
                 <p id="msg"></p>
@@ -293,8 +307,9 @@
             <div class="verify-card">
                 <i class="fa-solid fa-envelope-open-text"></i>
                 <h2>Verify your email</h2>
-                <p>We've sent a link to your inbox. Please click it to activate your account.</p>
+                <p>We've sent a link to your inbox. You can verify now or do it later.</p>
                 <button class="btn" id="check-status-btn" onclick="checkVerification()">I've Verified My Email</button>
+                <button class="btn btn-skip" onclick="skipVerification()">Skip for now</button>
                 <p id="verify-msg" style="margin-top: 1rem; font-size: 0.8rem;"></p>
             </div>
         </div>
@@ -307,10 +322,11 @@
 
         let isLogin = false; 
         let isCooldown = false;
+        let isSigningUp = false; // Prevents premature redirect on signup
 
         // Auto-detect login if the popup finishes while this iframe is still open
         _supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN') {
+            if (event === 'SIGNED_IN' && !isSigningUp) {
                 const msgEl = document.getElementById('msg');
                 msgEl.innerText = 'Success!';
                 msgEl.className = 'success';
@@ -383,6 +399,7 @@
             msgEl.className = "";
 
             if (isLogin) {
+                isSigningUp = false;
                 const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
                 
                 if (error) {
@@ -391,6 +408,7 @@
                     isCooldown = false;
                 }
             } else {
+                isSigningUp = true; // Tell the app not to auto-redirect immediately
                 signupEmail = email;
                 const { data, error } = await _supabase.auth.signUp({ 
                     email, 
@@ -402,13 +420,17 @@
                     msgEl.innerText = error.message;
                     msgEl.className = 'err';
                     isCooldown = false;
+                    isSigningUp = false;
                 } else {
+                    // Show the overlay, but since verification isn't required by Supabase anymore, 
+                    // they are technically logged in and can choose to skip.
                     document.getElementById('verify-overlay').style.display = 'flex';
                 }
             }
         }
 
         async function handleDiscordLogin() {
+            isSigningUp = false;
             const msgEl = document.getElementById('msg');
             msgEl.innerText = "Opening Discord...";
             msgEl.className = "";
@@ -448,21 +470,27 @@
             btn.innerText = "Checking...";
             vMsg.innerText = "";
 
+            // Even if unverified, they will successfully sign in now because "Confirm Email" is OFF.
+            // We just let them through manually.
             const { data, error } = await _supabase.auth.signInWithPassword({
                 email: signupEmail,
                 password: document.getElementById('password').value
             });
 
             if (error) {
-                if (error.message.toLowerCase().includes("confirmed") || error.message.toLowerCase().includes("verify")) {
-                    vMsg.innerText = "Still waiting for verification...";
-                    vMsg.className = "err";
-                } else {
-                    vMsg.innerText = error.message;
-                    vMsg.className = "err";
-                }
+                vMsg.innerText = error.message;
+                vMsg.className = "err";
                 btn.innerText = "I've Verified My Email";
+            } else {
+                vMsg.innerText = "Success! Taking you to the dashboard...";
+                vMsg.className = "success";
+                setTimeout(() => window.location.href = 'home.html', 1000);
             }
+        }
+
+        function skipVerification() {
+            // They are already authenticated behind the scenes since Confirm Email is OFF. Just redirect.
+            window.location.href = 'home.html';
         }
     </script>
 </body>
