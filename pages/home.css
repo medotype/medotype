@@ -225,10 +225,11 @@ body {
 }
 
 .btn-shop:hover {
-    background: color-mix(in srgb, var(--text-bright) 6%, var(--card-bg));
-    border-color: color-mix(in srgb, var(--text-bright) 30%, transparent);
+    background: var(--card-bg);
+    border-color: var(--text-bright);
+    filter: brightness(1.2);
     transform: translateY(-2px);
-    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 50%, black);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
 }
 
 .btn-locked, .btn-locked:hover {
@@ -268,16 +269,15 @@ body {
 
 .btn-challenge-1v1 {
     width: 100%; 
-    background: color-mix(in srgb, var(--text-bright) 5%, var(--card-bg)); 
-    border: 2px solid color-mix(in srgb, var(--text-bright) 10%, transparent); 
-    box-shadow: 0 6px 0 color-mix(in srgb, var(--bg) 40%, black); 
+    background: var(--card-bg); 
+    border: 2px solid var(--text-faded); 
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3); 
     color: var(--text-bright);
 }
-
 .btn-challenge-1v1:hover {
-    background: color-mix(in srgb, var(--text-bright) 10%, var(--card-bg));
+    filter: brightness(1.25);
     transform: translateY(-2px);
-    box-shadow: 0 8px 0 color-mix(in srgb, var(--bg) 50%, black);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
 }
 
 .icon-wrapper { position: relative; display: inline-flex; }
